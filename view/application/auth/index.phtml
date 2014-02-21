@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" style="visibility: visible;">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>登录iCC品牌云</title>
+<meta name="format-detection" content="telephone=no">
+<link rel="stylesheet" type="text/css" href="<?php echo $this->basepath()?>/css/login/global.css">
+<style type="text/css">a{color: #0b7aae;}input.primary, .button, .btnPrimary{background: #3198d8;border: 1px solid #4176ba;}.button, .button, .btnPrimary, .btnPrimary {border: 1px solid, #1c78b1 (0.11,0.471,0.694);background: #2e8ec9;background: -moz-linear-gradient(bottom,  #2789c7 0%, #3f9fd9 100%);background: -webkit-gradient(linear, left bottom, left top, color-stop(0%,#2789c7), color-stop(100%,#3f9fd9));background: -webkit-linear-gradient(bottom,  #2789c7 0%,#3f9fd9 100%);background: -o-linear-gradient(bottom,  #2789c7 0%,#3f9fd9 100%);background: -ms-linear-gradient(bottom,  #2789c7 0%,#3f9fd9 100%);background: linear-gradient(bottom, #2789c7 0%, #3f9fd9 100%) bottom (0.153,0.537,0.78) to top(0.247,0.624,0.851)filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#3f9fd9', endColorstr='#2789c7',GradientType=0 );} .button:hover, .button:focus, .btnPrimary:hover, .btnPrimary:focus {background: #278ac7 ( 0.153, 0.541, 0.78)}body{background-color:#2a94d6;}#footer, #footer a{color:#ffffff;}#content{background-color:#ffffff;}#content{border:1px solid #CCCCCC; border-radius: 3px;-moz-border-radius: 3px;-webkit-border-radius: 3px; padding:10px;}#left_side { float:left; width: 320px;}#right_side{text-align:right;vertical-align:top;}</style><style type="text/css"> html { visibility: hidden; } </style>
+</head>
+<body>
+<div id="login">
+	<div id="login_wrapper">
+		<div id="left_side">
+			<div id="login_component">
+				<div id="logo_wrapper">
+					<a href="#"><img id="logo" class="logo_salesforce" src="<?php echo $this->basepath()?>/images/logo.png" alt="iCatholic Cloud" border="0"></a>
+				</div>
+				<div id="loginwidget">
+					<form name="login" method="post" action="<?php echo $this->basepath()?>/application/auth/login" target="_top" autocomplete="off" novalidate="novalidate">
+					<div class="loginbox_container" onclick="document.login.username.focus();">
+						<div id="clrUsr" class="clrField">&nbsp;</div>
+						<div id="usrn">
+							<div>
+								<label for="username" class="zen-assistiveText">用户名</label><input type="text" placeholder="用户名" value="" class="input" name="username" id="username" >
+							</div>
+						</div>
+					</div>
+					<div class="loginbox_container" onclick="document.login.password.focus();">
+						<div id="clrPw" class="clrField">&nbsp;</div>
+						<div id="pswd">
+							<div>
+								<label for="password" class="zen-assistiveText">密码</label><input type="password" placeholder="密码" class="input" id="password" name="password" autocomplete="off" >
+							</div>
+						</div>
+					</div>
+					<?php if($this->failure) { ?>
+					<div id="pwcaps" class="loginbox_container" ><font color=red>用户名或者密码错误，请重新输入！</font></div>
+					<?php } ?>
+					<div class="loginbox_container"><button class="button" id="Login" name="Login"><span class="label">登录到iCC平台</span></button></div>
+					<div class="loginbox_container">
+						<div id="rem" class="wrapper_remember"><input type="checkbox" id="rememberUn" name="rememberUn">            &nbsp;<label for="rememberUn">记住用户名</label></div>
+					</div>
+					<div class="loginbox_container" id="forgot">
+						<span><a href="#">系统仅限授权用户使用</a></span>
+					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<div id="right_side">
+		  <img src="/images/banner.png" />
+		</div>
+	</div>
+	<div id="footer">Copyright © 2011-<?php echo date("Y")?> iCatholic Cloud BP, inc. 公司版权所有。保留所有权利。</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<?php echo $this->doctype(); ?>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+<script>
+var isSystem = true;
+var __DOMAIN__ = '<?php echo $this->__DOMAIN__;?>';
+</script>
+<?php
+echo $this->headTitle($this->translate('ICC品牌云平台'))
+    ->setSeparator(' - ')
+    ->setAutoEscape(false);
+echo $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1.0');
+
+echo $this->headLink(array(
+    'rel' => 'shortcut icon',
+    'type' => 'image/vnd.microsoft.icon',
+    'href' => $this->basePath() . '/img/favicon.ico'
+))
+    ->appendStylesheet($this->basePath() . '/css/ext-theme-neptune-all.css?v='.$this->__VERSION__)
+    ->appendStylesheet($this->basePath() . '/css/icon.css?v='.$this->__VERSION__)
+    ->appendStylesheet($this->basePath() . '/css/BoxSelect.css?v='.$this->__VERSION__);
+echo $this->headScript()
+    ->appendFile($this->basePath() . '/js/build/production/icc/app.js?v='.$this->__VERSION__)
+    ->appendFile($this->basePath() . '/js/resources/common.js?v='.$this->__VERSION__)
+    ->appendFile($this->basePath() . '/js/resources/htmlspecialchars.js?v='.$this->__VERSION__)
+    ->appendFile($this->basePath() . '/css/BoxSelect.js?v='.$this->__VERSION__);
+
+?>
+</head>
+<body>
+<?php echo $this->content; ?>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "name" : "iCatholic Cloud Platform",
+  "description" : "iCatholic Cloud Platform",
+  "version" : "1.0",
+  "require" : {
+    "php" : ">=5.3.3",
+    "zendframework/zendframework" : ">=2.2.5",
+    "monolog/monolog" : ">=1.6.0",
+    "mobiledetect/mobiledetectlib" : ">=2.6.9",
+    "codeplex/phpexcel" : ">=1.7.8",
+    "doctrine/mongodb-odm" : ">=1.0.0-BETA9",
+    "lukaszr/matrixcode" : "dev-master",
+    "zendframework/zendservice-apple-apns" : "dev-master",
+    "doctrine/doctrine-mongo-odm-module" : "dev-master",
+    "cboden/ratchet" : "dev-master",
+    "react/react" : "0.3.*",
+    "gregwar/captcha" : "dev-master",
+    "lusitanian/oauth" : "~0.2",
+    "firephp/firephp-core" : "dev-master",
+    "phpmailer/phpmailer" : "v5.2.7",
+    "nicmart/tree": "dev-master",
+    "browscap/browscap-php": "1.0.*@dev"
+  },
+  "keywords" : [ "framework", "zf2" ],
+  "config" : {
+    "process-timeout" : 3600
+  },
+  "license" : "BSD-3-Clause",
+  "homepage" : "http://cloud.umaman.com"
+}
