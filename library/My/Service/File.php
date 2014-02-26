@@ -85,7 +85,7 @@ class File
         if (! isset($_FILES[$fieldName]))
             throw new \Exception("上传文件无效");
         
-        $this->_file->storeToGridFS($fieldName, array(
+        return $this->_file->storeToGridFS($fieldName, array(
             'project_id' => $this->_project_id
         ));
     }
