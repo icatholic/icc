@@ -42,5 +42,9 @@ class FileController extends Action
             return $this->response;
         }
     }
+    
+    public function uploadAction() {
+        
+    }
 }
 
