@@ -433,15 +433,17 @@ class Database
      * 更新操作
      *
      * @param string $criteria            
-     * @param string $object            
+     * @param string $object  
+     * @param string $options           
      * @throws \SoapFault
      * @return string
      */
-    public function update($criteria, $object)
+    public function update($criteria, $object, $options)
     {
         $criteria = $this->toArray($criteria);
         $object = $this->toArray($object);
-        $rst = $this->_model->update($criteria, $object);
+        $options = $this->toArray($options);
+        $rst = $this->_model->update($criteria, $object, $options);
         return $this->result($rst);
     }
 
