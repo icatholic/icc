@@ -528,7 +528,8 @@ class iDatabase
         $client->setFileUpload($fileName, 'file', $fileBytes);
         $response = $client->request('POST');
         if ($response->isSuccessful()) {
-            return json_decode($response->getBody(), true);
+			var_dump($response->getBody());
+            return json_decode(trim($response->getBody()), true);
         } else {
             throw new Exception("请求未成功");
         }

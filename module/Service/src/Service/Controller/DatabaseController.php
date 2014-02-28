@@ -15,7 +15,6 @@ use Zend\Serializer\Serializer;
 
 class DatabaseController extends Action
 {
-
     /**
      * 提供数据集合的操作服务
      * @see \Zend\Mvc\Controller\AbstractActionController::indexAction()
@@ -58,7 +57,8 @@ class DatabaseController extends Action
                 'err' => '未发现有效的上传文件'
             );
         }
-        return json_encode($rst, JSON_UNESCAPED_UNICODE);
+        echo json_encode($rst, JSON_UNESCAPED_UNICODE);
+        return $this->response;
     }
     
     public function testAction() {
