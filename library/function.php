@@ -470,11 +470,7 @@ function doGet($url, $params = array(), $returnObj = false)
             'rfc3986strict' => false
         ));
         $response = $client->request('GET');
-        if ($response->isSuccessful()) {
-            return $returnObj ? $response : $response->getBody();
-        } else {
-            throw new Exception('error status is ' . $response->getStatus());
-        }
+        return $returnObj ? $response : $response->getBody();
     } catch (Exception $e) {
         fb(exceptionMsg($e), \FirePHP::LOG);
         return false;
@@ -518,11 +514,7 @@ function doPost($url, $params = array(), $returnObj = false)
             'rfc3986strict' => false
         ));
         $response = $client->send();
-        if ($response->isSuccessful()) {
-            return $returnObj ? $response : $response->getBody();
-        } else {
-            throw new Exception('error status is ' . $response->getStatus());
-        }
+        return $returnObj ? $response : $response->getBody();
     } catch (Exception $e) {
         fb(exceptionMsg($e), \FirePHP::LOG);
         return false;
@@ -576,11 +568,7 @@ function doRequest($url, $get = array(), $post = array(), $returnObj = false)
             $client->setMethod(Request::METHOD_GET);
         
         $response = $client->send();
-        if ($response->isSuccessful()) {
-            return $returnObj ? $response : $response->getBody();
-        } else {
-            throw new Exception('error status is ' . $response->getStatus());
-        }
+        return $returnObj ? $response : $response->getBody();
     } catch (Exception $e) {
         fb(exceptionMsg($e), \FirePHP::LOG);
         return false;
