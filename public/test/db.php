@@ -11,10 +11,11 @@ $key_id = '53059145489619c06a3dc01f';
     $obj->setDebug(true);
     $obj->setCollection($collectionAlias);
     try {
-        $datas = array(
-            'textfield' => '123'
-        );
-        var_dump($obj->save($datas));
+        $obj->findAll(array());
+//         $datas = array(
+//             'textfield' => '123'
+//         );
+//         var_dump($obj->save($datas));
     } catch (SoapFault $e) {
         var_dump($e);
     }

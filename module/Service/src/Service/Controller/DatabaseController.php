@@ -10,10 +10,16 @@ namespace Service\Controller;
 
 use My\Common\Controller\Action;
 use OAuth\Common\Exception\Exception;
+use My\Service\Database;
+use Zend\Serializer\Serializer;
 
 class DatabaseController extends Action
 {
 
+    /**
+     * 提供数据集合的操作服务
+     * @see \Zend\Mvc\Controller\AbstractActionController::indexAction()
+     */
     public function indexAction()
     {
         $uri = DOMAIN . '/service/database/index';
@@ -53,6 +59,15 @@ class DatabaseController extends Action
             );
         }
         return json_encode($rst, JSON_UNESCAPED_UNICODE);
+    }
+    
+    public function testAction() {
+        $config = $this->getServiceLocator()->get('mongos');
+        $obj = new Database($config);
+        $obj->authenticate('52dce281489619e902452b46','687797961627269ff11a3f2f41ae90b014589fde','e3d47b82de94098cfc16966cbea8d917','53059145489619c06a3dc01f');
+        $obj->setCollection('test_data_type');
+        var_dump($obj->findAll(serialize(array()),serialize(array()),serialize(array())));
+        return $this->response;
     }
 }
 

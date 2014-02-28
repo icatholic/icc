@@ -1,4 +1,16 @@
 <?php
+/**
+ * 获取异常信息的细节
+ *
+ * @param Exception $e
+ */
+function exceptionMsg ($e)
+{
+    if (is_subclass_of($e, 'Exception') || $e instanceof Exception)
+        return $e->getFile() . $e->getLine() . $e->getMessage() .
+        $e->getTraceAsString();
+    return false;
+}
 
 class iDatabase
 {
@@ -23,6 +35,15 @@ class iDatabase
      * @var string
      */
     private $_namespace = 'http://cloud.umaman.com/service/database/index';
+
+    /**
+     * 传统采用SOAP上传文件，如果文件过大，解析xml会出现问题
+     * 故采用http协议本身的multi part的方式通过form表单进行提交
+     * 设定接受提交文件的地址
+     *
+     * @var string
+     */
+    private $_uploadUrl = 'http://cloud.umaman.com/service/database/upload';
 
     /**
      * 身份认证中的授权方法名称
@@ -146,7 +167,8 @@ class iDatabase
             );
             
             ini_set('default_socket_timeout', $this->_maxConnectionTime);
-            $this->_client = new MySoapClient($wsdl, $options);
+            //$this->_client = new MySoapClient($wsdl, $options);
+            $this->_client = new SoapClient($wsdl, $options);
             return $this->_client;
         } catch (SoapFault $e) {
             $this->soapFaultMsg($e);
@@ -358,13 +380,14 @@ class iDatabase
      * 执行更新操作
      *
      * @param array $criteria            
-     * @param array $object            
+     * @param array $object  
+     * @param array $options             
      * @return array boolean
      */
-    public function update(array $criteria, array $object)
+    public function update(array $criteria, array $object, array $options)
     {
         try {
-            return $this->result($this->_client->update(serialize($criteria), serialize($object)));
+            return $this->result($this->_client->update(serialize($criteria), serialize($object), serialize($options)));
         } catch (SoapFault $e) {
             $this->soapFaultMsg($e);
             return false;
@@ -462,20 +485,52 @@ class iDatabase
     }
 
     /**
-     * 上传文件到集群
-     *
-     * @param string $fileBytes
-     *            base64编码后的文件内容
-     * @param string $fileName
-     *            文件名称
+     * 通过$_FILES方式上传文件到集群
+     * 当前方法可以上传形式如$_FILES[$fileFieldName]的文件
      */
-    public function uploadFile($fileBytes, $fileName)
+    public function uploadFile($fileFieldName)
     {
-        try {
-            return $this->result($this->_client->uploadFile($fileBytes, $fileName));
-        } catch (SoapFault $e) {
-            $this->soapFaultMsg($e);
-            return false;
+        if ($_FILES[$fileFieldName]['error'] === UPLOAD_ERR_OK) {
+            $client = new Zend_Http_Client();
+            $client->setUri($this->_uploadUrl);
+            $client->setEncType(Zend_Http_Client::ENC_FORMDATA);
+            $client->setParameterGet(array(
+                'project_id' => $this->_project_id
+            ));
+            $client->setFileUpload($_FILES[$fileFieldName]['name'], $fileFieldName, file_get_contents($_FILES[$fileFieldName]['tmp_name']));
+            $response = $client->request('POST');
+            if ($response->isSuccessful()) {
+                return json_decode($response->getBody(), true);
+            } else {
+                throw new Exception("请求未成功");
+            }
+        } else {
+            throw new Exception("文件上传未成功，请检查文件是否超过服务器额定限制或者网络是否正常");
+        }
+    }
+
+    /**
+     * 上传指定文件名和内容的文件
+     *
+     * @param string $fileName            
+     * @param bytes $fileBytes            
+     * @throws Exception
+     * @return mixed
+     */
+    public function uploadBytes($fileName, $fileBytes)
+    {
+        $client = new Zend_Http_Client();
+        $client->setUri($this->_uploadUrl);
+        $client->setEncType(Zend_Http_Client::ENC_FORMDATA);
+        $client->setParameterGet(array(
+            'project_id' => $this->_project_id
+        ));
+        $client->setFileUpload($fileName, 'file', $fileBytes);
+        $response = $client->request('POST');
+        if ($response->isSuccessful()) {
+            return json_decode($response->getBody(), true);
+        } else {
+            throw new Exception("请求未成功");
         }
     }
 
@@ -499,7 +554,7 @@ class iDatabase
 
     /**
      * 获取集合的数据结构设定
-     * 
+     *
      * @return Ambigous <mixed, multitype:string , array>|boolean
      */
     public function getSchema()

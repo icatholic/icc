@@ -162,8 +162,9 @@ class Database
         $rst = $this->_key->findOne($query, array(
             'key' => true
         ));
-        if ($rst === null)
+        if ($rst === null) {
             throw new \SoapFault(404, '授权密钥无效');
+        }
         return $rst;
     }
 
@@ -566,7 +567,7 @@ class Database
     }
 
     /**
-     * 存储文件到集群
+     * 存储小文件文件到集群（2M以内的文件）
      *
      * @param string $fileBytes            
      * @param string $fileName            

@@ -452,6 +452,7 @@ function doGet($url, $params = array(), $returnObj = false)
         
         $client = new Zend\Http\Client();
         $client->setUri($url);
+        $client->setMethod(Request::METHOD_GET);
         $client->setParameterGet($params);
         $client->setEncType(Zend\Http\Client::ENC_URLENCODED);
         $client->setOptions(array(
@@ -499,6 +500,7 @@ function doPost($url, $params = array(), $returnObj = false)
         
         $client = new Zend\Http\Client();
         $client->setUri($url);
+        $client->setMethod(Request::METHOD_POST);
         $client->setParameterPost($params);
         $client->setEncType(Zend\Http\Client::ENC_URLENCODED);
         $client->setOptions(array(
@@ -515,7 +517,7 @@ function doPost($url, $params = array(), $returnObj = false)
             'argseparator' => null,
             'rfc3986strict' => false
         ));
-        $response = $client->request('POST');
+        $response = $client->send();
         if ($response->isSuccessful()) {
             return $returnObj ? $response : $response->getBody();
         } else {
@@ -569,10 +571,11 @@ function doRequest($url, $get = array(), $post = array(), $returnObj = false)
             'rfc3986strict' => false
         ));
         if (! empty($post))
-            $response = $client->request('POST');
+            $client->setMethod(Request::METHOD_POST);
         else
-            $response = $client->request('GET');
+            $client->setMethod(Request::METHOD_GET);
         
+        $response = $client->send();
         if ($response->isSuccessful()) {
             return $returnObj ? $response : $response->getBody();
         } else {
