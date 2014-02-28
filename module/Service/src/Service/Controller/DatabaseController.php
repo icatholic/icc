@@ -15,8 +15,10 @@ use Zend\Serializer\Serializer;
 
 class DatabaseController extends Action
 {
+
     /**
      * 提供数据集合的操作服务
+     * 
      * @see \Zend\Mvc\Controller\AbstractActionController::indexAction()
      */
     public function indexAction()
@@ -36,7 +38,7 @@ class DatabaseController extends Action
     public function uploadAction()
     {
         $project_id = $this->params()->fromQuery('project_id', '');
-        if(empty($project_id)) {
+        if (empty($project_id)) {
             throw new \Exception('无效的项目编号');
         }
         
@@ -60,13 +62,19 @@ class DatabaseController extends Action
         echo json_encode($rst, JSON_UNESCAPED_UNICODE);
         return $this->response;
     }
-    
-    public function testAction() {
+
+    /**
+     * 用于服务器端调试的方法
+     * 
+     * @return \Zend\Stdlib\ResponseInterface
+     */
+    public function testAction()
+    {
         $config = $this->getServiceLocator()->get('mongos');
         $obj = new Database($config);
-        $obj->authenticate('52dce281489619e902452b46','687797961627269ff11a3f2f41ae90b014589fde','e3d47b82de94098cfc16966cbea8d917','53059145489619c06a3dc01f');
+        $obj->authenticate('52dce281489619e902452b46', '687797961627269ff11a3f2f41ae90b014589fde', 'e3d47b82de94098cfc16966cbea8d917', '53059145489619c06a3dc01f');
         $obj->setCollection('test_data_type');
-        var_dump($obj->findAll(serialize(array()),serialize(array()),serialize(array())));
+        var_dump($obj->findAll(serialize(array()), serialize(array()), serialize(array())));
         return $this->response;
     }
 }
