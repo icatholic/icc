@@ -9,6 +9,9 @@
 namespace Service\Controller;
 
 use My\Common\Controller\Action;
+use Imagine\Imagick\Imagine;
+use Imagine\Image\BoxInterface;
+use Imagine\Image\Box;
 
 class FileController extends Action
 {
@@ -27,7 +30,8 @@ class FileController extends Action
     {
         $id = $this->params()->fromRoute('id', null);
         $download = $this->params()->fromRoute('download', null);
-        
+        $width = $this->params()->fromRoute('w', null);
+        $height = $this->params()->fromRoute('h', null);
         if ($id == null) {
             header("HTTP/1.1 404 Not Found");
             return $this->response;
@@ -35,16 +39,24 @@ class FileController extends Action
         
         $gridFsFile = $this->_file->getGridFsFileById($id);
         if ($gridFsFile instanceof \MongoGridFSFile) {
-            $this->_file->output($gridFsFile, true, $download == null ? false : true);
+            if (strpos(strtolower($gridFsFile->file['mime']), 'image')) {
+                // 图片处理
+                $imagick = new \Imagick();
+                $resource = $gridFsFile->getResource();
+                $imagick->readImageFile($resource);
+                $imagick->thumbnailimage($width, $height, false, false);
+                echo $imagick->getimageblob();
+            } else {
+                $this->_file->output($gridFsFile, true, $download == null ? false : true);
+            }
             return $this->response;
         } else {
             header("HTTP/1.1 404 Not Found");
             return $this->response;
         }
     }
-    
-    public function uploadAction() {
-        
-    }
+
+    public function uploadAction()
+    {}
 }
 

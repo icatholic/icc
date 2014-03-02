@@ -6,16 +6,20 @@
         {"name": "Jan Sorgalla", "email": "jsorgalla@googlemail.com"}
     ],
     "require": {
-        "php": ">=5.3.3"
+        "php": ">=5.4.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*"
     },
     "autoload": {
-        "psr-0": {
-            "React\\Promise": "src/"
-        }
+        "psr-4": {
+            "React\\Promise\\": "src/"
+        },
+        "files": ["src/functions.php"]
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0-dev"
+            "dev-master": "2.0-dev"
         }
     }
 }

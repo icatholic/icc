@@ -1,7 +1,23 @@
 CHANGELOG
 =========
 
-### 0.3.3 (2013-xx-xx)
+### 0.4.0 (2014-02-02)
+
+  * Feature: Added ChildProcess to run async child processes within the event loop (@jmikola)
+  * Feature: [EventLoop] Added `EventLoopInterface::nextTick()`, implemented in all event loops (@jmalloc)
+  * Feature: [EventLoop] Added `EventLoopInterface::futureTick()`, implemented in all event loops (@jmalloc)
+  * Feature: [EventLoop] Added `ExtEventLoop` implementation using pecl/event (@jmalloc)
+  * BC break: [HttpClient] Drop unused `Response::getBody()`
+  * BC break: Bump minimum PHP version to PHP 5.4, remove 5.3 specific hacks
+  * BC break: Remove `$loop` argument from `HttpClient`: `Client`, `Request`, `Response`
+  * BC break: Update to React/Promise 2.0
+  * BC break: Update to Evenement 2.0
+  * BC break: [EventLoop] New method: `EventLoopInterface::nextTick()`
+  * BC break: [EventLoop] New method: `EventLoopInterface::futureTick()`
+  * Bug fix: [Dns] Properly resolve CNAME aliases
+  * Dependency: Autoloading and filesystem structure now PSR-4 instead of PSR-0
+
+### 0.3.3 (2013-07-08)
 
   * Bug fix: [EventLoop] No error on removing non-existent streams (@clue)
   * Bug fix: [EventLoop] Do not silently remove feof listeners in `LibEvLoop`
