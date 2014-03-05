@@ -525,6 +525,9 @@ Ext.define('icc.controller.idatabase.Collection', {
 					var linkageSetValueField = Ext.isString(record.get('linkageSetValueField')) ? record.get('linkageSetValueField') : '';
 					var jsonSearch = Ext.isString(record.get('rshSearchCondition')) ? record.get('rshSearchCondition') : '';
 					var cdnUrl = Ext.isString(record.get('cdnUrl')) ? record.get('cdnUrl') : '';
+					if(cdnUrl=='') {
+						cdnUrl = 'http://cloud.umaman.com';
+					}
 					var xTemplate = Ext.isString(record.get('xTemplate')) ? record.get('xTemplate') : '';
 
 					// 获取fatherField
@@ -823,10 +826,11 @@ Ext.define('icc.controller.idatabase.Collection', {
 							break;
 						case 'filefield':
 							if (xTemplate != '') {
+								column.tpl = column.tpl.replace('{cdnUrl}', cdnUrl);
+							}
+							else {
 								if (record.get('showImage') != undefined && record.get('showImage') == true) {
-									column.tpl = '<a href="' + cdnUrl + '{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '{' + recordfield + '}?size=100x100" border="0" height="100" /></a>';
-								} else {
-									column.tpl = column.tpl.replace('{cdnUrl}', cdnUrl);
+									column.tpl = '<a href="' + cdnUrl + '/file/{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '/file/{' + recordfield + '}/w/100/h/100" border="0" height="100" /></a>';
 								}
 							}
 							break;
