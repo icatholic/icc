@@ -7,7 +7,7 @@ return array(
                 'default' => array(
                     'name' => 'Monolog\Handler\MongoDBHandler',
                     'args' => array(
-                        'mongo' => new \MongoClient("mongodb://127.0.0.1:27017"),
+                        'mongo' => new \MongoClient('mongodb://'.MONGOS_DEFAULT_01.','.MONGOS_DEFAULT_02.','.MONGOS_DEFAULT_03),
                         'database' => 'logs',
                         'collection' => 'logs' . date("Ym"),
                         'level' => \Monolog\Logger::ERROR,

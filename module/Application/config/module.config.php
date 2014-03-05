@@ -110,7 +110,10 @@ return array(
             'options' => array(
                 'servers' => array(
                     array(
-                        '127.0.0.1',
+                        MEMCACHED_01,
+                        11211
+                    ),array(
+                        MEMCACHED_02,
                         11211
                     )
                 )
@@ -123,7 +126,7 @@ return array(
             'options' => array(
                 'servers' => array(
                     array(
-                        '127.0.0.1',
+                        REDIS_01,
                         6379
                     )
                 )
@@ -134,9 +137,9 @@ return array(
         'cluster' => array(
             'default' => array(
                 'servers' => array(
-                    '127.0.0.1:27017',
-                    '127.0.0.1:27017',
-                    '127.0.0.1:27017'
+                    MONGOS_DEFAULT_01,
+                    MONGOS_DEFAULT_02,
+                    MONGOS_DEFAULT_03
                 ),
                 'dbs' => array(
                     DEFAULT_DATABASE,
@@ -148,9 +151,9 @@ return array(
             ),
             'analysis' => array(
                 'servers' => array(
-                    '127.0.0.1:27017',
-                    '127.0.0.1:27017',
-                    '127.0.0.1:27017'
+                    MONGOS_ANALYSIS_01,
+                    MONGOS_ANALYSIS_02,
+                    MONGOS_ANALYSIS_03
                 ),
                 'dbs' => array(
                     DEFAULT_DATABASE,
