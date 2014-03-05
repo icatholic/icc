@@ -7,7 +7,7 @@ defined('CACHE_ADAPTER') || define('CACHE_ADAPTER', 'fileCache'); // [fileCache|
 defined('APPLICATION_ENV') || define('APPLICATION_ENV', 'development'); // [development|production]
 defined('DEFAULT_DATABASE') || define('DEFAULT_DATABASE', 'ICCv1');
 defined('DEFAULT_CLUSTER') || define('DEFAULT_CLUSTER', 'default');
-defined('DOMAIN') || define('DOMAIN', 'http://localhost');
+defined('DOMAIN') || define('DOMAIN', 'http://cloud.umaman.com');
 
 /**
  * ICC指定数据库列表
@@ -60,11 +60,11 @@ defined('MEMCACHED_02') || define('MEMCACHED_02', '10.0.0.2');
 
 defined('REDIS_01') || define('REDIS_01', '10.0.0.2');
 
-defined('MONGOS_DEFAULT_01') || define('MONGOS_DEFAULT_01', '10.0.0.30:27017');
-defined('MONGOS_DEFAULT_02') || define('MONGOS_DEFAULT_02', '10.0.0.31:27017');
-defined('MONGOS_DEFAULT_03') || define('MONGOS_DEFAULT_03', '10.0.0.32:27017');
+defined('MONGOS_DEFAULT_01') || define('MONGOS_DEFAULT_01', '10.0.0.11:50000');
+defined('MONGOS_DEFAULT_02') || define('MONGOS_DEFAULT_02', '10.0.0.12:50000');
+defined('MONGOS_DEFAULT_03') || define('MONGOS_DEFAULT_03', '10.0.0.13:50000');
 
-defined('MONGOS_ANALYSIS_01') || define('MONGOS_ANALYSIS_01', '10.0.0.30:27017');
-defined('MONGOS_ANALYSIS_02') || define('MONGOS_ANALYSIS_02', '10.0.0.31:27017');
-defined('MONGOS_ANALYSIS_03') || define('MONGOS_ANALYSIS_03', '10.0.0.32:27017');
+defined('MONGOS_ANALYSIS_01') || define('MONGOS_ANALYSIS_01', '10.0.0.11:50000');
+defined('MONGOS_ANALYSIS_02') || define('MONGOS_ANALYSIS_02', '10.0.0.12:50000');
+defined('MONGOS_ANALYSIS_03') || define('MONGOS_ANALYSIS_03', '10.0.0.13:50000');
 
