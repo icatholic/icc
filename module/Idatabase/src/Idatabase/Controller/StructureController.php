@@ -183,6 +183,7 @@ class StructureController extends Action
                 try {
                     $datas['rshSearchCondition'] = Json::decode($datas['rshSearchCondition'], Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
+                    fb(exceptionMsg($e),'LOG');
                     return $this->msg(false, '关联集合约束查询条件的json格式错误');
                 }
             } else {
@@ -298,6 +299,7 @@ class StructureController extends Action
                 try {
                     $datas['rshSearchCondition'] = Json::decode($datas['rshSearchCondition'], Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
+                    fb(exceptionMsg($e),'LOG');
                     return $this->msg(false, '关联集合约束查询条件的json格式错误');
                 }
             } else {

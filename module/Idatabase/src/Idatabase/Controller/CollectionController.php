@@ -194,7 +194,7 @@ class CollectionController extends Action
                         'hookLastResponseResult' => $response
                     )
                 ));
-                return $this->msg(true, '触发联动操作成功');
+                return $this->msg(true, '触发联动操作成功'.$response);
             } catch (\Exception $e) {
                 return $this->msg(false, $e->getMessage());
             }
