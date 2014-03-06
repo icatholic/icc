@@ -960,18 +960,18 @@ function mapReduce($dataModel, $statisticInfo, $query, $method = 'replace', $sco
             var key = '';
             var rst = {
                total : !isNaN(yAxisField) ? yAxisField : 0,
-               count : yAxisField!==undefined ? 1 : 0,
+               count : yAxisField!==null ? 1 : 0,
                max : !isNaN(yAxisField) ? yAxisField : Number.NEGATIVE_INFINITY,
                min : !isNaN(yAxisField) ? yAxisField : Number.POSITIVE_INFINITY,
                val : [yAxisField]
             };
 
-            if(xAxisField==undefined ||yAxisField==undefined) {
+            if(xAxisField==null ||yAxisField==null) {
                 key = '__OTHERS__';
                 return emit(key,rst);
             }
             if(xAxisType=='hour' || xAxisType=='day' || xAxisType=='month' || xAxisType=='year') {
-                if(xAxisField!==undefined) {
+                if(xAxisField!==null) {
                     try {
                         var time = new Date(xAxisField);
                         var timeSec = time.getTime();
@@ -1059,13 +1059,13 @@ function mapReduce($dataModel, $statisticInfo, $query, $method = 'replace', $sco
                   } else if(yAxisType=='sum') {
                       rst.total += values[idx].total;
                   } else if(yAxisType=='max') {
-                      if(rst.max==undefined)
+                      if(rst.max==null)
                           rst.max = values[idx].max;
                       else if(rst.max <= values[idx].max) {
                           rst.max = values[idx].max;
                       }
                   } else if(yAxisType=='min') {
-                      if(rst.min==undefined) {
+                      if(rst.min==null) {
                           rst.min = values[idx].min;
                       }
                       else if(rst.min >= values[idx].min) {
