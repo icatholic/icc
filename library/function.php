@@ -942,6 +942,7 @@ function iCollectionName($_id)
 /**
  * map reduce统一处理函数
  *
+ * @param string $out            
  * @param resource $dataModel            
  * @param array $statisticInfo            
  * @param array $query            
@@ -950,7 +951,7 @@ function iCollectionName($_id)
  * @param array $sort            
  * @param int $limit            
  */
-function mapReduce($dataModel, $statisticInfo, $query, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
+function mapReduce($out = null, $dataModel, $statisticInfo, $query, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
 {
     $map = "function(){
             var xAxisType = '{$statisticInfo['xAxisType']}';
@@ -1156,6 +1157,6 @@ function mapReduce($dataModel, $statisticInfo, $query, $method = 'replace', $sco
             return rst;
         }";
     
-    return $dataModel->mapReduce($map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
+    return $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
 }
 

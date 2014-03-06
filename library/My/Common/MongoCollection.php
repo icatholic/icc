@@ -273,7 +273,7 @@ class MongoCollection extends \MongoCollection
          * MongoClient::RP_SECONDARY 只读从db优先
          * MongoClient::RP_SECONDARY_PREFERRED 读取从db优先
          */
-        //$this->db->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
+        // $this->db->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
         $this->db->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
     }
 
@@ -876,9 +876,11 @@ class MongoCollection extends \MongoCollection
      *
      * @param array $command            
      */
-    public function mapReduce($map, $reduce, $query = array(), $finalize = null, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
+    public function mapReduce($out = null, $map, $reduce, $query = array(), $finalize = null, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
     {
-        $out = md5(serialize(func_get_args()));
+        if ($out == null) {
+            $out = md5(serialize(func_get_args()));
+        }
         try {
             // map reduce执行锁管理开始
             $locks = new self($this->_configInstance, 'locks', DB_MAPREDUCE, $this->_cluster);
@@ -1026,7 +1028,7 @@ class MongoCollection extends \MongoCollection
         fb($id, 'LOG');
         $gridfsFile = $this->_fs->get($id);
         if (! ($gridfsFile instanceof \MongoGridFSFile)) {
-            fb($gridfsFile,'LOG');
+            fb($gridfsFile, 'LOG');
             throw new \Exception('$gridfsFile is not instanceof MongoGridFSFile');
         }
         return $gridfsFile->file;

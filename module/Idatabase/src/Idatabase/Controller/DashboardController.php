@@ -16,7 +16,7 @@ class DashboardController extends Action
 {
 
     private $_dashboard;
-    
+
     private $_statistic;
 
     private $_project;
@@ -100,7 +100,7 @@ class DashboardController extends Action
                     $oldDashboardOut->physicalDrop();
                 }
                 
-                //检查是否存在映射关系
+                // 检查是否存在映射关系
                 $mapCollection = $this->_mapping->findOne(array(
                     'collection_id' => $statisticInfo['collection_id'],
                     'active' => true
@@ -121,7 +121,8 @@ class DashboardController extends Action
                     )
                 );
                 
-                $rst = mapReduce($dataModel, $statisticInfo, $query, 'reduce');
+                $out = 'dashboard_' . $statisticInfo['_id']->__toString();
+                $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'reduce');
                 if ($rst instanceof \MongoCollection) {
                     $outCollectionName = $rst->getName(); // 输出集合名称
                     $this->_statistic->update(array(

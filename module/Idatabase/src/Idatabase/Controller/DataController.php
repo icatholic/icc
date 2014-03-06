@@ -336,7 +336,7 @@ class DataController extends Action
         try {
             $query = array();
             $query = $this->searchCondition();
-            $rst = mapReduce($this->_data, $statisticInfo, $query);
+            $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
             
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {
@@ -757,7 +757,7 @@ class DataController extends Action
             foreach ($_FILES as $fieldName => $file) {
                 if ($file['name'] != '') {
                     if ($file['error'] == UPLOAD_ERR_OK) {
-                        if(isset($oldDataInfo[$fieldName])) {
+                        if (isset($oldDataInfo[$fieldName])) {
                             $this->_data->removeFileFromGridFS($oldDataInfo[$fieldName]);
                         }
                         $fileInfo = $this->_data->storeToGridFS($fieldName);
