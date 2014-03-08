@@ -1,6 +1,7 @@
 <?php
 use Zend\Http\Request;
 use Zend\Json\Json;
+use My\Common\MongoCollection;
 
 /**
  * ICC函数定义集合文件
@@ -951,7 +952,7 @@ function iCollectionName($_id)
  * @param array $sort            
  * @param int $limit            
  */
-function mapReduce($out = null, $dataModel, $statisticInfo, $query, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
+function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $query, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
 {
     $map = "function(){
             var xAxisType = '{$statisticInfo['xAxisType']}';

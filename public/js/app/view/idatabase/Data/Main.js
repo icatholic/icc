@@ -34,6 +34,7 @@ Ext.define('icc.view.idatabase.Data.Main', {
 					columns : this.gridColumns,
 					store : this.gridStore,
 					addOrEditFields : this.addOrEditFields,
+					linkagedElementInitValueFrom : this.linkagedElementInitValueFrom,
 					selType : 'checkboxmodel',
 					plugins : plugins
 				} ]
@@ -48,6 +49,7 @@ Ext.define('icc.view.idatabase.Data.Main', {
 					columns : this.gridColumns,
 					store : this.gridStore,
 					addOrEditFields : this.addOrEditFields,
+					linkagedElementInitValueFrom : this.linkagedElementInitValueFrom,
 					selType : 'checkboxmodel',
 					plugins : plugins
 				}, {

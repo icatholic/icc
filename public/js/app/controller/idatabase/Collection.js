@@ -484,6 +484,8 @@ Ext.define('icc.controller.idatabase.Collection', {
 		var isTree = Ext.isBoolean(record.get('isTree')) ? record.get('isTree') : false;
 		var isRowExpander = Ext.isBoolean(record.get('isRowExpander')) ? record.get('isRowExpander') : false;
 		var rowBodyTpl = record.get('rowExpanderTpl');
+		var linkagedElementInitValueFrom = {};
+		
 		var me = this;
 		var panel = tabpanel.getComponent(__COLLECTION_ID__);
 		if (panel == null) {
@@ -517,8 +519,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 				// 存储下拉菜单模式的列
 				var gridComboboxColumns = [];
 				var addOrEditFields = [];
-				var linkagedElementMap = {};
-				
+
 				Ext.Array.forEach(records, function(record) {
 					var isBoxSelect = Ext.isBoolean(record.get('isBoxSelect')) ? record.get('isBoxSelect') : false;
 					var isLinkageMenu = Ext.isBoolean(record.get('isLinkageMenu')) ? record.get('isLinkageMenu') : false;
@@ -550,7 +551,19 @@ Ext.define('icc.controller.idatabase.Collection', {
 					var recordField = convertDot(record.get('field'));
 					var recordLabel = record.get('label');
 					var allowBlank = !record.get('required');
-
+					
+					if(linkageSetValueField!='') {
+						var setValueFields = linkageSetValueField.split(',');
+						Ext.Array.forEach(setValueFields, function(field) {
+							if(Ext.isArray(linkagedElementMap[field])) {
+								linkagedElementInitValueFrom[field].push(recordField);
+							}
+							else {
+								linkagedElementInitValueFrom[field] = [recordField];
+							}
+						});
+					}
+					
 					// 创建添加和编辑的field表单开始
 					var addOrEditField = {
 						xtype: recordType,
@@ -1138,7 +1151,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 						}
 					});
 				}
-
+				
 				panel = Ext.widget('idatabaseDataMain', {
 					id: __COLLECTION_ID__,
 					name: collection_name,
@@ -1151,6 +1164,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 					isTree: isTree,
 					searchFields: searchFields,
 					addOrEditFields: addOrEditFields,
+					linkagedElementInitValueFrom : linkagedElementInitValueFrom,
 					isRowExpander: isRowExpander,
 					rowBodyTpl: rowBodyTpl
 				});
