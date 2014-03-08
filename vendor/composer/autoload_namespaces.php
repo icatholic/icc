@@ -9,6 +9,7 @@ return array(
     'phpbrowscapTest' => array($vendorDir . '/browscap/browscap-php/tests'),
     'phpbrowscap' => array($vendorDir . '/browscap/browscap-php/src'),
     'Zend\\' => array($vendorDir . '/zendframework/zendframework/library'),
+    'ZendXml' => array($vendorDir . '/zendframework/zendxml/library'),
     'ZendService' => array($vendorDir . '/zendframework/zendservice-apple-apns/library'),
     'Tree\\Test' => array($vendorDir . '/nicmart/tree/tests'),
     'Tree' => array($vendorDir . '/nicmart/tree/src'),

@@ -55,16 +55,19 @@ defined('IDATABASE_FILES') || define('IDATABASE_FILES', 'idatabase_files');
 defined('EVENT_LOG_ERROR') || define('EVENT_LOG_ERROR', 'event_log_error');
 defined('EVENT_LOG_DEBUG') || define('EVENT_LOG_DEBUG', 'event_log_debug');
 
-defined('MEMCACHED_01') || define('MEMCACHED_01', '10.0.0.1');
-defined('MEMCACHED_02') || define('MEMCACHED_02', '10.0.0.2');
+/**
+ * 服务器配置信息
+ */
+defined('MEMCACHED_01') || define('MEMCACHED_01', '127.0.0.1');
+defined('MEMCACHED_02') || define('MEMCACHED_02', '127.0.0.2');
 
 defined('REDIS_01') || define('REDIS_01', '10.0.0.2');
 
-defined('MONGOS_DEFAULT_01') || define('MONGOS_DEFAULT_01', '10.0.0.11:50000');
-defined('MONGOS_DEFAULT_02') || define('MONGOS_DEFAULT_02', '10.0.0.12:50000');
-defined('MONGOS_DEFAULT_03') || define('MONGOS_DEFAULT_03', '10.0.0.13:50000');
+defined('MONGOS_DEFAULT_01') || define('MONGOS_DEFAULT_01', '127.0.0.1:27017');
+defined('MONGOS_DEFAULT_02') || define('MONGOS_DEFAULT_02', '127.0.0.1:27017');
+defined('MONGOS_DEFAULT_03') || define('MONGOS_DEFAULT_03', '127.0.0.1:27017');
 
-defined('MONGOS_ANALYSIS_01') || define('MONGOS_ANALYSIS_01', '10.0.0.11:50000');
-defined('MONGOS_ANALYSIS_02') || define('MONGOS_ANALYSIS_02', '10.0.0.12:50000');
-defined('MONGOS_ANALYSIS_03') || define('MONGOS_ANALYSIS_03', '10.0.0.13:50000');
+defined('MONGOS_ANALYSIS_01') || define('MONGOS_ANALYSIS_01', '127.0.0.1:27017');
+defined('MONGOS_ANALYSIS_02') || define('MONGOS_ANALYSIS_02', '127.0.0.1:27017');
+defined('MONGOS_ANALYSIS_03') || define('MONGOS_ANALYSIS_03', '127.0.0.1:27017');
 

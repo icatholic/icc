@@ -1209,12 +1209,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/avalanche123/Imagine.git",
-                "reference": "5e013323dacbb7d6ab0c0d55692e6b75d1fb30d2"
+                "reference": "852d86227059f2c418f7bb6d1d2058f7bdc4ffa2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/avalanche123/Imagine/zipball/5e013323dacbb7d6ab0c0d55692e6b75d1fb30d2",
-                "reference": "5e013323dacbb7d6ab0c0d55692e6b75d1fb30d2",
+                "url": "https://api.github.com/repos/avalanche123/Imagine/zipball/852d86227059f2c418f7bb6d1d2058f7bdc4ffa2",
+                "reference": "852d86227059f2c418f7bb6d1d2058f7bdc4ffa2",
                 "shasum": ""
             },
             "require": {
@@ -1258,7 +1258,7 @@
                 "image manipulation",
                 "image processing"
             ],
-            "time": "2013-12-23 10:54:18"
+            "time": "2014-03-05 12:40:36"
         },
         {
             "name": "lukaszr/matrixcode",
@@ -1482,16 +1482,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/nicmart/Tree.git",
-                "reference": "d5b0607d51a2e855c40c035784d01a71331e539a"
+                "reference": "43007fbb4ee9dbdf39c5ae36fdf0c23cf7ff1139"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nicmart/Tree/zipball/d5b0607d51a2e855c40c035784d01a71331e539a",
-                "reference": "d5b0607d51a2e855c40c035784d01a71331e539a",
+                "url": "https://api.github.com/repos/nicmart/Tree/zipball/43007fbb4ee9dbdf39c5ae36fdf0c23cf7ff1139",
+                "reference": "43007fbb4ee9dbdf39c5ae36fdf0c23cf7ff1139",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.3"
+                "php": ">=5.4"
             },
             "type": "library",
             "autoload": {
@@ -1512,7 +1512,7 @@
                 }
             ],
             "description": "A basic but flexible php tree data structure and a fluent tree builder implementation.",
-            "time": "2013-04-22 09:49:08"
+            "time": "2014-03-05 16:05:51"
         },
         {
             "name": "phpmailer/phpmailer",
@@ -1947,20 +1947,21 @@
         },
         {
             "name": "zendframework/zendframework",
-            "version": "2.2.5",
+            "version": "2.2.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zf2.git",
-                "reference": "4a7cf6a4cf791244e14aa0ca49d1f06916b63202"
+                "reference": "5eae447d46b00a280573b94c398b2f46f45a6903"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zf2/zipball/4a7cf6a4cf791244e14aa0ca49d1f06916b63202",
-                "reference": "4a7cf6a4cf791244e14aa0ca49d1f06916b63202",
+                "url": "https://api.github.com/repos/zendframework/zf2/zipball/5eae447d46b00a280573b94c398b2f46f45a6903",
+                "reference": "5eae447d46b00a280573b94c398b2f46f45a6903",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.3"
+                "php": ">=5.3.3",
+                "zendframework/zendxml": "~1.0-dev"
             },
             "replace": {
                 "zendframework/zend-authentication": "self.version",
@@ -2058,7 +2059,7 @@
                 "framework",
                 "zf2"
             ],
-            "time": "2013-10-31 15:48:16"
+            "time": "2014-03-06 17:27:03"
         },
         {
             "name": "zendframework/zendservice-apple-apns",
@@ -2101,6 +2102,51 @@
                 "zf2"
             ],
             "time": "2014-01-02 17:23:48"
+        },
+        {
+            "name": "zendframework/zendxml",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/ZendXml.git",
+                "reference": "559b34f426d33a11c3db118e00ce14bb8dc64e5f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/ZendXml/zipball/559b34f426d33a11c3db118e00ce14bb8dc64e5f",
+                "reference": "559b34f426d33a11c3db118e00ce14bb8dc64e5f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "require-dev": {
+                "fabpot/php-cs-fixer": "*@dev",
+                "phpunit/phpunit": "~3.7"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "ZendXml": "library/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "Utility library for XML usage, best practices, and security in PHP",
+            "homepage": "http://packages.zendframework.com/",
+            "keywords": [
+                "security",
+                "xml",
+                "zf2"
+            ],
+            "time": "2014-03-05 22:25:44"
         }
     ],
     "packages-dev": [
