@@ -517,7 +517,8 @@ Ext.define('icc.controller.idatabase.Collection', {
 				// 存储下拉菜单模式的列
 				var gridComboboxColumns = [];
 				var addOrEditFields = [];
-
+				var linkagedElementMap = {};
+				
 				Ext.Array.forEach(records, function(record) {
 					var isBoxSelect = Ext.isBoolean(record.get('isBoxSelect')) ? record.get('isBoxSelect') : false;
 					var isLinkageMenu = Ext.isBoolean(record.get('isLinkageMenu')) ? record.get('isLinkageMenu') : false;
@@ -529,6 +530,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 						cdnUrl = 'http://cloud.umaman.com';
 					}
 					var xTemplate = Ext.isString(record.get('xTemplate')) ? record.get('xTemplate') : '';
+					
 
 					// 获取fatherField
 					if (record.get('rshKey')) {
@@ -830,7 +832,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 							}
 							else {
 								if (record.get('showImage') != undefined && record.get('showImage') == true) {
-									column.tpl = '<a href="' + cdnUrl + '/file/{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '/file/{' + recordfield + '}/w/100/h/100" border="0" height="100" /></a>';
+									column.tpl = '<a href="' + cdnUrl + '/file/{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '/file/{' + recordfield + '}/w/100/h/100" border="0" /></a>';
 								}
 							}
 							break;
