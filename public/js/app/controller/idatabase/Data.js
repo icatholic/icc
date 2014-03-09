@@ -123,7 +123,8 @@ Ext.define('icc.controller.idatabase.Data', {
 						__PROJECT_ID__: grid.__PROJECT_ID__,
 						__COLLECTION_ID__: grid.__COLLECTION_ID__,
 						__PLUGIN_ID__: grid.__PLUGIN_ID__,
-						addOrEditFields: grid.addOrEditFields
+						addOrEditFields: grid.addOrEditFields,
+						linkagedElementInitValueFrom : grid.linkagedElementInitValueFrom
 					});
 
 					var convertDot = function(name) {
@@ -160,7 +161,8 @@ Ext.define('icc.controller.idatabase.Data', {
 							}
 						} else if (item.xtype == 'boxselect') {
 							var boxSelect = form.findField(field);
-							var fieldValue = selections[0].get(field.replace("[]", ''));
+							field = field.replace("[]", '');
+							var fieldValue = selections[0].get(field);
 							if (Ext.isArray(fieldValue)) {
 								boxSelect.setValue(fieldValue);
 							} else {
@@ -174,6 +176,32 @@ Ext.define('icc.controller.idatabase.Data', {
 
 						} else {
 							form.findField(field).setValue(selections[0].get(sourceField));
+						}
+						
+						if(field in win.linkagedElementInitValueFrom){
+							try { 
+								var fatherFields = win.linkagedElementInitValueFrom[field];
+								var linkageSearch = {};
+								if(item.fatherField!='') {
+									Ext.Array.forEach(fatherFields,function(father,idx) {
+										var fatherValue = selections[0].get(father);
+										if(Ext.isArray(fatherValue)) {
+											linkageSearch[item.fatherField] = {
+													"$in": fatherValue
+												};
+										}
+										else {
+											linkageSearch[item.fatherField] = fatherValue;
+										}
+									});
+									console.info(linkageSearch);
+									formField = form.findField(field) == null ? form.findField(field + '[]') : form.findField(field);
+									formField.store.proxy.extraParams.linkageSearch = Ext.JSON.encode(linkageSearch);
+								}
+							}
+							catch(e) {
+								console.info(e);
+							}
 						}
 						return true;
 					});

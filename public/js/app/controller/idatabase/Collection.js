@@ -551,19 +551,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 					var recordField = convertDot(record.get('field'));
 					var recordLabel = record.get('label');
 					var allowBlank = !record.get('required');
-					
-					if(linkageSetValueField!='') {
-						var setValueFields = linkageSetValueField.split(',');
-						Ext.Array.forEach(setValueFields, function(field) {
-							if(Ext.isArray(linkagedElementMap[field])) {
-								linkagedElementInitValueFrom[field].push(recordField);
-							}
-							else {
-								linkagedElementInitValueFrom[field] = [recordField];
-							}
-						});
-					}
-					
+
 					// 创建添加和编辑的field表单开始
 					var addOrEditField = {
 						xtype: recordType,
@@ -730,6 +718,18 @@ Ext.define('icc.controller.idatabase.Collection', {
 
 					addOrEditFields.push(addOrEditField);
 					// 创建添加和编辑的field表单结束
+					
+					if(linkageSetValueField!='') {
+						var setValueFields = linkageSetValueField.split(',');
+						Ext.Array.forEach(setValueFields, function(field) {
+							if(Ext.isArray(linkagedElementInitValueFrom[field])) {
+								linkagedElementInitValueFrom[field].push(recordField);
+							}
+							else {
+								linkagedElementInitValueFrom[field] = [recordField];
+							}
+						});
+					}
 
 					// 创建model的fields开始
 					var field = {
