@@ -303,7 +303,7 @@ class Database
         $limit = intval($limit);
         $limit = $limit < 0 ? 10 : $limit;
         $limit = $limit > 1000 ? 1000 : $limit;
-        if (isJson($fields)) {
+        if (! empty($fields)) {
             $fields = $this->toArray($fields);
         } else {
             $fields = array();
@@ -334,7 +334,7 @@ class Database
     public function findOne($query, $fields)
     {
         $query = $this->toArray($query);
-        if (isJson($fields)) {
+        if (! empty($fields)) {
             $fields = $this->toArray($fields);
         } else {
             $fields = array();
@@ -482,13 +482,13 @@ class Database
      */
     public function ensureIndex($keys, $options)
     {
-        if (isJson($keys)) {
+        if (! empty($keys)) {
             $keys = $this->toArray($keys);
         } else {
             $keys = trim($keys);
         }
         
-        if (isJson($options)) {
+        if (! empty($options)) {
             $options = $this->toArray($options);
         } else {
             $options = array(
