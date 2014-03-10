@@ -367,20 +367,15 @@ class MongoCollection extends \MongoCollection
      */
     public function aggregate($pipeline, $op = NULL, $op1 = NULL)
     {
-        $args = func_get_args();
         if (! $this->_noAppendQuery) {
-            array_unshift($args, array(
-                array(
-                    '$match' => array(
-                        '__REMOVED__' => false
-                    )
+            array_unshift($pipeline, array(
+                '$match' => array(
+                    '__REMOVED__' => false
                 )
             ));
         }
-        return call_user_func_array(array(
-            parent,
-            'aggregate'
-        ), $args);
+
+        return parent::aggregate($pipeline);
     }
 
     /**
