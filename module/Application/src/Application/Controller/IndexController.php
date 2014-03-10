@@ -123,6 +123,16 @@ class IndexController extends Action
     }
 
     /**
+     * 更新资源
+     */
+    public function refreshResourceAction()
+    {
+        $this->addResource();
+        echo 'refresh resource is ok';
+        return $this->response;
+    }
+
+    /**
      * 检索指定目录下的全部资源到数据库中
      */
     private function addResource()
