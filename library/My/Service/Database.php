@@ -434,8 +434,8 @@ class Database
      * 更新操作
      *
      * @param string $criteria            
-     * @param string $object  
-     * @param string $options           
+     * @param string $object            
+     * @param string $options            
      * @throws \SoapFault
      * @return string
      */
@@ -683,8 +683,8 @@ class Database
             }
             array_walk_recursive($rst, function (&$value, $key)
             {
-                if ($key === '_id' && strlen($value) === 24) {
-                    if (! ($value instanceof \MongoId))
+                if ($key === '_id') {
+                    if (! ($value instanceof \MongoId) && strlen($value) === 24)
                         $value = new \MongoId($value);
                 }
             });
