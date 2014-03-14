@@ -400,7 +400,14 @@ class DataController extends Action
             $datas = array();
             while ($cursor->hasNext()) {
                 $row = $cursor->getNext();
-                $datas[$row[$detail['rshCollectionValueField']]] = $row[$detail['rshCollectionKeyField']];
+                $key = $row[$detail['rshCollectionValueField']];
+                $value = $row[$detail['rshCollectionKeyField']];
+                if ($key instanceof \MongoId) {
+                    $key = $key->__toString();
+                }
+                if (! empty($key)) {
+                    $datas[$key] = $value;
+                }
             }
             $this->_rshData[$detail['collectionField']] = $datas;
         }
