@@ -1020,8 +1020,10 @@ class MongoCollection extends \MongoCollection
             $metadata['mime'] = $mime;
         
         $id = $this->_fs->storeUpload($fieldName, $metadata);
+        fb($id, 'LOG');
         $gridfsFile = $this->_fs->get($id);
         if (! ($gridfsFile instanceof \MongoGridFSFile)) {
+            fb($gridfsFile, 'LOG');
             throw new \Exception('$gridfsFile is not instanceof MongoGridFSFile');
         }
         return $gridfsFile->file;
