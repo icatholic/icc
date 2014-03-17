@@ -333,6 +333,10 @@ class DataController extends Action
             throw new \Exception('统计方法不存在');
         }
         
+        $map = array(
+            '_id' => $statisticInfo['xAxisField']
+        );
+        
         try {
             $query = array();
             $query = $this->searchCondition();
@@ -364,6 +368,9 @@ class DataController extends Action
             
             if ($export) {
                 $datas = $rst->findAll(array());
+                
+                $datas = $this->replaceRshData($datas, $map);
+                
                 $excel = array();
                 $excel['title'] = array(
                     '键',
@@ -376,11 +383,41 @@ class DataController extends Action
                 $datas = $rst->findAll(array(), array(
                     'value' => - 1
                 ), 0, $limit);
+                
+                $datas = $this->replaceRshData($datas, $map);
+                
                 return $this->rst($datas, 0, true);
             }
         } catch (\Exception $e) {
             return $this->deny('程序异常：' . $e->getLine() . $e->getMessage());
         }
+    }
+
+    /**
+     * 替换数据
+     *
+     * @param array $datas            
+     * @param array $map            
+     * @return array
+     */
+    private function replaceRshData($datas, $map)
+    {
+        $this->dealRshData();
+        convertToPureArray($datas);
+        array_walk($datas, function (&$value, $key) use($map)
+        {
+            ksort($value);
+            array_walk($value, function (&$cell, $field) use($map)
+            {
+                if (isset($map[$field])) {
+                    $field = $map[$field];
+                    if (isset($this->_rshData[$field])) {
+                        $cell = $this->_rshData[$field][$cell];
+                    }
+                }
+            });
+        });
+        return $datas;
     }
 
     /**
