@@ -1165,3 +1165,23 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
     return $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
 }
 
+/**
+ * 效仿数组函数的写法，实现复制数组。目的是为了解除内部变量的引用关系
+ * 
+ * @param array $arr            
+ * @return array
+ */
+function array_copy($arr)
+{
+    $newArray = array();
+    foreach ($arr as $key => $value) {
+        if (is_array($value))
+            $newArray[$key] = array_copy($value);
+        else 
+            if (is_object($value))
+                $newArray[$key] = clone $value;
+            else
+                $newArray[$key] = $value;
+    }
+    return $newArray;
+}
