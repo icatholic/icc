@@ -16,7 +16,6 @@ class PluginStructure extends Mongo
      */
     public function sync($datas)
     {
-        fb($datas,'LOG');
         if (! empty($datas['plugin_id'])) {
             return $this->update(array(
                 'plugin_id' => $datas['plugin_id'],

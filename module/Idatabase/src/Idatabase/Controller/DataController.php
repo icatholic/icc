@@ -438,7 +438,7 @@ class DataController extends Action
             while ($cursor->hasNext()) {
                 $row = $cursor->getNext();
                 $key = $row[$detail['rshCollectionValueField']];
-                $value = $row[$detail['rshCollectionKeyField']];
+                $value = isset($row[$detail['rshCollectionKeyField']]) ? $row[$detail['rshCollectionKeyField']] : '';
                 if ($key instanceof \MongoId) {
                     $key = $key->__toString();
                 }
