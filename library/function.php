@@ -961,10 +961,10 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
             var xAxisTitle = '{$statisticInfo['xAxisTitle']}'; 
             var key = '';
             var rst = {
-               total : !isNaN(yAxisField) ? yAxisField : 0,
+               total : parseFloat(yAxisField)!=NaN ? yAxisField : 0,
                count : yAxisField!==null ? 1 : 0,
-               max : !isNaN(yAxisField) ? yAxisField : Number.NEGATIVE_INFINITY,
-               min : !isNaN(yAxisField) ? yAxisField : Number.POSITIVE_INFINITY,
+               max : parseFloat(yAxisField)!=NaN ? yAxisField : Number.NEGATIVE_INFINITY,
+               min : parseFloat(yAxisField)!=NaN ? yAxisField : Number.POSITIVE_INFINITY,
                val : [yAxisField]
             };
 
@@ -997,7 +997,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                 }
             }
             else {
-                if(isNaN(yAxisField)) {
+                if(parseFloat(yAxisField)==NaN) {
                     yAxisField = 0;
                 }
             }
