@@ -1132,7 +1132,8 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                 rst = uniqueNumber;
             }
             else if(yAxisType=='avg') {
-                rst = Math.round(reducedValue.total / reducedValue.count,2);
+                rst = reducedValue.total / reducedValue.count;
+                rst = Math.round(rst*10000)/10000;
             }
             else if(yAxisType=='median') {
                 reducedValue.val.sort(function(a,b){return a>b?1:-1});
@@ -1140,24 +1141,26 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                 rst = reducedValue.val[(length%2==1 ? Math.floor(length/2) : Math.floor(length/2))];
             }
             else if(yAxisType=='variance') {
-                var avg = Math.round(reducedValue.total / reducedValue.count,2);
+                var avg = reducedValue.total / reducedValue.count;
                 var squared_Diff = 0;
                 var length = reducedValue.val.length;
                 for(var i=0;i<length;i++) {
                     var deviation = reducedValue.val[i] - avg;
                     squared_Diff += deviation * deviation;
                 }
-                rst = Math.round(squared_Diff/length,2);
+                rst = squared_Diff/length;
+                rst = Math.round(rst*10000)/10000;
             }
             else if(yAxisType=='standard') {
-                var avg = Math.round(reducedValue.total / reducedValue.count,2);
+                var avg = reducedValue.total / reducedValue.count;
                 var squared_Diff = 0;
                 var length = reducedValue.val.length;
                 for(var i=0;i<length;i++) {
                     var deviation = reducedValue.val[i] - avg;
                     squared_Diff += deviation * deviation;
                 }
-                rst = Math.round(Math.sqrt(squared_Diff/length),2);
+                rst = Math.sqrt(squared_Diff/length);
+                rst = Math.round(rst*10000)/10000;
             }
             return rst;
         }";
