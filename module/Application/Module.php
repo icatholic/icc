@@ -54,10 +54,10 @@ class Module
             if ($contentType) {
                 $contentType = $contentType->getFieldValue();
                 if (strpos($contentType, 'application/json') !== false) {
-                    $bc = new Browscap(ROOT_PATH . '/cache/');
-                    $current_browser = $bc->getBrowser();
-                    if ($current_browser->Browser === 'IE')
-                        $objHeaders->addHeaderLine('Content-Type', 'text/html;charset=utf-8');
+                    // $bc = new Browscap(ROOT_PATH . '/cache/');
+                    // $current_browser = $bc->getBrowser();
+                    // if ($current_browser->Browser === 'IE')
+                    $objHeaders->addHeaderLine('Content-Type', 'text/html;charset=utf-8');
                 }
             } else {
                 $objHeaders->addHeaderLine('Content-Type', 'text/html;charset=utf-8');
