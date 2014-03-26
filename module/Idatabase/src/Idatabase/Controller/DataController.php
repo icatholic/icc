@@ -412,7 +412,7 @@ class DataController extends Action
                 if (isset($map[$field])) {
                     $field = $map[$field];
                     if (isset($this->_rshData[$field])) {
-                        $cell = $this->_rshData[$field][$cell];
+                        $cell = isset($this->_rshData[$field][$cell]) ? $this->_rshData[$field][$cell] : '';
                     }
                 }
             });
