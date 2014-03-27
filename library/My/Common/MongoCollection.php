@@ -374,7 +374,7 @@ class MongoCollection extends \MongoCollection
                 )
             ));
         }
-
+        
         return parent::aggregate($pipeline);
     }
 
@@ -787,13 +787,15 @@ class MongoCollection extends \MongoCollection
         
         if (parent::count($criteria) == 0) {
             if (isset($options['upsert']) && $options['upsert']) {
-                parent::update($criteria, array(
-                    '$set' => array(
-                        '__CREATE_TIME__' => new \MongoDate(),
-                        '__MODIFY_TIME__' => new \MongoDate(),
-                        '__REMOVED__' => false
-                    )
-                ), $options);
+                // parent::update($criteria, array(
+                // '$set' => array(
+                // '__CREATE_TIME__' => new \MongoDate(),
+                // '__MODIFY_TIME__' => new \MongoDate(),
+                // '__REMOVED__' => false
+                // )
+                // ), $options);
+                $object = array_merge($criteria, $object);
+                return $this->insert($object);
             }
         } else {
             parent::update($criteria, array(
