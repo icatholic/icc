@@ -320,6 +320,38 @@ class MongoCollection extends \MongoCollection
     }
 
     /**
+     * 增加片键字段，用于分片集合update数据时使用upsert=>true的情况
+     * 
+     * @param array $query            
+     * @return multitype: Ambigous multitype:\MongoId >
+     */
+    private function addSharedKeyToQuery(array $query = null)
+    {
+        if (! is_array($query)) {
+            throw new \Exception('$query必须为数组');
+        }
+        if ($this->_noAppendQuery) {
+            return $query;
+        }
+        
+        $keys = array_keys($query);
+        $intersect = array_intersect($keys, $this->_queryHaystack);
+        if (! empty($intersect)) {
+            $query = array(
+                '$and' => array(
+                    array(
+                        '_id' => new \MongoId()
+                    ),
+                    $query
+                )
+            );
+        } else {
+            $query['_id'] = new \MongoId();
+        }
+        return $query;
+    }
+
+    /**
      * 对于新建集合进行自动分片
      *
      * @return boolean
@@ -787,15 +819,14 @@ class MongoCollection extends \MongoCollection
         
         if (parent::count($criteria) == 0) {
             if (isset($options['upsert']) && $options['upsert']) {
-                // parent::update($criteria, array(
-                // '$set' => array(
-                // '__CREATE_TIME__' => new \MongoDate(),
-                // '__MODIFY_TIME__' => new \MongoDate(),
-                // '__REMOVED__' => false
-                // )
-                // ), $options);
-                $object = array_merge($criteria, $object);
-                return $this->insert($object);
+                $criteria = $this->addSharedKeyToQuery($criteria);
+                parent::update($criteria, array(
+                    '$set' => array(
+                        '__CREATE_TIME__' => new \MongoDate(),
+                        '__MODIFY_TIME__' => new \MongoDate(),
+                        '__REMOVED__' => false
+                    )
+                ), $options);
             }
         } else {
             parent::update($criteria, array(
