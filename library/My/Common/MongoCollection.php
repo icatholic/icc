@@ -584,7 +584,7 @@ class MongoCollection extends \MongoCollection
     public function findAndModify(array $query, array $update = NULL, array $fields = NULL, array $options = NULL)
     {
         $query = $this->appendQuery($query);
-        if (parent::count($query) == 0) {
+        if (parent::count($query) == 0 && $options['upsert'] == true) {
             $query = $this->addSharedKeyToQuery($query);
         }
         return parent::findAndModify($query, $update, $fields, $options);
@@ -618,7 +618,7 @@ class MongoCollection extends \MongoCollection
         if (isset($option['upsert']))
             $cmd['upsert'] = is_bool($option['upsert']) ? $option['upsert'] : false;
         
-        if (parent::count($cmd['query']) == 0) {
+        if (parent::count($cmd['query']) == 0 && $option['upsert'] == true) {
             $cmd['query'] = $this->addSharedKeyToQuery($cmd['query']);
         }
         return $this->_db->command($cmd);
