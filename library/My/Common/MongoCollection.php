@@ -320,30 +320,57 @@ class MongoCollection extends \MongoCollection
     }
 
     /**
-     * 增加片键字段，用于分片集合update数据时使用upsert=>true的情况
-     * 
-     * @param array $query            
+     * 检查某个数组中，是否包含某个键
+     *
+     * @param array $array
+     * @param array $keys
+     * @return boolean
+     */
+    private function checkKeyExistInArray($array, $keys)
+    {
+        if (! is_array($keys)) {
+            $keys = array(
+                    $keys
+            );
+        }
+        $result = false;
+        array_walk_recursive($array, function ($items, $key) use($keys, $result)
+        {
+            if (in_array($key, $keys, true))
+                $result = true;
+        });
+        return $result;
+    }
+    
+    /**
+     * ICC采用_id自动分片机制，故需要判断是否增加片键字段，用于分片集合update数据时使用upsert=>true的情况
+     *
+     * @param array $query
      * @return multitype: Ambigous multitype:\MongoId >
      */
     private function addSharedKeyToQuery(array $query = null)
     {
+        if($this->checkKeyExistInArray($query, '_id')) {
+            return $query;
+        }
+    
         if (! is_array($query)) {
             throw new \Exception('$query必须为数组');
         }
         if ($this->_noAppendQuery) {
             return $query;
         }
-        
+    
         $keys = array_keys($query);
         $intersect = array_intersect($keys, $this->_queryHaystack);
         if (! empty($intersect)) {
             $query = array(
-                '$and' => array(
-                    array(
-                        '_id' => new \MongoId()
-                    ),
-                    $query
-                )
+                    '$and' => array(
+                            array(
+                                    '_id' => new \MongoId()
+                            ),
+                            $query
+                    )
             );
         } else {
             $query['_id'] = new \MongoId();
@@ -560,6 +587,9 @@ class MongoCollection extends \MongoCollection
     public function findAndModify(array $query, array $update = NULL, array $fields = NULL, array $options = NULL)
     {
         $query = $this->appendQuery($query);
+        if (parent::count($query) == 0) {
+            $query = $this->addSharedKeyToQuery($query);
+        }
         return parent::findAndModify($query, $update, $fields, $options);
     }
 
@@ -591,6 +621,9 @@ class MongoCollection extends \MongoCollection
         if (isset($option['upsert']))
             $cmd['upsert'] = is_bool($option['upsert']) ? $option['upsert'] : false;
         
+        if (parent::count($cmd['query']) == 0) {
+            $cmd['query'] = $this->addSharedKeyToQuery($cmd['query']);
+        }
         return $this->_db->command($cmd);
     }
 
