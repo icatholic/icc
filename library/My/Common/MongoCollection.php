@@ -586,6 +586,8 @@ class MongoCollection extends \MongoCollection
         $query = $this->appendQuery($query);
         if (parent::count($query) == 0 && $options['upsert'] == true) {
             $query = $this->addSharedKeyToQuery($query);
+        } else {
+            unset($options['upsert']);
         }
         return parent::findAndModify($query, $update, $fields, $options);
     }
@@ -620,6 +622,8 @@ class MongoCollection extends \MongoCollection
         
         if (parent::count($cmd['query']) == 0 && $option['upsert'] == true) {
             $cmd['query'] = $this->addSharedKeyToQuery($cmd['query']);
+        } else {
+            unset($cmd['upsert']);
         }
         return $this->_db->command($cmd);
     }
@@ -859,6 +863,7 @@ class MongoCollection extends \MongoCollection
                 ), $options);
             }
         } else {
+            unset($options['upsert']);
             parent::update($criteria, array(
                 '$set' => array(
                     '__MODIFY_TIME__' => new \MongoDate()
