@@ -5,6 +5,7 @@ Ext.define('icc.view.idatabase.Collection.Dashboard', {
 	border: false,
 	resizeTabs: false,
 	enableTabScroll: true,
+	autoScroll : true,
 	layout: {
 		type: 'table',
 		columns: 3,
