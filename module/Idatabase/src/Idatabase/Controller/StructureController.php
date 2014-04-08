@@ -67,6 +67,10 @@ class StructureController extends Action
      */
     public function indexAction()
     {
+        $start = intval($this->params()->fromQuery('start', 0));
+        $limit = intval($this->params()->fromQuery('limit', 10));
+        $start = $start > 0 ? $start : 0;
+        
         $rst = array();
         $sort = array(
             'orderBy' => 1,
@@ -78,6 +82,8 @@ class StructureController extends Action
         );
         $cursor = $this->_structure->find($query);
         $cursor->sort($sort);
+        $cursor->skip($start)->limit($limit);
+        
         while ($cursor->hasNext()) {
             $row = $cursor->getNext();
             if (isset($row['rshCollection']) && $row['rshCollection'] != '') {
