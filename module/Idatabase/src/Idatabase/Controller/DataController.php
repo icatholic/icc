@@ -1177,8 +1177,8 @@ class DataController extends Action
                 switch ($detail['type']) {
                     case 'numberfield':
                         if (is_array($_REQUEST[$field])) {
-                            $min = trim($_REQUEST[$field]['min']);
-                            $max = trim($_REQUEST[$field]['max']);
+                            $min = isset($_REQUEST[$field]['min']) ? trim($_REQUEST[$field]['min']) : '';
+                            $max = isset($_REQUEST[$field]['max']) ? trim($_REQUEST[$field]['max']) : '';
                             $min = preg_match("/^[0-9]+\.[0-9]+$/", $min) ? floatval($min) : intval($min);
                             $max = preg_match("/^[0-9]+\.[0-9]+$/", $max) ? floatval($max) : intval($max);
                             
