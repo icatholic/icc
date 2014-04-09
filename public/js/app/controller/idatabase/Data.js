@@ -343,8 +343,8 @@ Ext.define('icc.controller.idatabase.Data', {
 						}
 					});
 
-					store.proxy.extraParams.action = button.action;
-					store.proxy.extraParams.start = 0;
+					//store.proxy.extraParams.start = 0;
+					store.proxy.extraParams.action = button.action;	
 					store.proxy.extraParams = Ext.Object.merge(store.proxy.extraParams, extraParams);
 
 					if (button.action == 'excel') {
