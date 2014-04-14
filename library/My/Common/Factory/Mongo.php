@@ -60,7 +60,8 @@ abstract class Mongo
                 $dnsString = 'mongodb://' . join(',', $clusterInfo['servers']);
                 if (class_exists('\MongoClient')) {
                     $connect = new \MongoClient($dnsString, $options);
-                    // $connect->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
+                    //$connect->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);//读取数据主优先
+                    $connect->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);//读取数据从优先
                     $cluster[$clusterName]['connect'] = $connect;
                 } else {
                     throw new \Exception('请安装PHP的Mongo1.4+版本的扩展');
