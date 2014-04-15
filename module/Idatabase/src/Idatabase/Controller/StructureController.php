@@ -571,6 +571,11 @@ class StructureController extends Action
                 'plugin_collection_id' => $plugin_collection_id,
                 'field' => $row['field']
             ), 'LOG');
+            
+            fb($this->_plugin_structure->findOne(array(
+                'plugin_collection_id' => $plugin_collection_id,
+                'field' => $row['field']
+            )),'LOG');
             $rst = $this->_plugin_structure->update(array(
                 'plugin_collection_id' => $plugin_collection_id,
                 'field' => $row['field']
