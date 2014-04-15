@@ -10,6 +10,7 @@ namespace Idatabase\Controller;
 
 use Zend\Json\Json;
 use My\Common\Controller\Action;
+use Aws\CloudFront\Exception\Exception;
 
 class StructureController extends Action
 {
@@ -21,7 +22,7 @@ class StructureController extends Action
     private $_plugin_id;
 
     private $_structure;
-    
+
     private $_mapping;
 
     private $_plugin_structure;
@@ -189,7 +190,7 @@ class StructureController extends Action
                 try {
                     $datas['rshSearchCondition'] = Json::decode($datas['rshSearchCondition'], Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
-                    fb(exceptionMsg($e),'LOG');
+                    fb(exceptionMsg($e), 'LOG');
                     return $this->msg(false, '关联集合约束查询条件的json格式错误');
                 }
             } else {
@@ -305,7 +306,7 @@ class StructureController extends Action
                 try {
                     $datas['rshSearchCondition'] = Json::decode($datas['rshSearchCondition'], Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
-                    fb(exceptionMsg($e),'LOG');
+                    fb(exceptionMsg($e), 'LOG');
                     return $this->msg(false, '关联集合约束查询条件的json格式错误');
                 }
             } else {
@@ -357,7 +358,7 @@ class StructureController extends Action
         
         // 如果修改了字段名称，那么对于数据集合中的对应字段进行重命名操作
         if ($oldStructureInfo['field'] !== $datas['field']) {
-            if($this->_mapping->getMapping($this->_collection_id)!==null) {
+            if ($this->_mapping->getMapping($this->_collection_id) !== null) {
                 return $this->msg(false, '当前集合开启了映射，无法修改字段名');
             }
             $dataCollection = $this->collection(iCollectionName($this->_collection_id));
@@ -482,7 +483,7 @@ class StructureController extends Action
             }
             
             if ($oldStructureInfo['field'] != $row['field']) {
-                if($this->_mapping->getMapping($this->_collection_id)!==null) {
+                if ($this->_mapping->getMapping($this->_collection_id) !== null) {
                     return $this->msg(false, '当前集合开启了映射，无法修改字段名');
                 }
                 $rename[$oldStructureInfo['field']] = $row['field'];
@@ -495,7 +496,7 @@ class StructureController extends Action
             ), array(
                 '$set' => $row
             ));
-
+            
             $this->_plugin_structure->sync($row);
         }
         
@@ -546,6 +547,40 @@ class StructureController extends Action
             }
         }
         return $this->msg(true, '删除字段属性成功');
+    }
+
+    /**
+     * 同步当前数据结构，作为插件的数据结构。
+     */
+    public function syncToPluginAction()
+    {
+        $plugin_collection_id = $this->params()->fromPost('__PLUGIN_COLLECTION_ID__', null);
+        
+        if ($plugin_collection_id == null) {
+            throw new \Exception('插件集合id不存在');
+        }
+        
+        $cursorStructure = $this->_structure->find(array(
+            'collection_id' => $this->_collection_id
+        ));
+        
+        while ($cursorStructure->hasNext()) {
+            $row = $cursorStructure->getNext();
+            unset($row['_id']);
+            fb(array(
+                'plugin_collection_id' => $plugin_collection_id,
+                'field' => $row['field']
+            ), 'LOG');
+            $rst = $this->_plugin_structure->update(array(
+                'plugin_collection_id' => $plugin_collection_id,
+                'field' => $row['field']
+            ), array(
+                '$set' => $row
+            ));
+            fb($rst,'LOG');
+        }
+        
+        return $this->msg(true, '同步当前集合数据结构->插件数据结构操作已经成功');
     }
 
     /**

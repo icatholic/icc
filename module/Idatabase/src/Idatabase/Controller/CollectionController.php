@@ -317,6 +317,8 @@ class CollectionController extends Action
         $isAutoHook = filter_var($this->params()->fromPost('isAutoHook', false), FILTER_VALIDATE_BOOLEAN);
         $hook = trim($this->params()->fromPost('hook', ''));
         $hookKey = trim($this->params()->fromPost('hookKey', ''));
+        $plugin_collection_id = trim($this->params()->fromPost('__PLUGIN_COLLECTION_ID__', ''));
+        
         
         if ($_id == null) {
             return $this->msg(false, '无效的集合编号');
@@ -371,6 +373,7 @@ class CollectionController extends Action
         $datas['isAutoHook'] = $isAutoHook;
         $datas['hook'] = $hook;
         $datas['hookKey'] = $hookKey;
+        $datas['plugin_collection_id'] = $plugin_collection_id; 
         $datas['plugin_collection_id'] = $this->_plugin_collection->editPluginCollection($datas);
         
         $this->_collection->update(array(

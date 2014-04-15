@@ -72,6 +72,11 @@ Ext.define('icc.view.idatabase.Structure.Grid', {
 							action: 'save'
 						}, {
 							xtype: 'button',
+							text: '同步插件结构',
+							iconCls: 'sync',
+							action: 'syncToPlugin'
+						}, {
+							xtype: 'button',
 							text: '删除',
 							iconCls: 'remove',
 							action: 'remove'

@@ -17,46 +17,47 @@ class PluginCollection extends Mongo
         $this->_project = new Project($this->config);
         $this->_mapping = new Mapping($this->config);
     }
-    
 
     /**
      * 添加集合到插件集合管理
      *
-     * @param array $datas
+     * @param array $datas            
      * @return string
      */
     public function addPluginCollection($datas)
     {
         if (empty($datas['plugin_id']))
             return '';
-    
+        
         unset($datas['project_id']);
         $this->insertRef($datas);
         if ($datas['_id'] instanceof \MongoId)
             return $datas['_id']->__toString();
-    
+        
         return '';
     }
-    
+
     /**
      * 添加集合到插件集合管理
      *
-     * @param array $datas
+     * @param array $datas            
      * @return string
      */
     public function editPluginCollection($datas)
     {
         unset($datas['project_id']);
         $plugin_collection_id = isset($datas['plugin_collection_id']) ? $datas['plugin_collection_id'] : '';
-        if (!empty($plugin_collection_id)) {
-            $this->update(array(
-                    '_id' => myMongoId($plugin_collection_id)
+        if (! empty($plugin_collection_id)) {
+            $rst = $this->update(array(
+                '_id' => myMongoId($plugin_collection_id)
             ), array(
-                    '$set' => $datas
+                '$set' => $datas
+            ), array(
+                'upsert' => true
             ));
-        }
-        else {
-            return $this->addPluginCollection($datas);
+        } else {
+            $rst = $this->addPluginCollection($datas);
+            return $rst;
         }
         return $plugin_collection_id;
     }
@@ -163,8 +164,11 @@ class PluginCollection extends Mongo
         
         if ($pluginCollectionInfo != null) {
             unset($pluginCollectionInfo['_id']);
+            fb($pluginCollectionInfo,'LOG');
             $collectionInfo = $pluginCollectionInfo;
-            $collectionInfo['project_id'] = array($project_id);
+            $collectionInfo['project_id'] = array(
+                $project_id
+            );
             
             $check = $this->_collection->findOne(array(
                 'project_id' => $project_id,

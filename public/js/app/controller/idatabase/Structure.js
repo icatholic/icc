@@ -8,7 +8,8 @@ Ext.define('icc.controller.idatabase.Structure', {
 		add: '/idatabase/structure/add',
 		edit: '/idatabase/structure/edit',
 		remove: '/idatabase/structure/remove',
-		save: '/idatabase/structure/save'
+		save: '/idatabase/structure/save',
+		syncToPlugin : '/idatabase/structure/sync-to-plugin'
 	},
 	refs: [{
 		ref: 'projectTabPanel',
@@ -158,6 +159,29 @@ Ext.define('icc.controller.idatabase.Structure', {
 				return true;
 			}
 		};
+		
+		listeners[controllerName + 'Grid button[action=syncToPlugin]'] = {
+				click: function(button) {
+					var grid = button.up('gridpanel');
+					var store = grid.store;
+
+					Ext.Ajax.request({
+						url: me.actions.syncToPlugin,
+						params: {
+							__PROJECT_ID__: grid.__PROJECT_ID__,
+							__COLLECTION_ID__: grid.__COLLECTION_ID__,
+							__PLUGIN_COLLECTION_ID__: grid.__PLUGIN_COLLECTION_ID__
+						},
+						scope: me,
+						success: function(response) {
+							var text = response.responseText;
+							var json = Ext.decode(text);
+							Ext.Msg.alert('提示信息', json.msg);
+						}
+					});
+					return true;
+				}
+			};
 
 		listeners[controllerName + 'Grid button[action=remove]'] = {
 			click: function(button) {

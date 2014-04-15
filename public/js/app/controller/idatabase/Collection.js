@@ -110,13 +110,15 @@ Ext.define('icc.controller.idatabase.Collection', {
 				var grid = button.up('gridpanel');
 				var selections = grid.getSelectionModel().getSelection();
 				if (selections.length > 0) {
+					var record = selections[0];
 					var win = Ext.widget(controllerName + 'Edit', {
-						__PROJECT_ID__: grid.__PROJECT_ID__,
 						plugin: grid.plugin,
-						__PLUGIN_ID__: grid.__PLUGIN_ID__
+						__PROJECT_ID__: grid.__PROJECT_ID__,
+						__PLUGIN_ID__: grid.__PLUGIN_ID__,
+						__PLUGIN_COLLECTION_ID__ : record.get('plugin_collection_id')
 					});
 					var form = win.down('form').getForm();
-					form.loadRecord(selections[0]);
+					form.loadRecord(record);
 					win.show();
 				} else {
 					Ext.Msg.alert('提示信息', '请选择你要编辑的项');
