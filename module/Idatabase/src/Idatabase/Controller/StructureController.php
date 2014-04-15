@@ -566,23 +566,19 @@ class StructureController extends Action
         
         while ($cursorStructure->hasNext()) {
             $row = $cursorStructure->getNext();
-            unset($row['_id']);
-            fb(array(
-                'plugin_collection_id' => $plugin_collection_id,
-                'field' => $row['field']
-            ), 'LOG');
-            
-            fb($this->_plugin_structure->findOne(array(
-                'plugin_collection_id' => $plugin_collection_id,
-                'field' => $row['field']
-            )),'LOG');
+            array_unset_recursive($row, array(
+                '_id',
+                'plugin_collection_id'
+            ));
+            $row['plugin_collection_id'] = $plugin_collection_id;
             $rst = $this->_plugin_structure->update(array(
                 'plugin_collection_id' => $plugin_collection_id,
                 'field' => $row['field']
             ), array(
                 '$set' => $row
+            ), array(
+                'upsert' => true
             ));
-            fb($rst,'LOG');
         }
         
         return $this->msg(true, '同步当前集合数据结构->插件数据结构操作已经成功');
