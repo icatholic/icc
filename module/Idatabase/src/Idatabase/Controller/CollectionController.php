@@ -458,9 +458,11 @@ class CollectionController extends Action
     {
         // 检查插件集合中是否包含这些名称信息
         $info = $this->_collection->findOne(array(
+            'project_id' => $this->_project_id,
             'name' => $info,
             'plugin' => true
         ));
+
         if ($info == null) {
             return false;
         }
@@ -471,9 +473,11 @@ class CollectionController extends Action
     {
         // 检查插件集合中是否包含这些名称信息
         $info = $this->_collection->findOne(array(
+            'project_id' => $this->_project_id,
             'alias' => $info,
             'plugin' => true
         ));
+
         if ($info == null) {
             return false;
         }
