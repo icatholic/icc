@@ -220,7 +220,7 @@ class CollectionController extends Action
             $isProfessional = filter_var($this->params()->fromPost('isProfessional', false), FILTER_VALIDATE_BOOLEAN);
             $isTree = filter_var($this->params()->fromPost('isTree', false), FILTER_VALIDATE_BOOLEAN);
             $desc = $this->params()->fromPost('desc', null);
-            $orderBy = $this->params()->fromPost('orderBy', 0);
+            $orderBy = intval($this->params()->fromPost('orderBy', 0));
             $isRowExpander = filter_var($this->params()->fromPost('isRowExpander', false), FILTER_VALIDATE_BOOLEAN);
             $rowExpanderTpl = $this->params()->fromPost('rowExpanderTpl', '');
             $plugin = filter_var($this->params()->fromPost('plugin', false), FILTER_VALIDATE_BOOLEAN);
@@ -309,7 +309,7 @@ class CollectionController extends Action
         $isProfessional = filter_var($this->params()->fromPost('isProfessional', false), FILTER_VALIDATE_BOOLEAN);
         $isTree = filter_var($this->params()->fromPost('isTree', false), FILTER_VALIDATE_BOOLEAN);
         $desc = $this->params()->fromPost('desc', null);
-        $orderBy = $this->params()->fromPost('orderBy', 0);
+        $orderBy = intval($this->params()->fromPost('orderBy', 0));
         $isRowExpander = filter_var($this->params()->fromPost('isRowExpander', false), FILTER_VALIDATE_BOOLEAN);
         $rowExpanderTpl = $this->params()->fromPost('rowExpanderTpl', '');
         $plugin = filter_var($this->params()->fromPost('plugin', false), FILTER_VALIDATE_BOOLEAN);
