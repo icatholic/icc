@@ -30,6 +30,8 @@ class PluginCollection extends Mongo
             return '';
         
         unset($datas['project_id']);
+        $datas['_id'] = new \MongoId();
+        $datas['plugin_collection_id'] = $datas['_id']->__toString();
         $this->insertRef($datas);
         if ($datas['_id'] instanceof \MongoId)
             return $datas['_id']->__toString();
@@ -84,6 +86,8 @@ class PluginCollection extends Mongo
             fb('$pluginCollectionInfo is null', 'LOG');
             return false;
         }
+        
+        $pluginCollectionInfo['plugin_collection_id'] = isset($pluginCollectionInfo['plugin_collection_id']) ? $pluginCollectionInfo['plugin_collection_id'] : $pluginCollectionInfo['_id']->__toString();
         
         // 同步数据结构
         $syncPluginStructure = function ($plugin_id, $collection_id) use($pluginCollectionInfo)
