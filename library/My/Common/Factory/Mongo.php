@@ -42,7 +42,8 @@ abstract class Mongo
         $options = array();
         $options['connectTimeoutMS'] = 60000;
         $options['socketTimeoutMS'] = 60000;
-        $options['w'] = 1;
+        //$options['w'] = 1;
+        $options['w'] = 3;
         $options['wTimeout'] = 60000;
         
         if (isset($cfg['options']) && ! empty($cfg['options'])) {
