@@ -273,8 +273,8 @@ class MongoCollection extends \MongoCollection
          * MongoClient::RP_SECONDARY 只读从db优先
          * MongoClient::RP_SECONDARY_PREFERRED 读取从db优先
          */
-        $this->db->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
-        //$this->db->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
+        //$this->db->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
+        $this->db->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
     }
 
     /**
