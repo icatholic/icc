@@ -379,10 +379,18 @@ class DataController extends Action
                 $excel['result'] = $datas;
                 arrayToExcel($excel);
             } else {
-                $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 100;
-                $datas = $rst->findAll(array(), array(
-                    'value' => - 1
-                ), 0, $limit);
+                if($statisticInfo['seriesType']!='line') {
+                    $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 100;
+                    $datas = $rst->findAll(array(), array(
+                        'value' => - 1
+                    ), 0, $limit);
+                }
+                else {
+                    $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 100;
+                    $datas = $rst->findAll(array(), array(
+                        '_id' => 1
+                    ), 0, $limit);
+                }
                 
                 $datas = $this->replaceRshData($datas, $map);
                 
