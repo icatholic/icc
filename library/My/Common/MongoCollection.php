@@ -829,7 +829,7 @@ class MongoCollection extends \MongoCollection
         
         $keys = array_keys($object);
         foreach ($keys as $key) {
-            $key = strtolower($key);
+            //$key = strtolower($key);
             if (! in_array($key, $this->_updateHaystack, true)) {
                 throw new \Exception('$key must contain ' . join(',', $this->_updateHaystack));
             }

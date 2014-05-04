@@ -946,6 +946,7 @@ class DataController extends Action
      */
     public function dropAction()
     {
+        resetTimeMemLimit();
         $password = $this->params()->fromPost('password', null);
         if ($password == null) {
             return $this->msg(false, '请输入当前用户的登录密码');

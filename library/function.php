@@ -1077,7 +1077,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                       else if(rst.min >= values[idx].min) {
                           rst.min = values[idx].min;
                       }
-                  } else if(yAxisType=='unique') {
+                  } else if(yAxisType=='unique'||yAxisType=='distinct') {
                       values[idx].val.forEach(function(v,i){
                           rst.val.push(v);
                       });   
@@ -1122,7 +1122,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
             else if(yAxisType=='min') {
                 rst = reducedValue.min;
             }
-            else if(yAxisType=='unique') {
+            else if(yAxisType=='unique' || yAxisType=='distinct') {
                 reducedValue.val.forEach(function(v,i){
                     if(uniqueData.indexOf(v)===-1) {
                         uniqueNumber += 1;
