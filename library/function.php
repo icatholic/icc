@@ -744,23 +744,23 @@ function getScriptExecuteInfo()
  * @param mixed $remove
  *            key的数组或者key的字符串
  */
-function array_unset_recursive(&$array, $remove)
-{
-    if (! is_array($remove)) {
-        $remove = array(
-            $remove
-        );
-    }
-    foreach ($array as $key => &$value) {
-        if (in_array($key, $remove, true)) {
-            unset($array[$key]);
-        } else {
-            if (is_array($value)) {
-                array_unset_recursive($value, $remove);
-            }
-        }
-    }
-}
+// function array_unset_recursive(&$array, $remove)
+// {
+//     if (! is_array($remove)) {
+//         $remove = array(
+//             $remove
+//         );
+//     }
+//     foreach ($array as $key => &$value) {
+//         if (in_array($key, $remove, true)) {
+//             unset($array[$key]);
+//         } else {
+//             if (is_array($value)) {
+//                 array_unset_recursive($value, $remove);
+//             }
+//         }
+//     }
+// }
 
 /**
  * 进行mongoid和tostring之间的转换
@@ -1170,7 +1170,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
 
 /**
  * 效仿数组函数的写法，实现复制数组。目的是为了解除内部变量的引用关系
- * 
+ *
  * @param array $arr            
  * @return array
  */
@@ -1187,4 +1187,40 @@ function array_copy($arr)
                 $newArray[$key] = $value;
     }
     return $newArray;
+}
+
+/**
+ * 递归方法unset数组里面的元素
+ *
+ * @param array $array            
+ * @param array|string $fields            
+ * @param boolean $remove
+ *            true表示删除数组$array中的$fields属性 false表示保留数组$array中的$fields属性
+ */
+function array_unset_recursive(&$array, $fields, $remove = true)
+{
+    if (! is_array($fields)) {
+        $fields = array(
+            $fields
+        );
+    }
+    foreach ($array as $key => &$value) {
+        if ($remove) {
+            if (in_array($key, $fields, true)) {
+                unset($array[$key]);
+            } else {
+                if (is_array($value)) {
+                    array_unset_recursive($value, $fields, $remove);
+                }
+            }
+        } else {
+            if (! in_array($key, $fields, true)) {
+                unset($array[$key]);
+            } else {
+                if (is_array($value)) {
+                    array_unset_recursive($value, $fields, $remove);
+                }
+            }
+        }
+    }
 }
