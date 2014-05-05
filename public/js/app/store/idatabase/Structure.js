@@ -6,7 +6,7 @@ Ext.define('icc.store.idatabase.Structure', {
 		type : 'ajax',
 		url : '/idatabase/structure/index',
 		extraParams : {
-			
+			limit : 1000
 		},
 		reader : {
 			type : 'json',

@@ -512,7 +512,8 @@ Ext.define('icc.controller.idatabase.Collection', {
 				__PROJECT_ID__: __PROJECT_ID__,
 				__COLLECTION_ID__: __COLLECTION_ID__,
 				__PLUGIN_ID__: __PLUGIN_ID__,
-				__PLUGIN_COLLECTION_ID__: __PLUGIN_COLLECTION_ID__
+				__PLUGIN_COLLECTION_ID__: __PLUGIN_COLLECTION_ID__,
+				limit : 1000
 			};
 
 			var treeField = '';
