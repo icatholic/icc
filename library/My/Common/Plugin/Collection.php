@@ -12,7 +12,7 @@ class Collection extends AbstractPlugin
      * 初始化插件并执行初始化集合调用
      *
      * @param string $modelName            
-     * @return \My\Common\MongoCollection
+     * @return \My\Common\Plugin\Collection
      */
     public function __invoke($collection = null, $database = DEFAULT_DATABASE, $cluster = DEFAULT_CLUSTER, $collectionOptions = null)
     {
