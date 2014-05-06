@@ -106,9 +106,9 @@ class DashboardController extends Action
                     'active' => true
                 ));
                 if ($mapCollection != null) {
-                    $dataModel = $this->collection($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
+                    $dataModel = $this->collection()->secondary($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
                 } else {
-                    $dataModel = $this->collection(iCollectionName($statisticInfo['collection_id']));
+                    $dataModel = $this->collection()->secondary(iCollectionName($statisticInfo['collection_id']));
                 }
                 
                 $query = array();

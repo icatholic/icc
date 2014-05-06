@@ -24,10 +24,11 @@ class Collection extends AbstractPlugin
 
     /**
      * 初始化集合调用
-     *
-     * @param string $collection            
-     * @param string $database            
-     * @param string $cluster            
+     * @param string $collection
+     * @param string $database
+     * @param string $cluster
+     * @param string $collectionOptions
+     * @throws \Exception
      * @return \My\Common\MongoCollection
      */
     public function collection($collection = null, $database = DEFAULT_DATABASE, $cluster = DEFAULT_CLUSTER, $collectionOptions = null)
@@ -40,5 +41,29 @@ class Collection extends AbstractPlugin
             ->get('mongos');
         
         return new MongoCollection($mongoConfig, $collection, $database, $cluster, $collectionOptions);
+    }
+    
+
+    /**
+     * 初始化集合并通过复制集来获取数据
+     * 
+     * @param string $collection
+     * @param string $database
+     * @param string $cluster
+     * @param string $collectionOptions
+     * @throws \Exception
+     * @return \My\Common\MongoCollection
+     */
+    public function secondary($collection = null, $database = DEFAULT_DATABASE, $cluster = DEFAULT_CLUSTER, $collectionOptions = null) {
+        if ($collection === null)
+            throw new \Exception('请设定集合名称');
+        
+        $mongoConfig = $this->getController()
+        ->getServiceLocator()
+        ->get('mongos');
+        
+        $obj = new MongoCollection($mongoConfig, $collection, $database, $cluster, $collectionOptions);
+        $obj->setReadPreference(\MongoClient::RP_SECONDARY);
+        return $obj;
     }
 }
