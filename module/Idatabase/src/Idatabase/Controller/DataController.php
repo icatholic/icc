@@ -24,6 +24,12 @@ class DataController extends Action
      * @var object
      */
     private $_data;
+    
+    /**
+     * 执行快速写入或者删除操作时候的对象
+     * @var object
+     */
+    private $_dataQw;
 
     /**
      * 读取数据属性结构的mongocollection实例
@@ -210,8 +216,10 @@ class DataController extends Action
         ));
         if ($mapCollection != null) {
             $this->_data = $this->collection($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
+            $this->_dataQw = $this->collection()->qw($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
         } else {
             $this->_data = $this->collection($this->_collection_name);
+            $this->_dataQw = $this->collection()->qw($this->_collection_name);
         }
     }
 
@@ -286,7 +294,7 @@ class DataController extends Action
                     array_walk($value, function (&$cell, $field)
                     {
                         if (isset($this->_rshData[$field])) {
-                            $cell = $this->_rshData[$field][$cell];
+                            $cell = isset($this->_rshData[$field][$cell]) ? $this->_rshData[$field][$cell] : '';
                         }
                     });
                 });

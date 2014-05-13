@@ -96,6 +96,13 @@ class ImportController extends Action
         
         $this->getSchema();
     }
+    
+    /**
+     * 将导入数据脚本放置到gearman中进行，加快页面的响应速度
+     */
+    public function importJobAction() {
+        
+    }
 
     /**
      * 导入数据到集合内
