@@ -37,6 +37,7 @@ defined('IDATABASE_PROJECTS') || define('IDATABASE_PROJECTS', 'idatabase_project
 defined('IDATABASE_PLUGINS') || define('IDATABASE_PLUGINS', 'idatabase_plugins');
 defined('IDATABASE_PLUGINS_COLLECTIONS') || define('IDATABASE_PLUGINS_COLLECTIONS', 'idatabase_plugins_collections');
 defined('IDATABASE_PLUGINS_STRUCTURES') || define('IDATABASE_PLUGINS_STRUCTURES', 'idatabase_plugins_structures');
+defined('IDATABASE_PLUGINS_DATAS') || define('IDATABASE_PLUGINS_DATAS', 'idatabase_plugins_datas');
 defined('IDATABASE_PROJECT_PLUGINS') || define('IDATABASE_PROJECT_PLUGINS', 'idatabase_project_plugins');
 defined('IDATABASE_VIEWS') || define('IDATABASE_VIEWS', 'idatabase_views');
 defined('IDATABASE_STATISTIC') || define('IDATABASE_STATISTIC', 'idatabase_statistic');
