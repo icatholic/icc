@@ -12,7 +12,7 @@ use My\Common\MongoCollection;
 
 class Mongo extends MongoCollection
 {
-    
+
     /**
      * 集群环境配置信息
      *
@@ -60,4 +60,22 @@ class Mongo extends MongoCollection
         }
     }
 
+    /**
+     * 设定集合
+     * 
+     * @param string $collection
+     * @param string $database
+     * @param string $cluster
+     */
+    public function setCollection($collection, $database = DEFAULT_DATABASE, $cluster = DEFAULT_CLUSTER)
+    {
+        $this->collection = $collection;
+        $this->database = $database;
+        $this->cluster = $cluster;
+        
+        parent::__construct($this->config, $this->collection, $this->database, $this->cluster);
+        if (method_exists($this, 'init')) {
+            $this->init();
+        }
+    }
 }
