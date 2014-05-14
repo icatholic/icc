@@ -147,7 +147,28 @@ Ext.define('icc.view.idatabase.Collection.Edit', {
 							fieldLabel : '行展开模板(支持Ext.Xtemplate)',
 							allowBlank : true
 						} ]
-					} ]
+					} , {
+						xtype : 'fieldset',
+						title : '插件设定（选填）',
+						collapsed : true,
+						collapsible : true,
+						items : [ {
+							xtype : 'radiogroup',
+							fieldLabel : '设定为插件默认数据源',
+							defaultType : 'radiofield',
+							layout : 'hbox',
+							items : [ {
+								boxLabel : '是',
+								name : 'defaultSourceData',
+								inputValue : true
+							}, {
+								boxLabel : '否',
+								name : 'defaultSourceData',
+								inputValue : false,
+								checked : true
+							} ]
+						}]
+					}  ]
 				} ]
 			} ]
 		});

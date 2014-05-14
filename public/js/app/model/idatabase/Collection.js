@@ -40,6 +40,9 @@ Ext.define('icc.model.idatabase.Collection', {
 		name: 'isAutoHook',
 		type: 'boolean'
 	}, {
+		name: 'defaultSourceData',
+		type: 'boolean'
+	}, {
 		name: 'hook',
 		type: 'string'
 	}, {
