@@ -102,12 +102,17 @@ class PluginData extends Mongo
         if (! empty($source['data_collection_id'])) {
             $data_collection_id = $source['data_collection_id'];
             $this->_sourceData->setCollection(iCollectionName($data_collection_id));
-            $this->_sourceData->setReadPreference(MongoClient::RP_SECONDARY);
+            $this->_sourceData->setReadPreference(\MongoClient::RP_SECONDARY);
             
             $this->_targetData->setCollection(iCollectionName($target_collection_id));
             $cursor = $this->_sourceData->find(array());
             while ($cursor->hasNext()) {
                 $row = $cursor->getNext();
+                array_unset_recursive($row, array(
+                    '_id',
+                    '__CREATE_TIME__',
+                    '__MODIFY_TIME__'
+                ));
                 $this->_targetData->update($row, array(
                     '$set' => $row
                 ), array(

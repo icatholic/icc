@@ -290,7 +290,6 @@ class CollectionController extends Action
             }
             
             return $this->msg(true, '添加集合成功');
-            
         } catch (\Exception $e) {
             var_dump($e->getTraceAsString());
         }
@@ -403,10 +402,7 @@ class CollectionController extends Action
         // 设定或者取消当前集合为插件默认的数据集合
         if (! empty($plugin_id)) {
             if ($defaultSourceData) {
-                if (isset($rst['_id']) && $rst['_id'] instanceof \MongoId) {
-                    $data_collection_id = $rst['_id']->__toString();
-                    $this->_plugin_data->setDefault($datas['plugin_collection_id'], $_id);
-                }
+                $this->_plugin_data->setDefault($datas['plugin_collection_id'], $_id);
             } else {
                 $this->_plugin_data->cancelDefault($datas['plugin_collection_id'], $_id);
             }
