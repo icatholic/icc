@@ -8,10 +8,25 @@ class PluginCollection extends Mongo
 
     protected $collection = IDATABASE_PLUGINS_COLLECTIONS;
 
+    private $_project_plugin;
+
+    private $_plugin_structure;
+
+    private $_plugin_data;
+
+    private $_structure;
+
+    private $_collection;
+
+    private $_project;
+
+    private $_mapping;
+
     public function init()
     {
         $this->_project_plugin = new ProjectPlugin($this->config);
         $this->_plugin_structure = new PluginStructure($this->config);
+        $this->_plugin_data = new PluginData($this->config);
         $this->_structure = new Structure($this->config);
         $this->_collection = new Collection($this->config);
         $this->_project = new Project($this->config);
@@ -124,6 +139,13 @@ class PluginCollection extends Mongo
                     'upsert' => true
                 ));
             }
+            
+            // 插入新的数据
+            if (isset($pluginCollectionInfo['_id']) && $pluginCollectionInfo['_id'] instanceof \MongoId) {
+                $plugin_collection_id = $pluginCollectionInfo['_id']->__toString();
+                $target_collection_id = $collection_id;
+                $this->_plugin_data->copy($plugin_collection_id, $target_collection_id);
+            }
             return true;
         };
         
@@ -168,7 +190,7 @@ class PluginCollection extends Mongo
         
         if ($pluginCollectionInfo != null) {
             unset($pluginCollectionInfo['_id']);
-            fb($pluginCollectionInfo,'LOG');
+            fb($pluginCollectionInfo, 'LOG');
             $collectionInfo = $pluginCollectionInfo;
             $collectionInfo['project_id'] = array(
                 $project_id
@@ -193,6 +215,9 @@ class PluginCollection extends Mongo
                 $syncPluginStructure($plugin_id, $check['_id']);
                 $createMapping($check['_id'], $collectionName);
             }
+            
+            // 同步默认数据，默认数据将覆盖原有数据
+            
             return $check;
         }
         

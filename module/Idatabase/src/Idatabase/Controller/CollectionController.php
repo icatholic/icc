@@ -11,6 +11,7 @@ namespace Idatabase\Controller;
 use Zend\View\Model\JsonModel;
 use Zend\Json\Json;
 use My\Common\Controller\Action;
+use Idatabase\Model\PluginData;
 
 class CollectionController extends Action
 {
@@ -26,6 +27,8 @@ class CollectionController extends Action
     private $_plugin_collection;
 
     private $_plugin_structure;
+
+    private $_plugin_data;
 
     private $_lock;
 
@@ -52,6 +55,7 @@ class CollectionController extends Action
         $this->_plugin = $this->model('Idatabase\Model\Plugin');
         $this->_plugin_collection = $this->model('Idatabase\Model\PluginCollection');
         $this->_plugin_structure = $this->model('Idatabase\Model\PluginStructure');
+        $this->_plugin_data = $this->model('Idatabase\Model\PluginData');
         $this->_lock = $this->model('Idatabase\Model\Lock');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
     }
@@ -194,7 +198,7 @@ class CollectionController extends Action
                         'hookLastResponseResult' => $response
                     )
                 ));
-                return $this->msg(true, '触发联动操作成功'.$response);
+                return $this->msg(true, '触发联动操作成功' . $response);
             } catch (\Exception $e) {
                 return $this->msg(false, $e->getMessage());
             }
@@ -226,6 +230,7 @@ class CollectionController extends Action
             $plugin = filter_var($this->params()->fromPost('plugin', false), FILTER_VALIDATE_BOOLEAN);
             $plugin_id = $this->_plugin_id;
             $isAutoHook = filter_var($this->params()->fromPost('isAutoHook', false), FILTER_VALIDATE_BOOLEAN);
+            $defaultSourceData = filter_var($this->params()->fromPost('defaultSourceData', false), FILTER_VALIDATE_BOOLEAN);
             $hook = trim($this->params()->fromPost('hook', ''));
             $hookKey = trim($this->params()->fromPost('hookKey', ''));
             
@@ -268,12 +273,24 @@ class CollectionController extends Action
             $datas['isRowExpander'] = $isRowExpander;
             $datas['rowExpanderTpl'] = $rowExpanderTpl;
             $datas['isAutoHook'] = $isAutoHook;
+            $datas['defaultSourceData'] = $defaultSourceData;
             $datas['hook'] = $hook;
             $datas['hookKey'] = $hookKey;
             $datas['plugin_collection_id'] = $this->_plugin_collection->addPluginCollection($datas);
-            $this->_collection->insert($datas);
+            $rst = $this->_collection->insert($datas);
+            
+            // 设定或者取消当前集合为插件默认的数据集合
+            if (! empty($plugin_id)) {
+                if ($defaultSourceData) {
+                    if (isset($rst['_id']) && $rst['_id'] instanceof \MongoId) {
+                        $data_collection_id = $rst['_id']->__toString();
+                        $this->_plugin_data->setDefault($datas['plugin_collection_id'], $data_collection_id);
+                    }
+                }
+            }
             
             return $this->msg(true, '添加集合成功');
+            
         } catch (\Exception $e) {
             var_dump($e->getTraceAsString());
         }
@@ -315,10 +332,10 @@ class CollectionController extends Action
         $plugin = filter_var($this->params()->fromPost('plugin', false), FILTER_VALIDATE_BOOLEAN);
         $plugin_id = $this->_plugin_id;
         $isAutoHook = filter_var($this->params()->fromPost('isAutoHook', false), FILTER_VALIDATE_BOOLEAN);
+        $defaultSourceData = filter_var($this->params()->fromPost('defaultSourceData', false), FILTER_VALIDATE_BOOLEAN);
         $hook = trim($this->params()->fromPost('hook', ''));
         $hookKey = trim($this->params()->fromPost('hookKey', ''));
         $plugin_collection_id = trim($this->params()->fromPost('__PLUGIN_COLLECTION_ID__', ''));
-        
         
         if ($_id == null) {
             return $this->msg(false, '无效的集合编号');
@@ -371,9 +388,10 @@ class CollectionController extends Action
         $datas['isRowExpander'] = $isRowExpander;
         $datas['rowExpanderTpl'] = $rowExpanderTpl;
         $datas['isAutoHook'] = $isAutoHook;
+        $datas['defaultSourceData'] = $defaultSourceData;
         $datas['hook'] = $hook;
         $datas['hookKey'] = $hookKey;
-        $datas['plugin_collection_id'] = $plugin_collection_id; 
+        $datas['plugin_collection_id'] = $plugin_collection_id;
         $datas['plugin_collection_id'] = $this->_plugin_collection->editPluginCollection($datas);
         
         $this->_collection->update(array(
@@ -381,6 +399,18 @@ class CollectionController extends Action
         ), array(
             '$set' => $datas
         ));
+        
+        // 设定或者取消当前集合为插件默认的数据集合
+        if (! empty($plugin_id)) {
+            if ($defaultSourceData) {
+                if (isset($rst['_id']) && $rst['_id'] instanceof \MongoId) {
+                    $data_collection_id = $rst['_id']->__toString();
+                    $this->_plugin_data->setDefault($datas['plugin_collection_id'], $_id);
+                }
+            } else {
+                $this->_plugin_data->cancelDefault($datas['plugin_collection_id'], $_id);
+            }
+        }
         
         return $this->msg(true, '编辑信息成功');
     }
@@ -462,7 +492,7 @@ class CollectionController extends Action
             'name' => $info,
             'plugin' => true
         ));
-
+        
         if ($info == null) {
             return false;
         }
@@ -477,7 +507,7 @@ class CollectionController extends Action
             'alias' => $info,
             'plugin' => true
         ));
-
+        
         if ($info == null) {
             return false;
         }

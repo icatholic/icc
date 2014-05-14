@@ -47,19 +47,42 @@ class PluginData extends Mongo
      */
     public function setDefault($plugin_collection_id, $data_collection_id)
     {
-        $this->remove(array(
+        $this->update(array(
             'plugin_collection_id' => $plugin_collection_id
-        ));
-        $this->insert(array(
-            'plugin_collection_id' => $plugin_collection_id,
-            'data_collection_id' => $data_collection_id
+        ), array(
+            '$set' => array(
+                'data_collection_id' => $data_collection_id
+            )
+        ), array(
+            'upsert' => true
         ));
     }
 
     /**
+     * 取消默认设置
+     *
+     * @param string $plugin_collection_id            
+     * @param string $data_collection_id            
+     */
+    public function cancelDefault($plugin_collection_id, $data_collection_id)
+    {
+        $check = $this->findOne(array(
+            'plugin_collection_id' => $plugin_collection_id,
+            'data_collection_id' => $data_collection_id
+        ));
+        
+        if (! empty($check)) {
+            $this->remove(array(
+                'plugin_collection_id' => $plugin_collection_id
+            ));
+        }
+    }
+
+    /**
      * 复制插件集合默认数据
-     * @param string $plugin_collection_id
-     * @param string $target_collection_id
+     *
+     * @param string $plugin_collection_id            
+     * @param string $target_collection_id            
      * @return boolean
      */
     public function copy($plugin_collection_id, $target_collection_id)
@@ -75,13 +98,17 @@ class PluginData extends Mongo
         if (! empty($source['data_collection_id'])) {
             $data_collection_id = $source['data_collection_id'];
             $this->_sourceData->setCollection(iCollectionName($data_collection_id));
-            $this->_targetData->setCollection(iCollectionName($target_collection_id));
+            $this->_sourceData->setReadPreference(MongoClient::RP_SECONDARY);
             
+            $this->_targetData->setCollection(iCollectionName($target_collection_id));
             $cursor = $this->_sourceData->find(array());
             while ($cursor->hasNext()) {
                 $row = $cursor->getNext();
-                unset($row['_id']);
-                $this->_targetData->insert($row);
+                $this->_targetData->update($row, array(
+                    '$set' => $row
+                ), array(
+                    'upsert' => true
+                ));
             }
             return true;
         }
