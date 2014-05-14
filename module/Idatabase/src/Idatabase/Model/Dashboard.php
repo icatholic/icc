@@ -8,27 +8,35 @@ class Dashboard extends Mongo
 {
 
     protected $collection = IDATABASE_DASHBOARD;
-    
+
     private $_collection;
-    
+
     private $_project;
-    
+
     private $_mapping;
-    
+
     private $_statistic;
-    
+
     public function init()
     {
         $this->_collection = new Collection($this->config);
         $this->_project = new Project($this->config);
         $this->_mapping = new Mapping($this->config);
         $this->_statistic = new Statistic($this->config);
+        
+        // 添加索引
+        $this->ensureIndex(array(
+            'collection_id' => 1
+        ));
+        $this->ensureIndex(array(
+            'field' => 1
+        ));
     }
 
     /**
      * 根据集合的名称获取集合的_id
      *
-     * @param string $project_id         
+     * @param string $project_id            
      * @throws \Exception or string
      */
     public function getAllStatisticsByProject($project_id)
@@ -60,5 +68,4 @@ class Dashboard extends Mongo
         }
         return $statistics;
     }
-    
 }

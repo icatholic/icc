@@ -33,5 +33,7 @@ class Collection extends Mongo
         } else {
             return $collectionInfo['_id']->__toString();
         }
+        
+        
     }
 }
