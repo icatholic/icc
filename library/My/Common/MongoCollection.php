@@ -273,7 +273,7 @@ class MongoCollection extends \MongoCollection
          * MongoClient::RP_SECONDARY 只读从db优先
          * MongoClient::RP_SECONDARY_PREFERRED 读取从db优先
          */
-        //$this->db->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
+        // $this->db->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
         $this->db->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
     }
 
@@ -829,7 +829,7 @@ class MongoCollection extends \MongoCollection
         
         $keys = array_keys($object);
         foreach ($keys as $key) {
-            //$key = strtolower($key);
+            // $key = strtolower($key);
             if (! in_array($key, $this->_updateHaystack, true)) {
                 throw new \Exception('$key must contain ' . join(',', $this->_updateHaystack));
             }
@@ -1186,15 +1186,17 @@ class MongoCollection extends \MongoCollection
      */
     private function debug()
     {
-        $err = $this->_db->lastError();
-        // 在浏览器中输出错误信息以便发现问题
-        if (self::debug) {
-            fb($err, \FirePHP::LOG);
-        } else {
-            if ($err['err'] != null) {
-                GlobalEventManager::trigger('logError', null, array(
-                    json_encode($err)
-                ));
+        if ($this->_db instanceof \MongoDB) {
+            $err = $this->_db->lastError();
+            // 在浏览器中输出错误信息以便发现问题
+            if (self::debug) {
+                fb($err, \FirePHP::LOG);
+            } else {
+                if ($err['err'] != null) {
+                    GlobalEventManager::trigger('logError', null, array(
+                        json_encode($err)
+                    ));
+                }
             }
         }
     }

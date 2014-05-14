@@ -27,14 +27,18 @@ class PluginData extends Mongo
 
     public function init()
     {
-        $this->_project_plugin = new ProjectPlugin($this->config);
-        $this->_plugin_structure = new PluginStructure($this->config);
-        $this->_structure = new Structure($this->config);
-        $this->_collection = new Collection($this->config);
-        $this->_project = new Project($this->config);
-        $this->_mapping = new Mapping($this->config);
-        $this->_sourceData = new Data($this->config);
-        $this->_targetData = clone $this->_sourceData;
+        try {
+            $this->_project_plugin = new ProjectPlugin($this->config);
+            $this->_plugin_structure = new PluginStructure($this->config);
+            $this->_structure = new Structure($this->config);
+            $this->_collection = new Collection($this->config);
+            $this->_project = new Project($this->config);
+            $this->_mapping = new Mapping($this->config);
+            $this->_sourceData = new Data($this->config);
+            $this->_targetData = new Data($this->config);
+        } catch (Exception $e) {
+            fb($e, 'LOG');
+        }
     }
 
     /**
