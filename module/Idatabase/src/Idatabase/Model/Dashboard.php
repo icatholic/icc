@@ -23,14 +23,6 @@ class Dashboard extends Mongo
         $this->_project = new Project($this->config);
         $this->_mapping = new Mapping($this->config);
         $this->_statistic = new Statistic($this->config);
-        
-        // 添加索引
-        $this->ensureIndex(array(
-            'collection_id' => 1
-        ));
-        $this->ensureIndex(array(
-            'field' => 1
-        ));
     }
 
     /**
