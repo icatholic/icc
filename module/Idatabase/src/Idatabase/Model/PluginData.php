@@ -122,4 +122,21 @@ class PluginData extends Mongo
             return true;
         }
     }
+
+    /**
+     * 检测当前$collection_id是否为默认数据集合
+     *
+     * @param string $collection_id            
+     */
+    public function isDefault($collection_id)
+    {
+        $check = $this->findOne(array(
+            'data_collection_id' => $collection_id
+        ));
+        if($check) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

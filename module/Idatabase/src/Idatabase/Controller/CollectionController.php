@@ -131,6 +131,14 @@ class CollectionController extends Action
             if ($lockInfo > 0) {
                 $row['locked'] = true;
             }
+            
+            //判断当前集合是否默认数据集合，如果是显示正确的集合
+            if($this->_plugin_data->isDefault(myMongoId($row['_id']))) {
+                $row['defaultSourceData'] = true;
+            } else {
+                $row['defaultSourceData'] = false;
+            }
+            
             $datas[] = $row;
         }
         return $this->rst($datas, $cursor->count(), true);
