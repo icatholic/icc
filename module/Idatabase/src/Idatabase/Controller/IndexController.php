@@ -77,7 +77,7 @@ class IndexController extends Action
             }
             
             $this->getSchema();
-            $this->_targetCollection = $this->model('idatabase_collection_' . $this->_collection_id);
+            $this->_targetCollection = $this->collection(iCollectionName($this->_collection_id));
         } catch (\Exception $e) {
             return $this->msg(false, $e->getMessage());
         }
