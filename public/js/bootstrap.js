@@ -813,6 +813,9 @@ Ext.ClassManager.addNameAlternateMappings({
   "Ext.ux.event.Player": [],
   "Ext.ux.event.Recorder": [],
   "Ext.ux.event.RecorderManager": [],
+  "Ext.ux.form.HtmlEditor.ImageCropDialog": [],
+  "Ext.ux.form.HtmlEditor.ImageDialog": [],
+  "Ext.ux.form.HtmlEditor.imageUpload": [],
   "Ext.ux.form.ItemSelector": [
     "Ext.ux.ItemSelector"
   ],
@@ -1955,6 +1958,9 @@ Ext.ClassManager.addNameAliasMappings({
   "Ext.ux.event.RecorderManager": [
     "widget.eventrecordermanager"
   ],
+  "Ext.ux.form.HtmlEditor.ImageCropDialog": [],
+  "Ext.ux.form.HtmlEditor.ImageDialog": [],
+  "Ext.ux.form.HtmlEditor.imageUpload": [],
   "Ext.ux.form.ItemSelector": [
     "widget.itemselector",
     "widget.itemselectorfield"

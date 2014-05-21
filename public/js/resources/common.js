@@ -14,6 +14,7 @@ Ext.Loader.setConfig({
 });
 
 Ext.onReady(function() {
+	Ext.require(['Ext.ux.form.HtmlEditor.ImageCropDialog','Ext.ux.form.HtmlEditor.ImageDialog','Ext.ux.form.HtmlEditor.imageUpload']);
 	Ext.require(['Ext.data.proxy.Ajax', 'Ext.form.field.ComboBox', 'Ext.form.field.VTypes', 'Ext.grid.plugin.RowExpander'], function() {
 
 		Ext.override('Ext.data.proxy.Ajax', {

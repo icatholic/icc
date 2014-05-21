@@ -116,7 +116,7 @@ Ext.define('Ext.ux.form.HtmlEditor.imageUpload', {
      * iframe head. If more css rules are included, it can suffer undesired effects
      * Default 'css/iframe_styles.css'
      */
-    iframeCss: '/css/iframe_styles.css',
+    iframeCss: '/css/htmlEditorUpload.css',
     t: function (string) {
         return this.lang[string] ? this.lang[string] : string;
     },

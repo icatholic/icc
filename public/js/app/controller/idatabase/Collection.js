@@ -597,6 +597,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 						break;
 					case 'htmleditor':
 						addOrEditField.height = 300;
+						addOrEditField.plugins = [new Ext.create('Ext.ux.form.HtmlEditor.imageUpload', {dragResize:true,dragWheel:true,collection_id:__COLLECTION_ID__})];
 						break;
 					};
 
