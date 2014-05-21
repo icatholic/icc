@@ -150,7 +150,7 @@ class UploadController extends Action
      */
     private function deleteImage()
     {
-        $image = $this->params()->fromQuery('image', '');
+        $image = $this->params()->fromPost('image', '');
         $this->file->removeFileFromGridFS($image);
         return array(
             'success' => true,
