@@ -61,7 +61,7 @@ class UploadController extends Action
             $fileInfo = $this->_file->storeToGridFS('photo-path', array(
                 'collection_id' => $collection_id
             ));
-            $url = DOMAIN . '/file/' . $fileInfo['_id'];
+            $url = DOMAIN . '/file/' . $fileInfo['_id']->__toString();
             
             $result = array(
                 'success' => true,
