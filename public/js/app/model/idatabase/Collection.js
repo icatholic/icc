@@ -1,52 +1,55 @@
 Ext.define('icc.model.idatabase.Collection', {
-	extend: 'icc.model.common.Model',
-	fields: [{
-		name: 'name',
-		type: 'string'
+	extend : 'icc.model.common.Model',
+	fields : [ {
+		name : 'name',
+		type : 'string'
 	}, {
-		name: 'alias',
-		type: 'string'
+		name : 'alias',
+		type : 'string'
 	}, {
-		name: 'type',
-		type: 'string'
+		name : 'type',
+		type : 'string'
 	}, {
-		name: 'isTree',
-		type: 'boolean'
+		name : 'isProfessional',
+		type : 'boolean'
 	}, {
-		name: 'desc',
-		type: 'string'
+		name : 'isTree',
+		type : 'boolean'
 	}, {
-		name: 'orderBy',
-		type: 'int'
+		name : 'desc',
+		type : 'string'
 	}, {
-		name: 'plugin',
-		type: 'boolean'
+		name : 'orderBy',
+		type : 'int'
 	}, {
-		name: 'plugin_id',
-		type: 'string'
+		name : 'plugin',
+		type : 'boolean'
 	}, {
-		name: 'plugin_collection_id',
-		type: 'string'
+		name : 'plugin_id',
+		type : 'string'
 	}, {
-		name: 'isRowExpander',
-		type: 'boolean'
+		name : 'plugin_collection_id',
+		type : 'string'
 	}, {
-		name: 'rowExpanderTpl',
-		type: 'string'
+		name : 'isRowExpander',
+		type : 'boolean'
 	}, {
-		name: 'locked',
-		type: 'boolean'
+		name : 'rowExpanderTpl',
+		type : 'string'
 	}, {
-		name: 'isAutoHook',
-		type: 'boolean'
+		name : 'locked',
+		type : 'boolean'
 	}, {
-		name: 'defaultSourceData',
-		type: 'boolean'
+		name : 'isAutoHook',
+		type : 'boolean'
 	}, {
-		name: 'hook',
-		type: 'string'
+		name : 'defaultSourceData',
+		type : 'boolean'
 	}, {
-		name: 'hookKey',
-		type: 'string'
-	}]
+		name : 'hook',
+		type : 'string'
+	}, {
+		name : 'hookKey',
+		type : 'string'
+	} ]
 });
