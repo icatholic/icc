@@ -95,7 +95,7 @@ function excelTitle($i)
     $divisor = floor($i / 26);
     $remainder = $i % 26;
     if ($divisor > 0) {
-        return $str[$divisor - 1] . $str[$remainder];
+        return $str[intval($divisor - 1)] . $str[intval($remainder)];
     } else {
         return $str[$remainder];
     }
