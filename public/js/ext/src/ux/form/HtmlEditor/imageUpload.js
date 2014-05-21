@@ -123,8 +123,8 @@ Ext.define('Ext.ux.form.HtmlEditor.imageUpload', {
 	
     constructor: function (config) {
         Ext.apply(this, config);
-        this.submitUrl  = this.submitUrl+'?collection_id='+this.formId;
-        this.managerUrl = this.managerUrl+'?collection_id='+this.formId;
+        this.submitUrl  = this.submitUrl+'/collection_id/'+this.collection_id;
+        this.managerUrl = this.managerUrl+'/collection_id/'+this.collection_id;
         this.callParent(arguments);
     },
 	

@@ -9,7 +9,6 @@
 namespace Idatabase\Controller;
 
 use My\Common\Controller\Action;
-use My\Common\MongoCollection;
 
 class UploadController extends Action
 {
@@ -18,7 +17,7 @@ class UploadController extends Action
 
     public function init()
     {
-        $this->_file = $this->model("Idatabase\Model\File");
+        $this->_file = $this->model('Idatabase\Model\File');
     }
 
     /**
@@ -56,7 +55,7 @@ class UploadController extends Action
      */
     private function uploadHtmlEditorImage()
     {
-        $collection_id = $this->params()->fromQuery('collection_id', null);
+        $collection_id = $this->params('collection_id', null);
         if (isset($_FILES['photo-path']) && $_FILES['photo-path']['error'] == UPLOAD_ERR_OK) {
             
             $fileInfo = $this->_file->storeToGridFS('photo-path', array(
@@ -113,7 +112,7 @@ class UploadController extends Action
      */
     private function getImages()
     {
-        $collection_id = $this->params()->fromQuery('collection_id', '');
+        $collection_id = $this->params('collection_id', '');
         $limit = $this->params()->fromQuery('limit', 10);
         $start = $this->params()->fromQuery('start', 0);
         
