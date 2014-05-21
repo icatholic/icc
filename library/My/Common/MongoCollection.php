@@ -1155,7 +1155,7 @@ class MongoCollection extends \MongoCollection
         $cursor = $this->_fs->find($query, $fields);
         $cursor->sort($sort)
             ->skip($start)
-            ->$limit($limit);
+            ->limit($limit);
         return iterator_to_array($cursor, true);
     }
 
