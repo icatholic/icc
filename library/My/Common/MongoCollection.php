@@ -1071,7 +1071,10 @@ class MongoCollection extends \MongoCollection
      *
      * @param string $fieldName
      *            上传表单字段的名称
-     *            
+     * @return array 返回上传文件成功后的object
+     *        
+     *         object结构如下:
+     *        
      */
     public function storeToGridFS($fieldName, $metadata = array())
     {
@@ -1134,6 +1137,26 @@ class MongoCollection extends \MongoCollection
             $id = new \MongoId($id);
         }
         return $this->_fs->get($id);
+    }
+
+    /**
+     * 根据查询条件获取指定数量的结果集
+     *
+     * @param array $query            
+     * @param number $start            
+     * @param number $limit            
+     * @return multitype:
+     */
+    public function getGridFsFileBy($query, $sort = array('_id'=>-1), $start = 0, $limit = 20, $fields = null)
+    {
+        if (! is_array($query)) {
+            $query = array();
+        }
+        $cursor = $this->_fs->find($query, $fields);
+        $cursor->sort($sort)
+            ->skip($start)
+            ->$limit($limit);
+        return iterator_to_array($cursor, true);
     }
 
     /**

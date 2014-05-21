@@ -92,9 +92,9 @@ class UploadController extends Action
      */
     private function resizeImage()
     {
-        $width = isset($_REQUEST["width"]) ? intval($_REQUEST["width"]) : 0;
-        $height = isset($_REQUEST["height"]) ? intval($_REQUEST["height"]) : 0;
-        $imageSrc = isset($_REQUEST["image"]) ? ($_REQUEST["image"]) : '';
+        $width = $this->params()->fromQuery('width', 0);
+        $height = $this->params()->fromQuery('height', 0);
+        $imageSrc = $this->params()->fromQuery('image', '');
         return array(
             'success' => true,
             'message' => 'Success',
@@ -113,31 +113,26 @@ class UploadController extends Action
      */
     private function getImages()
     {
-        $config = Zend_Registry::get('config');
+        $collection_id = $this->params()->fromQuery('collection_id', '');
+        $limit = $this->params()->fromQuery('limit', 10);
+        $start = $this->params()->fromQuery('start', 0);
         
-        $formId = $this->getRequest()->getParam('formId');
-        $limit = isset($_REQUEST["limit"]) ? intval($_REQUEST["limit"]) : 10;
-        $start = isset($_REQUEST["start"]) ? intval($_REQUEST["start"]) : 0;
-        $query = isset($_REQUEST["query"]) ? $_REQUEST["query"] : 0;
-        
-        $cursor = $this->_gfs->find(array(
-            'meta.idb_form_id' => $formId
+        $files = $this->_file->getGridFsFileBy(array(
+            'collection_id' => $collection_id
         ));
-        $cursor->sort(array(
-            '_id' => - 1
-        ))
-            ->skip($start)
-            ->limit($limit);
-        while ($cursor->hasNext()) {
-            $row = $cursor->getNext();
-            $image = $config['uma']['server'] . 'soa/image/get/id/' . $row->file['_id']->__toString();
-            $results[] = array(
-                '_id' => $row->file['_id']->__toString(),
-                'fullname' => $row->file['fileName'],
-                'name' => $row->file['fileName'],
-                'src' => $image,
-                'thumbSrc' => $image . '/size/64x64'
-            );
+        
+        $results = array();
+        if (! empty($files) && is_array($files)) {
+            foreach ($files as $file) {
+                $image = DOMAIN . '/file/' . $file->file['_id']->__toString();
+                $results[] = array(
+                    '_id' => $file->file['_id']->__toString(),
+                    'fullname' => $file->file['fileName'],
+                    'name' => $file->file['fileName'],
+                    'src' => $image,
+                    'thumbSrc' => $image . '/w/64/h/64'
+                );
+            }
         }
         
         return array(
@@ -156,12 +151,8 @@ class UploadController extends Action
      */
     private function deleteImage()
     {
-        $formId = $this->getRequest()->getParam('formId');
-        $image = isset($_REQUEST["image"]) ? stripslashes($_REQUEST["image"]) : "";
-        $this->_gfs->remove(array(
-            'meta.idb_form_id' => $formId,
-            '_id' => new MongoId($image)
-        ));
+        $image = $this->params()->fromQuery('image', '');
+        $this->file->removeFileFromGridFS($image);
         return array(
             'success' => true,
             'message' => 'Success',
