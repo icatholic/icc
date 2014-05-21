@@ -17,14 +17,15 @@ echo $this->headLink(array(
     'type' => 'image/vnd.microsoft.icon',
     'href' => $this->basePath() . '/img/favicon.ico'
 ))
-    ->appendStylesheet($this->basePath() . '/css/ext-theme-neptune-all.css?v='.$this->__VERSION__)
-    ->appendStylesheet($this->basePath() . '/css/icon.css?v='.$this->__VERSION__)
-    ->appendStylesheet($this->basePath() . '/css/BoxSelect.css?v='.$this->__VERSION__);
+    ->appendStylesheet($this->basePath() . '/css/ext-theme-neptune-all.css?v=' . $this->__VERSION__)
+    ->appendStylesheet($this->basePath() . '/css/icon.css?v=' . $this->__VERSION__)
+    ->appendStylesheet($this->basePath() . '/css/BoxSelect.css?v=' . $this->__VERSION__)
+    ->appendStylesheet($this->basePath() . '/css/htmlEditorUpload.css?v=' . $this->__VERSION__);
 echo $this->headScript()
-    ->appendFile($this->basePath() . '/js/build/production/icc/app.js?v='.$this->__VERSION__)
-    ->appendFile($this->basePath() . '/js/resources/common.js?v='.$this->__VERSION__)
-    ->appendFile($this->basePath() . '/js/resources/htmlspecialchars.js?v='.$this->__VERSION__)
-    ->appendFile($this->basePath() . '/css/BoxSelect.js?v='.$this->__VERSION__);
+    ->appendFile($this->basePath() . '/js/build/production/icc/app.js?v=' . $this->__VERSION__)
+    ->appendFile($this->basePath() . '/js/resources/common.js?v=' . $this->__VERSION__)
+    ->appendFile($this->basePath() . '/js/resources/htmlspecialchars.js?v=' . $this->__VERSION__)
+    ->appendFile($this->basePath() . '/css/BoxSelect.js?v=' . $this->__VERSION__);
 
 ?>
 </head>
