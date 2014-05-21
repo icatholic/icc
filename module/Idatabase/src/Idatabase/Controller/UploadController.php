@@ -28,6 +28,8 @@ class UploadController extends Action
     public function indexAction()
     {
         $action = $this->params()->fromQuery('action', null);
+        $action = $this->params()->fromPost('action',$action);
+        
         switch ($action) {
             case 'upload':
                 echo (json_encode($this->uploadHtmlEditorImage()));
@@ -56,7 +58,7 @@ class UploadController extends Action
     private function uploadHtmlEditorImage()
     {
         $collection_id = $this->params('collection_id', null);
-        if (isset($_FILES['photo-path']) && $_FILES['photo-path']['error'] == UPLOAD_ERR_OK) {
+        if (isset($_FILES['photo-path']) && $_FILES['photo-path']['error'] == UPLOAD_ERR_OK && !empty($collection_id)) {
             
             $fileInfo = $this->_file->storeToGridFS('photo-path', array(
                 'collection_id' => $collection_id
@@ -119,15 +121,14 @@ class UploadController extends Action
         $files = $this->_file->getGridFsFileBy(array(
             'collection_id' => $collection_id
         ));
-        
         $results = array();
         if (! empty($files) && is_array($files)) {
             foreach ($files as $file) {
                 $image = DOMAIN . '/file/' . $file->file['_id']->__toString();
                 $results[] = array(
                     '_id' => $file->file['_id']->__toString(),
-                    'fullname' => $file->file['fileName'],
-                    'name' => $file->file['fileName'],
+                    'fullname' => $file->file['filename'],
+                    'name' => $file->file['filename'],
                     'src' => $image,
                     'thumbSrc' => $image . '/w/64/h/64'
                 );
@@ -151,10 +152,11 @@ class UploadController extends Action
     private function deleteImage()
     {
         $image = $this->params()->fromPost('image', '');
-        $this->file->removeFileFromGridFS($image);
+        $rst = $this->_file->removeFileFromGridFS($image);
+        fb($rst,'LOG');
         return array(
             'success' => true,
-            'message' => 'Success',
+            'message' => 'delete success',
             'data' => '',
             'total' => 1,
             'errors' => ''

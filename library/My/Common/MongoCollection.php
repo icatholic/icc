@@ -1074,6 +1074,44 @@ class MongoCollection extends \MongoCollection
      * @return array 返回上传文件成功后的object
      *        
      *         object结构如下:
+     *         array(
+     *         ['_id'] =>
+     *         MongoId(
+     *        
+     *         $id =
+     *         '537cc9b54896194b228b4581'
+     *         )
+     *         ['collection_id'] =>
+     *         NULL
+     *         ['name'] =>
+     *         'b21c8701a18b87d624ac8e2d050828381f30fd11.jpg'
+     *         ['type'] =>
+     *         'image/jpeg'
+     *         ['tmp_name'] =>
+     *         '/tmp/phpeBS799'
+     *         ['error'] =>
+     *         0
+     *         ['size'] =>
+     *         350522
+     *         ['mime'] =>
+     *         'image/jpeg; charset=binary'
+     *         ['filename'] =>
+     *         'b21c8701a18b87d624ac8e2d050828381f30fd11.jpg'
+     *         ['uploadDate'] =>
+     *         MongoDate(
+     *        
+     *         sec =
+     *         1400687029
+     *         usec =
+     *         515000
+     *         )
+     *         ['length'] =>
+     *         350522
+     *         ['chunkSize'] =>
+     *         262144
+     *         ['md5'] =>
+     *         '3a736c4eed22030dde16df11fee263e7'
+     *         )
      *        
      */
     public function storeToGridFS($fieldName, $metadata = array())
@@ -1091,12 +1129,12 @@ class MongoCollection extends \MongoCollection
             $metadata['mime'] = $mime;
         
         $id = $this->_fs->storeUpload($fieldName, $metadata);
-        fb($id, 'LOG');
         $gridfsFile = $this->_fs->get($id);
         if (! ($gridfsFile instanceof \MongoGridFSFile)) {
             fb($gridfsFile, 'LOG');
             throw new \Exception('$gridfsFile is not instanceof MongoGridFSFile');
         }
+        
         return $gridfsFile->file;
     }
 
@@ -1156,7 +1194,8 @@ class MongoCollection extends \MongoCollection
         $cursor->sort($sort)
             ->skip($start)
             ->limit($limit);
-        return iterator_to_array($cursor, true);
+        $rst = iterator_to_array($cursor, false);
+        return $rst;
     }
 
     /**
@@ -1201,7 +1240,9 @@ class MongoCollection extends \MongoCollection
         if (! $id instanceof \MongoId) {
             $id = new \MongoId($id);
         }
-        return $this->_fs->remove($id);
+        return $this->_fs->remove(array(
+            '_id' => $id
+        ));
     }
 
     /**
