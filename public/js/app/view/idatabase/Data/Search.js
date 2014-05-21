@@ -67,7 +67,7 @@ Ext.define('icc.view.idatabase.Data.Search', {
 		}, {
 			xtype: 'fieldset',
 			layout: 'hbox',
-			title: '记录ID',
+			title: '系统编号',
 			defaultType: 'textfield',
 			fieldDefaults: {
 				labelAlign: 'top',
@@ -87,7 +87,7 @@ Ext.define('icc.view.idatabase.Data.Search', {
 				width: 30
 			}, {
 				name: '__ID__',
-				fieldLabel: '记录ID'
+				fieldLabel: '系统编号'
 			} ]
 		});
 
