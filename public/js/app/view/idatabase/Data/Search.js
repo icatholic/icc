@@ -64,6 +64,31 @@ Ext.define('icc.view.idatabase.Data.Search', {
 				fieldLabel : '截止时间',
 				name : '__MODIFY_TIME__[end]'
 			} ]
+		}, {
+			xtype: 'fieldset',
+			layout: 'hbox',
+			title: '记录ID',
+			defaultType: 'textfield',
+			fieldDefaults: {
+				labelAlign: 'top',
+				labelSeparator: ''
+			},
+			items : [ {
+				fieldLabel: '非',
+				name: 'exclusive__' + '__ID__',
+				xtype: 'checkboxfield',
+				width: 30,
+				inputValue: true,
+				checked: false
+			}, {
+				fieldLabel: '等于',
+				name: 'exactMatch__' + '__ID__',
+				xtype: 'checkboxfield',
+				width: 30
+			}, {
+				name: '__ID__',
+				fieldLabel: '记录ID'
+			} ]
 		});
 
 		this.searchFields.push(Ext.create('icc.view.idatabase.Statistic.Combobox', {

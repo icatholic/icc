@@ -1166,6 +1166,9 @@ class DataController extends Action
             ),
             '__MODIFY_TIME__' => array(
                 'type' => 'datefield'
+            ),
+            '__ID__' => array(
+                'type' => 'textfield'
             )
         ));
         
@@ -1270,10 +1273,17 @@ class DataController extends Action
                         }
                         break;
                     default:
-                        if ($not)
-                            $subQuery[$field]['$ne'] = trim($_REQUEST[$field]);
-                        else
-                            $subQuery[$field] = $exact ? trim($_REQUEST[$field]) : myMongoRegex($_REQUEST[$field]);
+                        if ($field == '__ID__') {
+                            if ($not)
+                                $subQuery["_id"]['$ne'] = new \MongoId($_REQUEST[$field]);
+                            else
+                                $subQuery["_id"] = new \MongoId($_REQUEST[$field]);
+                        } else {
+                            if ($not)
+                                $subQuery[$field]['$ne'] = trim($_REQUEST[$field]);
+                            else
+                                $subQuery[$field] = $exact ? trim($_REQUEST[$field]) : myMongoRegex($_REQUEST[$field]);
+                        }
                         break;
                 }
                 $query['$and'][] = $subQuery;
