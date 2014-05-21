@@ -1147,7 +1147,7 @@ class MongoCollection extends \MongoCollection
      * @param number $limit            
      * @return multitype:
      */
-    public function getGridFsFileBy($query, $sort = array('_id'=>-1), $start = 0, $limit = 20, $fields = null)
+    public function getGridFsFileBy($query, $sort = array('_id'=>-1), $start = 0, $limit = 20, $fields = array())
     {
         if (! is_array($query)) {
             $query = array();
