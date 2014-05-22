@@ -8,7 +8,7 @@ Ext.define('icc.view.idatabase.Collection.AllCombobox', {
 	queryMode : 'remote',
 	pageSize : 20,
 	editable : false,
-	typeAhead : false,
+	typeAhead : true,
 	initComponent : function() {
 		var store = Ext.create('icc.store.idatabase.Collection.All');
 		store.proxy.extraParams['__PROJECT_ID__'] = this.__PROJECT_ID__;
