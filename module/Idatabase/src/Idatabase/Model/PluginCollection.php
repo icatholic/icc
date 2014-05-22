@@ -47,6 +47,7 @@ class PluginCollection extends Mongo
         unset($datas['project_id']);
         $datas['_id'] = new \MongoId();
         $datas['plugin_collection_id'] = $datas['_id']->__toString();
+        array_unset_recursive($datas, array('isAutoHook','hook','hookKey'));
         $this->insertRef($datas);
         if ($datas['_id'] instanceof \MongoId)
             return $datas['_id']->__toString();
@@ -62,8 +63,8 @@ class PluginCollection extends Mongo
      */
     public function editPluginCollection($datas)
     {
-        unset($datas['project_id']);
         $plugin_collection_id = isset($datas['plugin_collection_id']) ? $datas['plugin_collection_id'] : '';
+        array_unset_recursive($datas, array('project_id','isAutoHook','hook','hookKey'));
         if (! empty($plugin_collection_id)) {
             $rst = $this->update(array(
                 '_id' => myMongoId($plugin_collection_id)

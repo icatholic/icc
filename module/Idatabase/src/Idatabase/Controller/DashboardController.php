@@ -26,6 +26,8 @@ class DashboardController extends Action
     private $_project_id;
 
     private $_mapping;
+    
+    private $_rshData = array();
 
     public function init()
     {
@@ -123,6 +125,15 @@ class DashboardController extends Action
                 
                 $out = 'dashboard_' . $statisticInfo['_id']->__toString();
                 $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'reduce');
+                
+                // 统计完成替换里面的关联变量信息
+                $rstModel = $this->collection(iCollectionName($out));
+                $result = $rstModel->findAll(array());
+                $map = array(
+                    '_id' => $statisticInfo['xAxisField']
+                );
+                $result = $this->replaceRshData($result, $map);
+                
                 if ($rst instanceof \MongoCollection) {
                     $outCollectionName = $rst->getName(); // 输出集合名称
                     $this->_statistic->update(array(
@@ -145,4 +156,35 @@ class DashboardController extends Action
         echo 'OK';
         return $this->response;
     }
+    
+    /**
+     * 处理数据中的关联数据
+     */
+    private function dealRshData($collection_id)
+    {
+        foreach ($this->_rshCollection as $_id => $detail) {
+            $_id = $this->getCollectionIdByAlias($_id);
+            $collectionName = 'idatabase_collection_' . $_id;
+            $model = $this->collection($collectionName);
+            $cursor = $model->find(array(), array(
+                    $detail['rshCollectionKeyField'] => true,
+                    $detail['rshCollectionValueField'] => true
+            ));
+    
+            $datas = array();
+            while ($cursor->hasNext()) {
+                $row = $cursor->getNext();
+                $key = $row[$detail['rshCollectionValueField']];
+                $value = isset($row[$detail['rshCollectionKeyField']]) ? $row[$detail['rshCollectionKeyField']] : '';
+                if ($key instanceof \MongoId) {
+                    $key = $key->__toString();
+                }
+                if (! empty($key)) {
+                    $datas[$key] = $value;
+                }
+            }
+            $this->_rshData[$detail['collectionField']] = $datas;
+        }
+    }
+
 }
