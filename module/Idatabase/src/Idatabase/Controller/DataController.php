@@ -131,10 +131,10 @@ class DataController extends Action
      * @var object
      */
     private $_mapping;
-    
+
     /**
      * 索引管理集合
-     * 
+     *
      * @var object
      */
     private $_index;
@@ -230,7 +230,7 @@ class DataController extends Action
             $this->_data = $this->collection($this->_collection_name);
         }
         
-        //自动化为集合创建索引
+        // 自动化为集合创建索引
         $this->_index->autoCreateIndexes(isset($mapCollection['collection']) ? $mapCollection['collection'] : $this->_collection_id);
     }
 
@@ -256,7 +256,7 @@ class DataController extends Action
         
         if ($action == 'search' || $action == 'excel') {
             $query = $this->searchCondition();
-            fb($query,'LOG');
+            fb($query, 'LOG');
         }
         
         if ($search != null) {
@@ -282,6 +282,46 @@ class DataController extends Action
         
         if (empty($sort)) {
             $sort = $this->defaultOrder();
+        }
+        
+        if (! empty($this->_schema['2d'])) {
+            $keys2d = array_keys($this->_schema['2d']);
+            foreach ($keys2d as $field2d) {
+                if (isset($_REQUEST[$field2d])) {
+                    fb($_REQUEST[$field2d], 'LOG');
+                    $lng = floatval(trim($_REQUEST[$field2d]['lng']));
+                    $lat = floatval(trim($_REQUEST[$field2d]['lat']));
+                    $distance = ! empty($_REQUEST[$field2d]['distance']) ? floatval($_REQUEST[$field2d]['distance']) : 1;
+                    
+                    $pipeline = array(
+                        array(
+                            '$geoNear' => array(
+                                'near' => array(
+                                    $lng,
+                                    $lat
+                                ),
+                                'limit' => 1000,
+                                'spherical' => true,
+                                'distanceMultiplier' => 6371 * 1000,
+                                'query' => $query,
+                                'distanceField' => '__DISTANCE__'
+                            )
+                        ),
+                        array(
+                            '$match' => array(
+                                '__DISTANCE__' => array(
+                                    '$lte' => $distance * 1000
+                                )
+                            )
+                        )
+                    );
+                    $rst = $this->_data->aggregate($pipeline);
+                    if (isset($rst['result'])) {
+                        fb($rst['result'], 'LOG');
+                        return $this->rst($rst['result'], count($rst['result']), true);
+                    }
+                }
+            }
         }
         
         $cursor = $this->_data->find($query, $this->_fields);
@@ -1009,6 +1049,7 @@ class DataController extends Action
     private function getSchema()
     {
         $schema = array(
+            '2d' => array(),
             'file' => array(),
             'post' => array(
                 '_id' => array(
@@ -1039,6 +1080,10 @@ class DataController extends Action
             $schema['all'][$row['field']] = $row;
             $this->_fields[$row['field']] = true;
             $this->_title[$row['field']] = $row['label'];
+            
+            if ($row['type'] === '2dfield') {
+                $schema['2d'][$row['field']] = $row;
+            }
             
             if ($row['rshKey']) {
                 $schema['combobox']['rshCollectionKeyField'] = $row['field'];
@@ -1188,7 +1233,6 @@ class DataController extends Action
             )
         ));
         
-        fb($this->_schema['post'],'LOG');
         foreach ($this->_schema['post'] as $field => $detail) {
             $subQuery = array();
             $not = false;
@@ -1265,28 +1309,28 @@ class DataController extends Action
                         }
                         break;
                     case '2dfield':
-                        $lng = floatval(trim($_REQUEST[$field]['lng']));
-                        $lat = floatval(trim($_REQUEST[$field]['lat']));
-                        $distance = ! empty($_REQUEST[$field]['distance']) ? floatval($_REQUEST[$field]['distance']) : 10;
-                        $subQuery[$field] = array(
-                            '$near' => array(
-                                $lng,
-                                $lat
-                            ),
-                            '$maxDistance' => $distance / 111.12
-                        );
+                        // $lng = floatval(trim($_REQUEST[$field]['lng']));
+                        // $lat = floatval(trim($_REQUEST[$field]['lat']));
+                        // $distance = ! empty($_REQUEST[$field]['distance']) ? floatval($_REQUEST[$field]['distance']) : 10;
+                        // $subQuery[$field] = array(
+                        // '$near' => array(
+                        // $lng,
+                        // $lat
+                        // ),
+                        // '$maxDistance' => $distance / 111.12
+                        // );
                         
-                        // 在mognodb2.5.5以前，无法支持$and查询故如果进行地理位置信息检索，则强制其他检索条件失效。
-                        // 迁移到2.6以后，请注释掉该部分代码
-                        $geoQuery = array();
-                        $geoQuery[$field] = array(
-                            '$near' => array(
-                                $lng,
-                                $lat
-                            ),
-                            '$maxDistance' => $distance / 111.12
-                        );
-                        return $geoQuery;
+                        // // 在mognodb2.5.5以前，无法支持$and查询故如果进行地理位置信息检索，则强制其他检索条件失效。
+                        // // 迁移到2.6以后，请注释掉该部分代码
+                        // $geoQuery = array();
+                        // $geoQuery[$field] = array(
+                        // '$near' => array(
+                        // $lng,
+                        // $lat
+                        // ),
+                        // '$maxDistance' => $distance / 111.12
+                        // );
+                        // return $geoQuery;
                         break;
                     case 'boolfield':
                         $subQuery[$field] = filter_var(trim($_REQUEST[$field]), FILTER_VALIDATE_BOOLEAN);
@@ -1315,7 +1359,9 @@ class DataController extends Action
                         }
                         break;
                 }
-                $query['$and'][] = $subQuery;
+                if (! empty($subQuery)) {
+                    $query['$and'][] = $subQuery;
+                }
             }
         }
         
