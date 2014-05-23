@@ -117,7 +117,7 @@ class TestController extends AbstractActionController
             var_dump($this->_model->insertByFindAndModify(array(
                 'a.b' => time()
             )));
-            //var_dump($this->_model->findOne());
+            // var_dump($this->_model->findOne());
             echo 'OK';
         } catch (\Exception $e) {
             var_dump($e->getMessage());
@@ -162,24 +162,56 @@ class TestController extends AbstractActionController
         
         return $this->response;
     }
-    
-    public function irAction() {
+
+    public function irAction()
+    {
         $o = $this->model('test');
-        $o->insertByFindAndModify(array('a.b'=>'a.b','c'=>'c'));
+        $o->insertByFindAndModify(array(
+            'a.b' => 'a.b',
+            'c' => 'c'
+        ));
         echo '<pre>';
-        var_dump($o->findAll(array(),array('_id'=>-1),0,0,array('a.b'=>true)));
+        var_dump($o->findAll(array(), array(
+            '_id' => - 1
+        ), 0, 0, array(
+            'a.b' => true
+        )));
         return $this->response;
     }
-    
-    public function saveAction() {
+
+    public function saveAction()
+    {
         $o = $this->collection('test');
-        $data = array('a'=>123);
+        $data = array(
+            'a' => 123
+        );
         $o->saveRef($data);
         var_dump($data);
         return $this->response;
     }
-    
-    public function geoAction() {
-        
+
+    public function geoAction()
+    {
+        try {
+            $c = $this->collection(iCollectionName('537e1f8b489619c6668b459f'));
+            //$c->setNoAppendQuery(true);
+            var_dump($c->aggregate(array(
+                array(
+                    '$geoNear' => array(
+                        'near' => array(
+                            121.43785642996,
+                            31.189866744357
+                        ),
+                        'num' => 100,
+                        'spherical' => true,
+                        'maxDistance' => 0.089992800575954,
+                        'distanceField'=>'location'
+                    )
+                )
+            )));
+        } catch (\Exception $e) {
+            var_dump($e);
+        }
+        return $this->response;
     }
 }

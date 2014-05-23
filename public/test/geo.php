@@ -36,7 +36,7 @@ try {
     // )
     // ));
     
-    $cursor = $collection->find(array(
+    $cursor = $collection->count(array(
         'location' => array(
             '$near' => array(
                 0 => 123,
@@ -46,9 +46,9 @@ try {
         ),
         '__REMOVED__' => false
     ));
-    
-    var_dump($cursor->count());
-    var_dump(iterator_to_array($cursor, false));
+    var_dump($cursor);
+    //var_dump($cursor->count());
+    //var_dump(iterator_to_array($cursor, false));
 } catch (Exception $e) {
     var_dump($e);
 }
