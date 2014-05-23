@@ -256,7 +256,6 @@ class DataController extends Action
         
         if ($action == 'search' || $action == 'excel') {
             $query = $this->searchCondition();
-            fb($query, 'LOG');
         }
         
         if ($search != null) {
@@ -288,7 +287,6 @@ class DataController extends Action
             $keys2d = array_keys($this->_schema['2d']);
             foreach ($keys2d as $field2d) {
                 if (isset($_REQUEST[$field2d])) {
-                    fb($_REQUEST[$field2d], 'LOG');
                     $lng = floatval(trim($_REQUEST[$field2d]['lng']));
                     $lat = floatval(trim($_REQUEST[$field2d]['lat']));
                     $distance = ! empty($_REQUEST[$field2d]['distance']) ? floatval($_REQUEST[$field2d]['distance']) : 1;
@@ -317,7 +315,6 @@ class DataController extends Action
                     );
                     $rst = $this->_data->aggregate($pipeline);
                     if (isset($rst['result'])) {
-                        fb($rst['result'], 'LOG');
                         return $this->rst($rst['result'], count($rst['result']), true);
                     }
                 }
@@ -326,7 +323,6 @@ class DataController extends Action
         
         $cursor = $this->_data->find($query, $this->_fields);
         if (! ($cursor instanceof \MongoCursor)) {
-            fb($cursor, 'LOG');
             throw new \Exception('无效的$cursor');
         }
         
