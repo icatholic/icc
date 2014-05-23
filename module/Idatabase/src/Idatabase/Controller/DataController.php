@@ -226,10 +226,8 @@ class DataController extends Action
         ));
         if ($mapCollection != null) {
             $this->_data = $this->collection($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
-//             $this->_dataQw = $this->collection()->qw($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
         } else {
             $this->_data = $this->collection($this->_collection_name);
-//             $this->_dataQw = $this->collection()->qw($this->_collection_name);
         }
         
         //自动化为集合创建索引
@@ -286,7 +284,6 @@ class DataController extends Action
             $sort = $this->defaultOrder();
         }
         
-        fb($query, 'LOG');
         $cursor = $this->_data->find($query, $this->_fields);
         if (! ($cursor instanceof \MongoCursor)) {
             fb($cursor, 'LOG');
