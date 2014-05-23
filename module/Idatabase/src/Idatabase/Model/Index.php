@@ -21,7 +21,7 @@ class Index extends Mongo
             'collection_id' => $collection_id
         ));
         
-        $dataCollection = new Data();
+        $dataCollection = new Data($this->config);
         $dataCollection->setCollection(iCollectionName($collection_id));
         while ($cursor->hasNext()) {
             $index = $cursor->getNext();
