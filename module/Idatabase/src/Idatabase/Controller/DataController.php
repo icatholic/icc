@@ -131,6 +131,13 @@ class DataController extends Action
      * @var object
      */
     private $_mapping;
+    
+    /**
+     * 索引管理集合
+     * 
+     * @var object
+     */
+    private $_index;
 
     /**
      * 当集合为树状集合时，存储父节点数据的集合名称
@@ -185,6 +192,7 @@ class DataController extends Action
         $this->_order = $this->model('Idatabase\Model\Order');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_statistic = $this->model('Idatabase\Model\Statistic');
+        $this->_index = $this->model('Idatabase\Model\Index');
         
         // 检查必要的参数
         if (empty($this->_project_id)) {
@@ -218,11 +226,14 @@ class DataController extends Action
         ));
         if ($mapCollection != null) {
             $this->_data = $this->collection($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
-            $this->_dataQw = $this->collection()->qw($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
+//             $this->_dataQw = $this->collection()->qw($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
         } else {
             $this->_data = $this->collection($this->_collection_name);
-            $this->_dataQw = $this->collection()->qw($this->_collection_name);
+//             $this->_dataQw = $this->collection()->qw($this->_collection_name);
         }
+        
+        //自动化为集合创建索引
+        $this->_index->autoCreateIndexes(isset($mapCollection['collection']) ? $mapCollection['collection'] : $this->_collection_id);
     }
 
     /**
@@ -247,6 +258,7 @@ class DataController extends Action
         
         if ($action == 'search' || $action == 'excel') {
             $query = $this->searchCondition();
+            fb($query,'LOG');
         }
         
         if ($search != null) {
@@ -274,6 +286,7 @@ class DataController extends Action
             $sort = $this->defaultOrder();
         }
         
+        fb($query, 'LOG');
         $cursor = $this->_data->find($query, $this->_fields);
         if (! ($cursor instanceof \MongoCursor)) {
             fb($cursor, 'LOG');
@@ -1178,6 +1191,7 @@ class DataController extends Action
             )
         ));
         
+        fb($this->_schema['post'],'LOG');
         foreach ($this->_schema['post'] as $field => $detail) {
             $subQuery = array();
             $not = false;
