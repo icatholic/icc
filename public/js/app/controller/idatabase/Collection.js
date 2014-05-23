@@ -1014,7 +1014,8 @@ Ext.define('icc.controller.idatabase.Collection', {
 								defaultType: 'numberfield',
 								fieldDefaults: {
 									labelAlign: 'top',
-									labelSeparator: ''
+									labelSeparator: '',
+									decimalPrecision : 8
 								},
 								items: [{
 									name: recordField + '[lng]',
