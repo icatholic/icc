@@ -178,4 +178,8 @@ class TestController extends AbstractActionController
         var_dump($data);
         return $this->response;
     }
+    
+    public function geoAction() {
+        
+    }
 }

@@ -612,6 +612,7 @@ class Database
         return $this->result($rst);
     }
 
+
     /**
      * 规范返回数据的格式为数组
      *

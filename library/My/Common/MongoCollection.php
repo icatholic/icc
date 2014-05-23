@@ -525,7 +525,8 @@ class MongoCollection extends \MongoCollection
     public function find($query = NULL, $fields = NULL)
     {
         $fields = empty($fields) ? array() : $fields;
-        return parent::find($this->appendQuery($query), $fields);
+        $query = $this->appendQuery($query);
+        return parent::find($query, $fields);
     }
 
     /**

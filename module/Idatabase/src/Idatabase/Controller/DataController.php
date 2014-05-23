@@ -25,9 +25,10 @@ class DataController extends Action
      * @var object
      */
     private $_data;
-    
+
     /**
      * 执行快速写入或者删除操作时候的对象
+     *
      * @var object
      */
     private $_dataQw;
@@ -273,13 +274,12 @@ class DataController extends Action
             $sort = $this->defaultOrder();
         }
         
-        fb($query,'LOG');
         $cursor = $this->_data->find($query, $this->_fields);
-        if(!($cursor instanceof \MongoCursor)) {
-            fb($cursor,'LOG');
+        if (! ($cursor instanceof \MongoCursor)) {
+            fb($cursor, 'LOG');
             throw new \Exception('无效的$cursor');
         }
-
+        
         $total = $cursor->count();
         if ($total <= 0) {
             return $this->rst(array(), 0, true);
@@ -289,7 +289,6 @@ class DataController extends Action
         if ($action !== 'excel') {
             $cursor->skip($start)->limit($limit);
         }
-        
         
         $datas = iterator_to_array($cursor, false);
         $datas = $this->comboboxSelectedValues($datas);
@@ -317,7 +316,6 @@ class DataController extends Action
             arrayToExcel($excel);
         }
         return $this->rst($datas, $total, true);
-
     }
 
     /**
@@ -396,13 +394,12 @@ class DataController extends Action
                 $excel['result'] = $datas;
                 arrayToExcel($excel);
             } else {
-                if($statisticInfo['seriesType']!='line') {
+                if ($statisticInfo['seriesType'] != 'line') {
                     $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 100;
                     $datas = $rst->findAll(array(), array(
                         'value' => - 1
                     ), 0, $limit);
-                }
-                else {
+                } else {
                     $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 100;
                     $datas = $rst->findAll(array(), array(
                         '_id' => 1
@@ -1267,6 +1264,18 @@ class DataController extends Action
                             ),
                             '$maxDistance' => $distance / 111.12
                         );
+                        
+                        // 在mognodb2.5.5以前，无法支持$and查询故如果进行地理位置信息检索，则强制其他检索条件失效。
+                        // 迁移到2.6以后，请注释掉该部分代码
+                        $geoQuery = array();
+                        $geoQuery[$field] = array(
+                            '$near' => array(
+                                $lng,
+                                $lat
+                            ),
+                            '$maxDistance' => $distance / 111.12
+                        );
+                        return $geoQuery;
                         break;
                     case 'boolfield':
                         $subQuery[$field] = filter_var(trim($_REQUEST[$field]), FILTER_VALIDATE_BOOLEAN);

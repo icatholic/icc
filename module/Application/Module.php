@@ -72,7 +72,15 @@ class Module
     public function initFirePHP()
     {
         // 开启FirePHP调试或者关闭
+        $options = array(
+            'maxObjectDepth' => 10,
+            'maxArrayDepth' => 10,
+            'maxDepth' => 10,
+            'useNativeJsonEncode' => true,
+            'includeLineNumbers' => true
+        );
         \FirePHP::getInstance(true)->setEnabled(true);
+        \FB::setOptions($options);
     }
 
     public function initAuthentication()
