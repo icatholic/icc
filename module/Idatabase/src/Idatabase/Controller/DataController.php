@@ -14,6 +14,7 @@ use Zend\Json\Json;
 use My\Common\Controller\Action;
 use My\Common\MongoCollection;
 use Psr\Log\AbstractLogger;
+use Aws\CloudFront\Exception\Exception;
 
 class DataController extends Action
 {
@@ -272,43 +273,51 @@ class DataController extends Action
             $sort = $this->defaultOrder();
         }
         
+        fb($query,'LOG');
         $cursor = $this->_data->find($query, $this->_fields);
+        if(!($cursor instanceof \MongoCursor)) {
+            fb($cursor,'LOG');
+            throw new \Exception('无效的$cursor');
+        }
+
         $total = $cursor->count();
-        if ($total > 0) {
-            $cursor->sort($sort);
-            if ($action !== 'excel') {
-                $cursor->skip($start)->limit($limit);
-            }
-            
-            $datas = iterator_to_array($cursor, false);
-            $datas = $this->comboboxSelectedValues($datas);
-            
-            if ($action == 'excel') {
-                // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
-                $this->dealRshData();
-                // 结束
-                convertToPureArray($datas);
-                array_walk($datas, function (&$value, $key)
-                {
-                    ksort($value);
-                    array_walk($value, function (&$cell, $field)
-                    {
-                        if (isset($this->_rshData[$field])) {
-                            $cell = isset($this->_rshData[$field][$cell]) ? $this->_rshData[$field][$cell] : '';
-                        }
-                    });
-                });
-                
-                $excel = array(
-                    'title' => array_values($this->_title),
-                    'result' => $datas
-                );
-                arrayToExcel($excel);
-            }
-            return $this->rst($datas, $total, true);
-        } else {
+        if ($total <= 0) {
             return $this->rst(array(), 0, true);
         }
+        
+        $cursor->sort($sort);
+        if ($action !== 'excel') {
+            $cursor->skip($start)->limit($limit);
+        }
+        
+        
+        $datas = iterator_to_array($cursor, false);
+        $datas = $this->comboboxSelectedValues($datas);
+        
+        if ($action == 'excel') {
+            // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
+            $this->dealRshData();
+            // 结束
+            convertToPureArray($datas);
+            array_walk($datas, function (&$value, $key)
+            {
+                ksort($value);
+                array_walk($value, function (&$cell, $field)
+                {
+                    if (isset($this->_rshData[$field])) {
+                        $cell = isset($this->_rshData[$field][$cell]) ? $this->_rshData[$field][$cell] : '';
+                    }
+                });
+            });
+            
+            $excel = array(
+                'title' => array_values($this->_title),
+                'result' => $datas
+            );
+            arrayToExcel($excel);
+        }
+        return $this->rst($datas, $total, true);
+
     }
 
     /**
@@ -1251,7 +1260,7 @@ class DataController extends Action
                         $lng = floatval(trim($_REQUEST[$field]['lng']));
                         $lat = floatval(trim($_REQUEST[$field]['lat']));
                         $distance = ! empty($_REQUEST[$field]['distance']) ? floatval($_REQUEST[$field]['distance']) : 10;
-                        $subQuery = array(
+                        $subQuery[$field] = array(
                             '$near' => array(
                                 $lng,
                                 $lat
