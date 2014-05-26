@@ -130,12 +130,22 @@ class DashboardController extends Action
                 $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'reduce');
                 
                 // 替换统计结果中的数据为人可读数据开始
-                $rstModel = $this->collection(iCollectionName($out));
-                $result = $rstModel->findAll(array());
-                $map = array(
-                    '_id' => $statisticInfo['xAxisField']
-                );
-                $result = $this->replaceRshData($result, $map);
+                $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
+                if (! empty($rshDatas)) {
+                    $rstModel = $this->collection(iCollectionName($out));
+                    while ($cursor->hasNext()) {
+                        $row = $cursor->getNext();
+                        $_id = $row['_id'];
+                        $rstModel->update(array(
+                            '_id' => $_id,
+                            array(
+                                '$set' => array(
+                                    '_id' => $rshDatas[$_id]
+                                )
+                            )
+                        ));
+                    }
+                }
                 // 替换统计结果中的数据为人可读数据结束
                 
                 if ($rst instanceof \MongoCollection) {
@@ -162,47 +172,39 @@ class DashboardController extends Action
     }
 
     /**
-     */
-    /**
-     * 替换结果集中的数据
-     * 
-     * @param unknown $result            
-     * @param unknown $map            
-     */
-    private function replaceRshData($result, $map)
-    {}
-
-    /**
      * 处理数据中的关联数据
      */
     private function dealRshData($collection_id, $field)
     {
-        $rshData = array();
-        $rsh = $this->_structure->getRshFields($collection_id);
-        if (! empty($rsh) && isset($rsh[$field])) {
-            $rshCollection = $this->getCollectionIdByAlias($rsh[$field]);
-            $collectionName = 'idatabase_collection_' . $rshCollection;
-            $model = $this->secondary($collectionName);
-            $cursor = $model->find(array(), array(
-                $rshKeyValue['rshCollectionKeyField'] => true,
-                $rshKeyValue['rshCollectionValueField'] => true
-            ));
-            
-            $datas = array();
-            while ($cursor->hasNext()) {
-                $row = $cursor->getNext();
-                $key = $row[$rshKeyValue['rshCollectionValueField']];
-                $value = isset($row[$rshKeyValue['rshCollectionKeyField']]) ? $row[$rshKeyValue['rshCollectionKeyField']] : '';
-                if ($key instanceof \MongoId) {
-                    $key = $key->__toString();
-                }
-                if (! empty($key)) {
-                    $datas[$key] = $value;
+        try {
+            $rshData = array();
+            $rsh = $this->_structure->getRshFields($collection_id);
+            if (! empty($rsh) && isset($rsh[$field])) {
+                $rshCollection = $this->getCollectionIdByAlias($rsh[$field]);
+                // 获取被关联集合的结构
+                $rshKeyValue = $this->_structure->getComboboxKeyValueField($rshCollection);
+                $model = $this->secondary(iCollectionName($rshCollection));
+                $cursor = $model->find(array(), array(
+                    $rshKeyValue['rshCollectionKeyField'] => true,
+                    $rshKeyValue['rshCollectionValueField'] => true
+                ));
+                
+                while ($cursor->hasNext()) {
+                    $row = $cursor->getNext();
+                    $key = $row[$rshKeyValue['rshCollectionValueField']];
+                    $value = isset($row[$rshKeyValue['rshCollectionKeyField']]) ? $row[$rshKeyValue['rshCollectionKeyField']] : '';
+                    if ($key instanceof \MongoId) {
+                        $key = $key->__toString();
+                    }
+                    if (! empty($key)) {
+                        $rshData[$key] = $value;
+                    }
                 }
             }
-            $rshData[$field] = $datas;
+            
+            return $rshData;
+        } catch (\Exception $e) {
+            fb(exceptionMsg($e), 'LOG');
         }
-        
-        return $rshData;
     }
 }
