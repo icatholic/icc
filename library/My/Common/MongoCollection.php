@@ -519,7 +519,7 @@ class MongoCollection extends \MongoCollection
      * @param string $from            
      * @param string $to            
      */
-    public function copy($to)
+    public function copyTo($to)
     {
         $target = new \MongoCollection($this->_db, $to);
         if (method_exists($target, 'setWriteConcern'))

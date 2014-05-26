@@ -130,22 +130,22 @@ class DashboardController extends Action
                 $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'reduce');
                 
                 // 替换统计结果中的数据为人可读数据开始
-                $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
-                if (! empty($rshDatas)) {
-                    $rstModel = $this->collection(iCollectionName($out), DB_MAPREDUCE, DEFAULT_CLUSTER);
-                    $tmpModel = $this->qw(iCollectionName($out) . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
-                    while ($cursor->hasNext()) {
-                        $row = $cursor->getNext();
-                        $_id = $row['_id'];
-                        $tmpModel->insert(array(
-                            '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
-                            'value' => $row['value']
-                        ));
-                    }
-                    $rstModel->physicalDrop();
-                    $tmpModel->copy(iCollectionName($out));
-                    $tmpModel->physicalDrop();
-                }
+//                 $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
+//                 if (! empty($rshDatas)) {
+//                     $rstModel = $this->collection(iCollectionName($out), DB_MAPREDUCE, DEFAULT_CLUSTER);
+//                     $tmpModel = $this->qw(iCollectionName($out) . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
+//                     while ($cursor->hasNext()) {
+//                         $row = $cursor->getNext();
+//                         $_id = $row['_id'];
+//                         $tmpModel->insert(array(
+//                             '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
+//                             'value' => $row['value']
+//                         ));
+//                     }
+//                     $rstModel->physicalDrop();
+//                     $tmpModel->copyTo(iCollectionName($out));
+//                     $tmpModel->physicalDrop();
+//                 }
                 // 替换统计结果中的数据为人可读数据结束
                 
                 if ($rst instanceof \MongoCollection) {

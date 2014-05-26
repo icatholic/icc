@@ -1058,50 +1058,50 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
               };
 
               var yAxisType = '{$statisticInfo['yAxisType']}';
-              if(values instanceof Array) {
-                  var length = values.length;
-                  for(var idx = 0; idx < length ; idx++) {  
-                      if(yAxisType=='count') {
-                          rst.count += values[idx].count;
-                      } else if(yAxisType=='sum') {
-                          rst.total += values[idx].total;
-                      } else if(yAxisType=='max') {
-                          if(rst.max==null)
-                              rst.max = values[idx].max;
-                          else if(rst.max <= values[idx].max) {
-                              rst.max = values[idx].max;
-                          }
-                      } else if(yAxisType=='min') {
-                          if(rst.min==null) {
-                              rst.min = values[idx].min;
-                          }
-                          else if(rst.min >= values[idx].min) {
-                              rst.min = values[idx].min;
-                          }
-                      } else if(yAxisType=='unique'||yAxisType=='distinct') {
+              var length = values.length;
+              for(var idx = 0; idx < length ; idx++) {  
+                  if(yAxisType=='count') {
+                      rst.count += values[idx].count;
+                  } else if(yAxisType=='sum') {
+                      rst.total += values[idx].total;
+                  } else if(yAxisType=='max') {
+                      if(rst.max==null)
+                          rst.max = values[idx].max;
+                      else if(rst.max <= values[idx].max) {
+                          rst.max = values[idx].max;
+                      }
+                  } else if(yAxisType=='min') {
+                      if(rst.min==null) {
+                          rst.min = values[idx].min;
+                      }
+                      else if(rst.min >= values[idx].min) {
+                          rst.min = values[idx].min;
+                      }
+                  } else if(yAxisType=='unique'||yAxisType=='distinct') {
+                      if(values[idx].val instanceof Array) {
                           values[idx].val.forEach(function(v,i){
                               rst.val.push(v);
                           });   
-                      } else if(yAxisType=='avg') {
-                          rst.total += values[idx].total;
-                          rst.count += values[idx].count;
-                      } else if(yAxisType=='median') {
-                          values[idx].val.forEach(function(v,i){
-                              rst.val.push(v);
-                          });
-                      } else if(yAxisType=='variance') {
-                          rst.total += values[idx].total;
-                          rst.count += values[idx].count;
-                          values[idx].val.forEach(function(v,i){
-                              rst.val.push(v);
-                          });
-                      } else if(yAxisType=='standard') {
-                          rst.total += values[idx].total;
-                          rst.count += values[idx].count;
-                          values[idx].val.forEach(function(v,i){
-                              rst.val.push(v);
-                          });
                       }
+                  } else if(yAxisType=='avg') {
+                      rst.total += values[idx].total;
+                      rst.count += values[idx].count;
+                  } else if(yAxisType=='median') {
+                      values[idx].val.forEach(function(v,i){
+                          rst.val.push(v);
+                      });
+                  } else if(yAxisType=='variance') {
+                      rst.total += values[idx].total;
+                      rst.count += values[idx].count;
+                      values[idx].val.forEach(function(v,i){
+                          rst.val.push(v);
+                      });
+                  } else if(yAxisType=='standard') {
+                      rst.total += values[idx].total;
+                      rst.count += values[idx].count;
+                      values[idx].val.forEach(function(v,i){
+                          rst.val.push(v);
+                      });
                   }
               }
               return rst;
