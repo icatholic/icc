@@ -143,7 +143,8 @@ class DashboardController extends Action
                         ));
                     }
                     $rstModel->physicalDrop();
-                    $tmpModel->
+                    $tmpModel->copy(iCollectionName($out));
+                    $tmpModel->physicalDrop();
                 }
                 // 替换统计结果中的数据为人可读数据结束
                 
