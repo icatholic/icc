@@ -45,16 +45,4 @@ class Collection extends Mongo
         }
     }
 
-    /**
-     * 获取被关联的结合数据列表用于集合数据的替换
-     * @param string $rshCollectionAlias 集合别名 
-     * @param string $field 字段
-     * @return array 
-     */
-    public function getCollectionRshMap($collectionAlias,$field)
-    {
-        $rshCollection = $this->getCollectionIdByAlias($collectionAlias);
-        $rshFields = $this->_structure->getRshFields($rshCollection);
-        
-    }
 }
