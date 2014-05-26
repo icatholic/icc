@@ -934,7 +934,7 @@ class MongoCollection extends \MongoCollection
     }
 
     /**
-     * 执行DB的command操作
+     * 执行DB的command操作,直接运行命令行操作数据库中的数据，慎用
      *
      * @param array $command            
      * @return array

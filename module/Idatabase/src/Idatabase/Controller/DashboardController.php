@@ -26,7 +26,7 @@ class DashboardController extends Action
     private $_project_id;
 
     private $_mapping;
-    
+
     private $_rshData = array();
 
     public function init()
@@ -156,7 +156,7 @@ class DashboardController extends Action
         echo 'OK';
         return $this->response;
     }
-    
+
     /**
      * 处理数据中的关联数据
      */
@@ -167,10 +167,10 @@ class DashboardController extends Action
             $collectionName = 'idatabase_collection_' . $_id;
             $model = $this->collection($collectionName);
             $cursor = $model->find(array(), array(
-                    $detail['rshCollectionKeyField'] => true,
-                    $detail['rshCollectionValueField'] => true
+                $detail['rshCollectionKeyField'] => true,
+                $detail['rshCollectionValueField'] => true
             ));
-    
+            
             $datas = array();
             while ($cursor->hasNext()) {
                 $row = $cursor->getNext();
@@ -186,5 +186,4 @@ class DashboardController extends Action
             $this->_rshData[$detail['collectionField']] = $datas;
         }
     }
-
 }
