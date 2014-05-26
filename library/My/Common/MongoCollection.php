@@ -514,6 +514,32 @@ class MongoCollection extends \MongoCollection
     }
 
     /**
+     * 在同一个数据库内，复制集合数据
+     *
+     * @param string $from            
+     * @param string $to            
+     */
+    public function copy($to)
+    {
+        $target = new \MongoCollection($this->_db, $to);
+        if (method_exists($target, 'setWriteConcern'))
+            $target->setWriteConcern(0);
+        else
+            $target->w = 0;
+        
+        $cursor = $this->find(array());
+        while ($cursor->hasNext()) {
+            $row = $cursor->getNext();
+            if($row['_id'] instanceof \MongoId) {
+                $row['__OLD_ID__'] = $row['_id'];
+                unset($row['_id']);
+            }
+            $target->insert($row);
+        }
+        return true;
+    }
+
+    /**
      * ICC系统默认采用后台创建的方式，建立索引
      *
      * @see MongoCollection::ensureIndex()
