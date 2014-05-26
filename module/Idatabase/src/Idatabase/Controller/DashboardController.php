@@ -27,6 +27,8 @@ class DashboardController extends Action
 
     private $_mapping;
 
+    private $_structure;
+
     private $_rshData = array();
 
     public function init()
@@ -36,6 +38,7 @@ class DashboardController extends Action
         $this->_collection = $this->model('Idatabase\Model\Collection');
         $this->_statistic = $this->model('Idatabase\Model\Statistic');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
+        $this->_structure = $this->model('Idatabase\Model\Structure');
     }
 
     /**
@@ -126,13 +129,14 @@ class DashboardController extends Action
                 $out = 'dashboard_' . $statisticInfo['_id']->__toString();
                 $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'reduce');
                 
-                // 统计完成替换里面的关联变量信息
+                // 替换统计结果中的数据为人可读数据开始
                 $rstModel = $this->collection(iCollectionName($out));
                 $result = $rstModel->findAll(array());
                 $map = array(
                     '_id' => $statisticInfo['xAxisField']
                 );
                 $result = $this->replaceRshData($result, $map);
+                // 替换统计结果中的数据为人可读数据结束
                 
                 if ($rst instanceof \MongoCollection) {
                     $outCollectionName = $rst->getName(); // 输出集合名称
@@ -158,24 +162,37 @@ class DashboardController extends Action
     }
 
     /**
+     */
+    /**
+     * 替换结果集中的数据
+     * 
+     * @param unknown $result            
+     * @param unknown $map            
+     */
+    private function replaceRshData($result, $map)
+    {}
+
+    /**
      * 处理数据中的关联数据
      */
-    private function dealRshData($collection_id)
+    private function dealRshData($collection_id, $field)
     {
-        foreach ($this->_rshCollection as $_id => $detail) {
-            $_id = $this->getCollectionIdByAlias($_id);
-            $collectionName = 'idatabase_collection_' . $_id;
-            $model = $this->collection($collectionName);
+        $rshData = array();
+        $rsh = $this->_structure->getRshFields($collection_id);
+        if (! empty($rsh) && isset($rsh[$field])) {
+            $rshCollection = $this->getCollectionIdByAlias($rsh[$field]);
+            $collectionName = 'idatabase_collection_' . $rshCollection;
+            $model = $this->secondary($collectionName);
             $cursor = $model->find(array(), array(
-                $detail['rshCollectionKeyField'] => true,
-                $detail['rshCollectionValueField'] => true
+                $rshKeyValue['rshCollectionKeyField'] => true,
+                $rshKeyValue['rshCollectionValueField'] => true
             ));
             
             $datas = array();
             while ($cursor->hasNext()) {
                 $row = $cursor->getNext();
-                $key = $row[$detail['rshCollectionValueField']];
-                $value = isset($row[$detail['rshCollectionKeyField']]) ? $row[$detail['rshCollectionKeyField']] : '';
+                $key = $row[$rshKeyValue['rshCollectionValueField']];
+                $value = isset($row[$rshKeyValue['rshCollectionKeyField']]) ? $row[$rshKeyValue['rshCollectionKeyField']] : '';
                 if ($key instanceof \MongoId) {
                     $key = $key->__toString();
                 }
@@ -183,7 +200,9 @@ class DashboardController extends Action
                     $datas[$key] = $value;
                 }
             }
-            $this->_rshData[$detail['collectionField']] = $datas;
+            $rshData[$field] = $datas;
         }
+        
+        return $rshData;
     }
 }
