@@ -129,7 +129,7 @@ class DashboardController extends Action
                 
                 $out = 'dashboard_' . $statisticInfo['_id']->__toString();
                 $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'replace');
-
+                
                 if ($rst instanceof \MongoCollection) {
                     $outCollectionName = $rst->getName(); // 输出集合名称
                     $this->_statistic->update(array(
@@ -146,26 +146,27 @@ class DashboardController extends Action
                 }
                 
                 // 替换统计结果中的数据为人可读数据开始
-                $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
-                if (! empty($rshDatas)) {
-                    $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
-                    $rstModel->setNoAppendQuery(true);
-                    $tmpModel = $this->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
-                    $tmpModel->setNoAppendQuery(true);
-                    while ($cursor->hasNext()) {
-                        $row = $cursor->getNext();
-                        $_id = $row['_id'];
-                        $tmpModel->insert(array(
+                if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
+                    $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
+                    if (! empty($rshDatas)) {
+                        $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                        $rstModel->setNoAppendQuery(true);
+                        $tmpModel = $this->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
+                        $tmpModel->setNoAppendQuery(true);
+                        while ($cursor->hasNext()) {
+                            $row = $cursor->getNext();
+                            $_id = $row['_id'];
+                            $tmpModel->insert(array(
                                 '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
                                 'value' => $row['value']
-                        ));
+                            ));
+                        }
+                        $rstModel->physicalDrop();
+                        $tmpModel->copyTo($out);
+                        $tmpModel->physicalDrop();
                     }
-                    $rstModel->physicalDrop();
-                    $tmpModel->copyTo($out);
-                    $tmpModel->physicalDrop();
                 }
                 // 替换统计结果中的数据为人可读数据结束
-                
             } catch (\Exception $e) {
                 $logError($statisticInfo, $e->getMessage());
             }

@@ -521,7 +521,24 @@ class MongoCollection extends \MongoCollection
      */
     public function copyTo($to)
     {
-        $target = new \MongoCollection($this->_db, $to);
+        switch($this->_database) {
+            case DEFAULT_DATABASE:
+                $db = $this->_db;
+                break;
+            case DB_MAPREDUCE :
+                $db = $this->_mapreduce;
+                break;
+            case DB_BACKUP: 
+                $db = $this->_backup;
+                break;
+            case DB_ADMIN:
+                $db = $this->_admin;
+                break;
+            default:
+                $db = $this->_db;
+                break;
+        }
+        $target = new \MongoCollection($db, $to);
         if (method_exists($target, 'setWriteConcern'))
             $target->setWriteConcern(0);
         else
