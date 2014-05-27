@@ -1290,8 +1290,10 @@ class DataController extends Action
                     case 'datefield':
                         $start = trim($_REQUEST[$field]['start']);
                         $end = trim($_REQUEST[$field]['end']);
-                        $start = preg_match("/^[0-9]+$/", $start) ? new \MongoDate(intval($start)) : new \MongoDate(strtotime($start));
-                        $end = preg_match("/^[0-9]+$/", $end) ? new \MongoDate(intval($end)) : new \MongoDate(strtotime($end));
+                        if (! empty($start))
+                            $start = preg_match("/^[0-9]+$/", $start) ? new \MongoDate(intval($start)) : new \MongoDate(strtotime($start));
+                        if (! empty($end))
+                            $end = preg_match("/^[0-9]+$/", $end) ? new \MongoDate(intval($end)) : new \MongoDate(strtotime($end));
                         if ($not) {
                             if (! empty($start))
                                 $subQuery['$or'][][$field]['$lte'] = $start;

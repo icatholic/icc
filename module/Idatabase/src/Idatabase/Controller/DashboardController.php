@@ -88,6 +88,7 @@ class DashboardController extends Action
         };
         
         $statistics = $this->_statistic->findAll(array(
+            'isDashboard' => true,
             'resultExpireTime' => array(
                 '$lte' => new \MongoDate()
             )
@@ -127,27 +128,8 @@ class DashboardController extends Action
                 );
                 
                 $out = 'dashboard_' . $statisticInfo['_id']->__toString();
-                $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'reduce');
-                
-                // 替换统计结果中的数据为人可读数据开始
-//                 $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
-//                 if (! empty($rshDatas)) {
-//                     $rstModel = $this->collection(iCollectionName($out), DB_MAPREDUCE, DEFAULT_CLUSTER);
-//                     $tmpModel = $this->qw(iCollectionName($out) . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
-//                     while ($cursor->hasNext()) {
-//                         $row = $cursor->getNext();
-//                         $_id = $row['_id'];
-//                         $tmpModel->insert(array(
-//                             '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
-//                             'value' => $row['value']
-//                         ));
-//                     }
-//                     $rstModel->physicalDrop();
-//                     $tmpModel->copyTo(iCollectionName($out));
-//                     $tmpModel->physicalDrop();
-//                 }
-                // 替换统计结果中的数据为人可读数据结束
-                
+                $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'replace');
+
                 if ($rst instanceof \MongoCollection) {
                     $outCollectionName = $rst->getName(); // 输出集合名称
                     $this->_statistic->update(array(
@@ -162,6 +144,28 @@ class DashboardController extends Action
                 } else {
                     $logError($statisticInfo, $rst);
                 }
+                
+                // 替换统计结果中的数据为人可读数据开始
+                $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
+                if (! empty($rshDatas)) {
+                    $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                    $rstModel->setNoAppendQuery(true);
+                    $tmpModel = $this->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
+                    $tmpModel->setNoAppendQuery(true);
+                    while ($cursor->hasNext()) {
+                        $row = $cursor->getNext();
+                        $_id = $row['_id'];
+                        $tmpModel->insert(array(
+                                '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
+                                'value' => $row['value']
+                        ));
+                    }
+                    $rstModel->physicalDrop();
+                    $tmpModel->copyTo($out);
+                    $tmpModel->physicalDrop();
+                }
+                // 替换统计结果中的数据为人可读数据结束
+                
             } catch (\Exception $e) {
                 $logError($statisticInfo, $e->getMessage());
             }

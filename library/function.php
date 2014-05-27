@@ -961,11 +961,8 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
             var xAxisTitle = '{$statisticInfo['xAxisTitle']}'; 
             var key = '';
             var rst = {
-               //total : parseFloat(yAxisField)!=NaN ? yAxisField : 0,
                total : isNumber(yAxisField) ? yAxisField : 0,
                count : yAxisField!==null ? 1 : 0,
-               //max : parseFloat(yAxisField)!=NaN ? yAxisField : Number.NEGATIVE_INFINITY,
-               //min : parseFloat(yAxisField)!=NaN ? yAxisField : Number.POSITIVE_INFINITY,
                max : isNumber(yAxisField) ? yAxisField : Number.NEGATIVE_INFINITY,
                min : isNumber(yAxisField) ? yAxisField : Number.POSITIVE_INFINITY,
                val : [yAxisField]
@@ -980,8 +977,6 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                     try {
                         var time = new Date(xAxisField);
                         var timeSec = time.getTime();
-                        //time = new Date();
-                        //time.setTime(timeSec+8*3600000);
                         var year = time.getFullYear();
                         var m = time.getMonth() + 1;
                         var month = m<10 ? '0'+m : m; 
@@ -1000,8 +995,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                 }
             }
             else {
-                //if(parseFloat(yAxisField)==NaN) {
-                if(!isNumber(yAxisField))
+                if(!isNumber(yAxisField)) {
                     yAxisField = 0;
                 }
             }
