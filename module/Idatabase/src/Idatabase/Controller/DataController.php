@@ -1288,8 +1288,8 @@ class DataController extends Action
                         }
                         break;
                     case 'datefield':
-                        $start = trim($_REQUEST[$field]['start']);
-                        $end = trim($_REQUEST[$field]['end']);
+                        $start = isset($_REQUEST[$field]['start']) ? trim($_REQUEST[$field]['start']) : null;
+                        $end = isset($_REQUEST[$field]['end']) ? trim($_REQUEST[$field]['end']) : null;
                         if (! empty($start))
                             $start = preg_match("/^[0-9]+$/", $start) ? new \MongoDate(intval($start)) : new \MongoDate(strtotime($start));
                         if (! empty($end))
