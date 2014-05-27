@@ -43,7 +43,8 @@ class Structure extends Mongo
             )
         ), array(
             '$natural' => 1
-        ), 0, array(
+        ), 0, 0, array(
+            'field' => true,
             'rshCollection' => true
         ));
         

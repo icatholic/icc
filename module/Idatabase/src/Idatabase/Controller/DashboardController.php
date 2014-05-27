@@ -146,21 +146,137 @@ class DashboardController extends Action
                 }
                 
                 // 替换统计结果中的数据为人可读数据开始
+                // if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
+                // $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
+                // if (! empty($rshDatas)) {
+                // $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                // $rstModel->setNoAppendQuery(true);
+                // $tmpModel = $this->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
+                // $tmpModel->setNoAppendQuery(true);
+                // while ($cursor->hasNext()) {
+                // $row = $cursor->getNext();
+                // $_id = $row['_id'];
+                // $tmpModel->insert(array(
+                // '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
+                // 'value' => $row['value']
+                // ));
+                // }
+                // $rstModel->physicalDrop();
+                // $tmpModel->copyTo($out);
+                // $tmpModel->physicalDrop();
+                // }
+                // }
+                // 替换统计结果中的数据为人可读数据结束
+            } catch (\Exception $e) {
+                $logError($statisticInfo, $e->getMessage());
+            }
+        }
+        
+        echo 'OK';
+        return $this->response;
+    }
+
+    /**
+     * 测试结果
+     *
+     * @return \Zend\Stdlib\ResponseInterface
+     */
+    public function testAction()
+    {
+        $statistic_id = $this->params()->fromQuery('statistic_id', null);
+        $logError = function ($statisticInfo, $rst)
+        {
+            $this->_statistic->update(array(
+                '_id' => $statisticInfo['_id']
+            ), array(
+                '$set' => array(
+                    'dashboardOut' => '',
+                    'dashboardError' => is_string($rst) ? $rst : Json::encode($rst)
+                )
+            ));
+        };
+        
+        $statistics = $this->_statistic->findAll(array(
+            '_id' => myMongoId($statistic_id),
+            'isDashboard' => true
+        ));
+        
+        if (empty($statistics)) {
+            echo 'empty';
+            return $this->response;
+        }
+        
+        foreach ($statistics as $statisticInfo) {
+            try {
+                if (! empty($statisticInfo['dashboardOut'])) {
+                    $oldDashboardOut = $this->collection($statisticInfo['dashboardOut'], DB_MAPREDUCE, DEFAULT_CLUSTER);
+                    $oldDashboardOut->physicalDrop();
+                }
+                
+                // 检查是否存在映射关系
+                $mapCollection = $this->_mapping->findOne(array(
+                    'collection_id' => $statisticInfo['collection_id'],
+                    'active' => true
+                ));
+                if ($mapCollection != null) {
+                    $dataModel = $this->collection()->secondary($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
+                } else {
+                    $dataModel = $this->collection()->secondary(iCollectionName($statisticInfo['collection_id']));
+                }
+                
+                $query = array();
+                if (! empty($statisticInfo['dashboardQuery'])) {
+                    $query['$and'][] = $statisticInfo['dashboardQuery'];
+                }
+                $query['$and'][] = array(
+                    '__CREATE_TIME__' => array(
+                        '$gte' => new \MongoDate(time() - $statisticInfo['statisticPeriod'])
+                    )
+                );
+                
+                $out = 'dashboard_' . $statisticInfo['_id']->__toString();
+                $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'replace');
+                
+                if ($rst instanceof \MongoCollection) {
+                    $outCollectionName = $rst->getName(); // 输出集合名称
+                    $this->_statistic->update(array(
+                        '_id' => $statisticInfo['_id']
+                    ), array(
+                        '$set' => array(
+                            'dashboardOut' => $outCollectionName,
+                            'lastExecuteTime' => new \MongoDate(),
+                            'resultExpireTime' => new \MongoDate(time() + $statisticInfo['interval'])
+                        )
+                    ));
+                } else {
+                    $logError($statisticInfo, $rst);
+                }
+                
+                // 替换统计结果中的数据为人可读数据开始
                 if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
-                    $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
+                    $rshDatas = $this->dealRshData($statisticInfo['project_id'], $statisticInfo['collection_id'], $statisticInfo['xAxisField']);
                     if (! empty($rshDatas)) {
+                        fb($rshDatas,'LOG');
                         $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
                         $rstModel->setNoAppendQuery(true);
-                        $tmpModel = $this->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
+                        $tmpModel = $this->collection()->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
                         $tmpModel->setNoAppendQuery(true);
+                        $cursor = $rstModel->find(array());
                         while ($cursor->hasNext()) {
                             $row = $cursor->getNext();
+                            fb($row,'LOG');
+                            var_dump($row);
                             $_id = $row['_id'];
                             $tmpModel->insert(array(
                                 '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
                                 'value' => $row['value']
                             ));
+                            fb(array(
+                            '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
+                            'value' => $row['value']
+                            ), 'LOG');
                         }
+                        
                         $rstModel->physicalDrop();
                         $tmpModel->copyTo($out);
                         $tmpModel->physicalDrop();
@@ -179,16 +295,16 @@ class DashboardController extends Action
     /**
      * 处理数据中的关联数据
      */
-    private function dealRshData($collection_id, $field)
+    private function dealRshData($project_id, $collection_id, $field)
     {
         try {
             $rshData = array();
             $rsh = $this->_structure->getRshFields($collection_id);
             if (! empty($rsh) && isset($rsh[$field])) {
-                $rshCollection = $this->getCollectionIdByAlias($rsh[$field]);
+                $rshCollection = $this->_collection->getCollectionIdByAlias($project_id, $rsh[$field]);
                 // 获取被关联集合的结构
                 $rshKeyValue = $this->_structure->getComboboxKeyValueField($rshCollection);
-                $model = $this->secondary(iCollectionName($rshCollection));
+                $model = $this->collection()->secondary(iCollectionName($rshCollection));
                 $cursor = $model->find(array(), array(
                     $rshKeyValue['rshCollectionKeyField'] => true,
                     $rshKeyValue['rshCollectionValueField'] => true
@@ -201,12 +317,9 @@ class DashboardController extends Action
                     if ($key instanceof \MongoId) {
                         $key = $key->__toString();
                     }
-                    if (! empty($key)) {
-                        $rshData[$key] = $value;
-                    }
+                    $rshData[$key] = $value;
                 }
             }
-            
             return $rshData;
         } catch (\Exception $e) {
             fb(exceptionMsg($e), 'LOG');
