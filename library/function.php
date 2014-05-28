@@ -1001,7 +1001,11 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
             }
             
             if(xAxisField instanceof Array || xAxisField instanceof Object) {
-                xAxisField = xAxisField.toString();
+                if(xAxisField instanceof NumberLong) {
+                    xAxisField = NumberInt(xAxisField);
+                } else {
+                    xAxisField = xAxisField.toString();
+                }
             }
             
             switch(xAxisType) {
