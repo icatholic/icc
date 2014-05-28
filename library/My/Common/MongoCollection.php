@@ -521,14 +521,14 @@ class MongoCollection extends \MongoCollection
      */
     public function copyTo($to)
     {
-        switch($this->_database) {
+        switch ($this->_database) {
             case DEFAULT_DATABASE:
                 $db = $this->_db;
                 break;
-            case DB_MAPREDUCE :
+            case DB_MAPREDUCE:
                 $db = $this->_mapreduce;
                 break;
-            case DB_BACKUP: 
+            case DB_BACKUP:
                 $db = $this->_backup;
                 break;
             case DB_ADMIN:
@@ -547,7 +547,7 @@ class MongoCollection extends \MongoCollection
         $cursor = $this->find(array());
         while ($cursor->hasNext()) {
             $row = $cursor->getNext();
-            if($row['_id'] instanceof \MongoId) {
+            if ($row['_id'] instanceof \MongoId) {
                 $row['__OLD_ID__'] = $row['_id'];
                 unset($row['_id']);
             }
@@ -603,7 +603,7 @@ class MongoCollection extends \MongoCollection
      * @param array $fields            
      * @return array
      */
-    public function findAll($query, $sort = array('$natural'=>1), $skip = 0, $limit = 0, $fields = array())
+    public function findAll($query = array(), $sort = array('$natural'=>1), $skip = 0, $limit = 0, $fields = array())
     {
         $fields = empty($fields) ? array() : $fields;
         $cursor = $this->find($query, $fields);
@@ -757,7 +757,7 @@ class MongoCollection extends \MongoCollection
             $a['__MODIFY_TIME__'] = new \MongoDate();
         }
         
-        if (! isset($a['__REMOVED__'])) {
+        if (! isset($a['__REMOVED__']) && ! $this->_noAppendQuery) {
             $a['__REMOVED__'] = false;
         }
         

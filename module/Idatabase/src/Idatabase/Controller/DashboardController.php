@@ -146,26 +146,25 @@ class DashboardController extends Action
                 }
                 
                 // 替换统计结果中的数据为人可读数据开始
-                // if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
-                // $rshDatas = $this->dealRshData($statisticInfo['collection_id'], $statisticInfo['xAxisField']);
-                // if (! empty($rshDatas)) {
-                // $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
-                // $rstModel->setNoAppendQuery(true);
-                // $tmpModel = $this->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
-                // $tmpModel->setNoAppendQuery(true);
-                // while ($cursor->hasNext()) {
-                // $row = $cursor->getNext();
-                // $_id = $row['_id'];
-                // $tmpModel->insert(array(
-                // '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
-                // 'value' => $row['value']
-                // ));
-                // }
-                // $rstModel->physicalDrop();
-                // $tmpModel->copyTo($out);
-                // $tmpModel->physicalDrop();
-                // }
-                // }
+                if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
+                    $rshDatas = $this->dealRshData($statisticInfo['project_id'], $statisticInfo['collection_id'], $statisticInfo['xAxisField']);
+                    if (! empty($rshDatas)) {
+                        $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                        $rstModel->setNoAppendQuery(true);
+                        $cursor = $rstModel->find(array());
+                        while ($cursor->hasNext()) {
+                            $row = $cursor->getNext();
+                            $_id = $row['_id'];
+                            $rstModel->physicalRemove(array(
+                                '_id' => $_id
+                            ));
+                            $rstModel->insert(array(
+                                '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
+                                'value' => $row['value']
+                            ));
+                        }
+                    }
+                }
                 // 替换统计结果中的数据为人可读数据结束
             } catch (\Exception $e) {
                 $logError($statisticInfo, $e->getMessage());
@@ -256,30 +255,21 @@ class DashboardController extends Action
                 if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
                     $rshDatas = $this->dealRshData($statisticInfo['project_id'], $statisticInfo['collection_id'], $statisticInfo['xAxisField']);
                     if (! empty($rshDatas)) {
-                        fb($rshDatas,'LOG');
                         $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
                         $rstModel->setNoAppendQuery(true);
-                        $tmpModel = $this->collection()->qw($out . '_tmp', DB_MAPREDUCE, DEFAULT_CLUSTER);
-                        $tmpModel->setNoAppendQuery(true);
                         $cursor = $rstModel->find(array());
                         while ($cursor->hasNext()) {
                             $row = $cursor->getNext();
-                            fb($row,'LOG');
-                            var_dump($row);
                             $_id = $row['_id'];
-                            $tmpModel->insert(array(
+                            $rstModel->physicalRemove(array(
+                                '_id' => $_id
+                            ));
+                            $rstModel->insert(array(
                                 '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
                                 'value' => $row['value']
                             ));
-                            fb(array(
-                            '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
-                            'value' => $row['value']
-                            ), 'LOG');
                         }
-                        
-                        $rstModel->physicalDrop();
-                        $tmpModel->copyTo($out);
-                        $tmpModel->physicalDrop();
+                        var_dump($rstModel->findAll(array()));
                     }
                 }
                 // 替换统计结果中的数据为人可读数据结束
