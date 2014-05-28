@@ -37,7 +37,7 @@ Ext.define('icc.view.idatabase.Statistic.Add', {
 					fieldLabel: '最大显示条数',
 					minValue: 0,
 					maxValue: 1000,
-					value: 100
+					value: 20
 				}, {
 					xtype: 'fieldset',
 					title: '柱状图/线形图',

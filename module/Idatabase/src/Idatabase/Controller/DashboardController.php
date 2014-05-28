@@ -149,19 +149,28 @@ class DashboardController extends Action
                 if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
                     $rshDatas = $this->dealRshData($statisticInfo['project_id'], $statisticInfo['collection_id'], $statisticInfo['xAxisField']);
                     if (! empty($rshDatas)) {
-                        $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
-                        $rstModel->setNoAppendQuery(true);
-                        $cursor = $rstModel->find(array());
-                        while ($cursor->hasNext()) {
-                            $row = $cursor->getNext();
-                            $_id = $row['_id'];
-                            $rstModel->physicalRemove(array(
-                                '_id' => $_id
-                            ));
-                            $rstModel->insert(array(
-                                '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
-                                'value' => $row['value']
-                            ));
+                        try {
+                            $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                            $rstModel->setNoAppendQuery(true);
+                            $cursor = $rstModel->find(array());
+                            while ($cursor->hasNext()) {
+                                $row = $cursor->getNext();
+                                $rstModel->physicalRemove(array(
+                                    '_id' => $row['_id']
+                                ));
+                                $_id = $row['_id'];
+                                $rstModel->update(array(
+                                    '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id
+                                ), array(
+                                    '$set' => array(
+                                        'value' => $row['value']
+                                    )
+                                ), array(
+                                    'upsert' => true
+                                ));
+                            }
+                        } catch (\Exception $e) {
+                            var_dump($e);
                         }
                     }
                 }
@@ -255,22 +264,29 @@ class DashboardController extends Action
                 if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
                     $rshDatas = $this->dealRshData($statisticInfo['project_id'], $statisticInfo['collection_id'], $statisticInfo['xAxisField']);
                     if (! empty($rshDatas)) {
-                        $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
-                        $rstModel->setNoAppendQuery(true);
-                        echo $out;
-                        $cursor = $rstModel->find(array());
-                        while ($cursor->hasNext()) {
-                            $row = $cursor->getNext();
-                            $_id = $row['_id'];
-                            $rstModel->physicalRemove(array(
-                                '_id' => $_id
-                            ));
-                            $rstModel->insert(array(
-                                '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id,
-                                'value' => $row['value']
-                            ));
+                        try {
+                            $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                            $rstModel->setNoAppendQuery(true);
+                            $cursor = $rstModel->find(array());
+                            while ($cursor->hasNext()) {
+                                $row = $cursor->getNext();
+                                $rstModel->physicalRemove(array(
+                                    '_id' => $row['_id']
+                                ));
+                                $_id = $row['_id'];
+                                $rstModel->update(array(
+                                    '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id
+                                ), array(
+                                    '$set' => array(
+                                        'value' => $row['value']
+                                    )
+                                ), array(
+                                    'upsert' => true
+                                ));
+                            }
+                        } catch (\Exception $e) {
+                            var_dump($e);
                         }
-                        var_dump($rstModel->findAll(array()));
                     }
                 }
                 // 替换统计结果中的数据为人可读数据结束
