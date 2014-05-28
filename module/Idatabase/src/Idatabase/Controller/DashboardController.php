@@ -257,6 +257,7 @@ class DashboardController extends Action
                     if (! empty($rshDatas)) {
                         $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
                         $rstModel->setNoAppendQuery(true);
+                        echo $out;
                         $cursor = $rstModel->find(array());
                         while ($cursor->hasNext()) {
                             $row = $cursor->getNext();
