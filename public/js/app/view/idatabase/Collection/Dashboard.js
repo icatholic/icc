@@ -78,6 +78,7 @@ Ext.define('icc.view.idatabase.Collection.Dashboard', {
 										max: '最大值',
 										min: '最小值',
 										unique: '唯一值',
+										distinct: '唯一值',
 										median: '中位数',
 										variance: '方差',
 										standard: '标准差'
@@ -119,8 +120,9 @@ Ext.define('icc.view.idatabase.Collection.Dashboard', {
 												tips: {
 													trackMouse: true,
 													width: 'auto',
-													height: 30,
-													minHeight: 30,
+													maxWidth : 300,
+													//height: 30,
+													//minHeight: 30,
 													renderer: function(storeItem, item) {
 														this.setTitle(storeItem.get('_id') + '的' + type[yAxisType] + ':' + storeItem.get('value'));
 													}
@@ -147,14 +149,15 @@ Ext.define('icc.view.idatabase.Collection.Dashboard', {
 												donut: true,
 												tips: {
 													trackMouse: true,
-													width: 150,
-													height: 28,
+													width: 'auto',
+													maxWidth : 300,
+													//height: 28,
 													renderer: function(storeItem, item) {
 														var total = 0;
 														store.each(function(rec) {
 															total += rec.get('value');
 														});
-														this.setTitle(storeItem.get('_id') + ': ' + Math.round(storeItem.get('value') / total * 100, 2) + '%');
+														this.setTitle(storeItem.get('_id') + ': ' + Math.round(storeItem.get('value') / total * 100, 2) + '% ('+storeItem.get('value')+')');
 													}
 												},
 												highlight: {
