@@ -131,6 +131,7 @@ class PluginCollection extends Mongo
                     '__REMOVED__'
                 ));
                 $row['collection_id'] = $collection_id;
+                array_unset_recursive($row, array('isAutoHook','hook','hookKey'));
                 $this->_structure->update(array(
                     'collection_id' => $collection_id,
                     'field' => $row['field']
