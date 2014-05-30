@@ -41,7 +41,8 @@ class Dashboard extends Mongo
             $row = $cursor->getNext();
             $collection_id = $row['_id']->__toString();
             $statisticInfos = $this->_statistic->findAll(array(
-                'collection_id' => $collection_id
+                'collection_id' => $collection_id,
+                'isDashboard' => true
             ));
             if (! empty($statisticInfos)) {
                 foreach ($statisticInfos as $statisticInfos) {
