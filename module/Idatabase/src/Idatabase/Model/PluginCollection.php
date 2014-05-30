@@ -47,7 +47,11 @@ class PluginCollection extends Mongo
         unset($datas['project_id']);
         $datas['_id'] = new \MongoId();
         $datas['plugin_collection_id'] = $datas['_id']->__toString();
-        array_unset_recursive($datas, array('isAutoHook','hook','hookKey'));
+        array_unset_recursive($datas, array(
+            'isAutoHook',
+            'hook',
+            'hookKey'
+        ));
         $this->insertRef($datas);
         if ($datas['_id'] instanceof \MongoId)
             return $datas['_id']->__toString();
@@ -64,7 +68,12 @@ class PluginCollection extends Mongo
     public function editPluginCollection($datas)
     {
         $plugin_collection_id = isset($datas['plugin_collection_id']) ? $datas['plugin_collection_id'] : '';
-        array_unset_recursive($datas, array('project_id','isAutoHook','hook','hookKey'));
+        array_unset_recursive($datas, array(
+            'project_id',
+            'isAutoHook',
+            'hook',
+            'hookKey'
+        ));
         if (! empty($plugin_collection_id)) {
             $rst = $this->update(array(
                 '_id' => myMongoId($plugin_collection_id)
@@ -131,7 +140,6 @@ class PluginCollection extends Mongo
                     '__REMOVED__'
                 ));
                 $row['collection_id'] = $collection_id;
-                array_unset_recursive($row, array('isAutoHook','hook','hookKey'));
                 $this->_structure->update(array(
                     'collection_id' => $collection_id,
                     'field' => $row['field']
@@ -192,7 +200,6 @@ class PluginCollection extends Mongo
         
         if ($pluginCollectionInfo != null) {
             unset($pluginCollectionInfo['_id']);
-            fb($pluginCollectionInfo, 'LOG');
             $collectionInfo = $pluginCollectionInfo;
             $collectionInfo['project_id'] = array(
                 $project_id
@@ -201,6 +208,12 @@ class PluginCollection extends Mongo
             $check = $this->_collection->findOne(array(
                 'project_id' => $project_id,
                 'alias' => $collectionName
+            ));
+            
+            array_unset_recursive($collectionInfo, array(
+                'isAutoHook',
+                'hook',
+                'hookKey'
             ));
             
             if ($check == null) {
