@@ -110,7 +110,7 @@ Ext.define('icc.view.idatabase.Statistic.Add', {
 					collapsible: true,
 					items: [{
 						xtype: 'radiogroup',
-						fieldLabel: '开启控制面板显示',
+						fieldLabel: '开启仪表盘显示',
 						defaultType: 'radiofield',
 						layout: 'hbox',
 						items: [{
@@ -123,6 +123,10 @@ Ext.define('icc.view.idatabase.Statistic.Add', {
 							inputValue: false,
 							checked: true
 						}]
+					}, {
+						xtype: 'textfield',
+						name: 'dashboardTitle',
+						fieldLabel: '仪表盘标题'
 					}, {
 						xtype: 'textareafield',
 						name: 'dashboardQuery',

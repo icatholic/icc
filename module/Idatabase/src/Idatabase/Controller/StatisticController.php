@@ -100,6 +100,7 @@ class StatisticController extends Action
         $seriesField = trim($this->params()->fromPost('seriesField', '')); // 用于pie
         $maxShowNumber = intval($this->params()->fromPost('maxShowNumber', 100)); // 显示最大数量，防止饼状图太多
         $isDashboard = filter_var($this->params()->fromPost('isDashboard', null), FILTER_VALIDATE_BOOLEAN); // 是否显示在控制面板
+        $dashboardTitle = trim($this->params()->fromPost('dashboardTitle', ''));
         $dashboardQuery = trim($this->params()->fromPost('dashboardQuery', '')); // 控制面板附加查询条件
         $statisticPeriod = intval($this->params()->fromPost('statisticPeriod', 24 * 3600)); // 控制面板显示周期
         $colspan = intval($this->params()->fromPost('colspan', 1)); // 行显示是否合并
@@ -178,6 +179,7 @@ class StatisticController extends Action
         $datas['maxShowNumber'] = $maxShowNumber;
         
         $datas['isDashboard'] = $isDashboard;
+        $datas['dashboardTitle'] = !empty($dashboardTitle) ? $dashboardTitle : $name;
         $datas['dashboardQuery'] = $dashboardQuery;
         $datas['statisticPeriod'] = $statisticPeriod;
         $datas['colspan'] = $colspan;
@@ -215,6 +217,7 @@ class StatisticController extends Action
         $seriesField = trim($this->params()->fromPost('seriesField', '')); // 用于pie
         $maxShowNumber = intval($this->params()->fromPost('maxShowNumber', 100)); // 显示最大数量，防止饼状图太多
         $isDashboard = filter_var($this->params()->fromPost('isDashboard', null), FILTER_VALIDATE_BOOLEAN); // 是否显示在控制面板
+        $dashboardTitle = trim($this->params()->fromPost('dashboardTitle', ''));
         $dashboardQuery = trim($this->params()->fromPost('dashboardQuery', '')); // 控制面板附加查询条件
         $statisticPeriod = intval($this->params()->fromPost('statisticPeriod', 24 * 3600)); // 控制面板显示周期
         $colspan = intval($this->params()->fromPost('colspan', 1)); // 行显示是否合并
@@ -293,6 +296,7 @@ class StatisticController extends Action
         $datas['maxShowNumber'] = $maxShowNumber;
         
         $datas['isDashboard'] = $isDashboard;
+        $datas['dashboardTitle'] = !empty($dashboardTitle) ? $dashboardTitle : $name;
         $datas['dashboardQuery'] = $dashboardQuery;
         $datas['statisticPeriod'] = $statisticPeriod;
         $datas['colspan'] = $colspan;

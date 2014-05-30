@@ -40,6 +40,9 @@ Ext.define('icc.model.idatabase.Statistic', {
 		name : 'isDashboard',
 		type : 'boolean'
 	}, {
+		name : 'dashboardTitle',
+		type : 'string'
+	}, {
 		name : 'dashboardQuery',
 		type : 'string'
 	}, {

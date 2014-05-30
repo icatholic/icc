@@ -66,7 +66,7 @@ Ext.define('icc.view.idatabase.Collection.Dashboard', {
 										fields: ["_id", "value"],
 										data: items['__DATAS__']
 									});
-									var title = items.name;
+									var title = items.dashboardTitle ? items.dashboardTitle : items.name;
 									var seriesType = items.seriesType;
 									var yAxisTitle = items.yAxisTitle;
 									var yAxisType = items.yAxisType;
@@ -133,7 +133,7 @@ Ext.define('icc.view.idatabase.Collection.Dashboard', {
 										var chart = Ext.create('Ext.chart.Chart', {
 											animate: true,
 											store: store,
-											title: items.name,
+											title: items.dashboardTitle ? items.dashboardTitle : items.name,
 											shadow: true,
 											width: width,
 											height: 300,
