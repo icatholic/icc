@@ -155,10 +155,10 @@ class StatisticController extends Action
                 try {
                     $dashboardQuery = Json::decode($dashboardQuery, Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
-                    return $this->msg(false, '统计条件的json格式错误');
+                    return $this->msg(false, '仪表盘统计条件的json格式错误');
                 }
             } else {
-                return $this->msg(false, '统计条件的json格式错误');
+                return $this->msg(false, '仪表盘统计条件的json格式错误');
             }
         }
         
@@ -167,10 +167,10 @@ class StatisticController extends Action
                 try {
                     $defaultQuery = Json::decode($defaultQuery, Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
-                    return $this->msg(false, '统计条件的json格式错误');
+                    return $this->msg(false, '默认统计条件的json格式错误');
                 }
             } else {
-                return $this->msg(false, '统计条件的json格式错误');
+                return $this->msg(false, '默认统计条件的json格式错误');
             }
         }
         
@@ -286,10 +286,10 @@ class StatisticController extends Action
                 try {
                     $dashboardQuery = Json::decode($dashboardQuery, Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
-                    return $this->msg(false, '统计条件的json格式错误');
+                    return $this->msg(false, '仪表盘统计条件的json格式错误');
                 }
             } else {
-                return $this->msg(false, '统计条件的json格式错误');
+                return $this->msg(false, '仪表盘统计条件的json格式错误');
             }
         }
         
@@ -298,10 +298,10 @@ class StatisticController extends Action
                 try {
                     $defaultQuery = Json::decode($defaultQuery, Json::TYPE_ARRAY);
                 } catch (\Exception $e) {
-                    return $this->msg(false, '统计条件的json格式错误');
+                    return $this->msg(false, '默认统计条件的json格式错误');
                 }
             } else {
-                return $this->msg(false, '统计条件的json格式错误');
+                return $this->msg(false, '默认统计条件的json格式错误');
             }
         }
         

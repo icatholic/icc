@@ -67,6 +67,10 @@ Ext.define('icc.view.idatabase.Statistic.Add', {
 							__COLLECTION_ID__: this.__COLLECTION_ID__
 						}]
 					}, {
+						xtype: 'textareafield',
+						name: 'defaultQuery',
+						fieldLabel: '默认统计条件'
+					}, {
 						xtype: 'fieldset',
 						title: 'X轴设定(横向)',
 						collapsed: false,
@@ -130,7 +134,7 @@ Ext.define('icc.view.idatabase.Statistic.Add', {
 					}, {
 						xtype: 'textareafield',
 						name: 'dashboardQuery',
-						fieldLabel: '统计条件'
+						fieldLabel: '仪表盘统计条件'
 					}, {
 						xtype: 'idatabaseStatisticComboboxPeriod',
 						name: 'statisticPeriod',

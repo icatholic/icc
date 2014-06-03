@@ -16,6 +16,18 @@ Ext.define('icc.model.idatabase.Statistic', {
 		name : 'xAxisTitle',
 		type : 'string'
 	}, {
+		name : 'defaultQuery',
+		type : 'string',
+		convert : function(value, record) {
+			if (Ext.isObject(value) || Ext.isArray(value)) {
+				return Ext.JSON.encode(value);
+			} else if (Ext.isString(value)) {
+				return value;
+			} else {
+				return '';
+			}
+		}
+	}, {
 		name : 'xAxisType',
 		type : 'string'
 	}, {
@@ -44,7 +56,16 @@ Ext.define('icc.model.idatabase.Statistic', {
 		type : 'string'
 	}, {
 		name : 'dashboardQuery',
-		type : 'string'
+		type : 'string',
+		convert : function(value, record) {
+			if (Ext.isObject(value) || Ext.isArray(value)) {
+				return Ext.JSON.encode(value);
+			} else if (Ext.isString(value)) {
+				return value;
+			} else {
+				return '';
+			}
+		}
 	}, {
 		name : 'statisticPeriod',
 		type : 'int'

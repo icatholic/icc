@@ -44,6 +44,10 @@ Ext.define('icc.view.idatabase.Statistic.Edit', {
 					maxValue: 1000,
 					value: 100
 				}, {
+					xtype: 'textareafield',
+					name: 'defaultQuery',
+					fieldLabel: '默认统计条件'
+				}, {
 					xtype : 'fieldset',
 					title : '柱状图/线形图',
 					collapsed : false,
@@ -135,7 +139,7 @@ Ext.define('icc.view.idatabase.Statistic.Edit', {
 					}, {
 						xtype: 'textareafield',
 						name: 'dashboardQuery',
-						fieldLabel: '统计条件'
+						fieldLabel: '仪表盘统计条件'
 					}, {
 						xtype: 'idatabaseStatisticComboboxPeriod',
 						name: 'statisticPeriod',
