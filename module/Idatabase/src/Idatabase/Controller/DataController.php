@@ -401,6 +401,17 @@ class DataController extends Action
         try {
             $query = array();
             $query = $this->searchCondition();
+            
+            //增加默认统计条件开始
+            if (! empty($statisticInfo['defaultQuery'])) {
+                if (isset($query['$and'])) {
+                    $query['$and'][] = $statisticInfo['defaultQuery'];
+                } else {
+                    $query = array_merge($query, $statisticInfo['defaultQuery']);
+                }
+            }
+            //增加默认统计条件结束
+            
             $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
             
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
@@ -441,12 +452,12 @@ class DataController extends Action
                 arrayToExcel($excel);
             } else {
                 if ($statisticInfo['seriesType'] != 'line') {
-                    $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 100;
+                    $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 20;
                     $datas = $rst->findAll(array(), array(
                         'value' => - 1
                     ), 0, $limit);
                 } else {
-                    $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 100;
+                    $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 20;
                     $datas = $rst->findAll(array(), array(
                         '_id' => 1
                     ), 0, $limit);
