@@ -46,7 +46,7 @@ Ext.define('icc.view.idatabase.Statistic.Edit', {
 				}, {
 					xtype: 'textareafield',
 					name: 'defaultQuery',
-					fieldLabel: '默认统计条件'
+					fieldLabel: '默认统计条件(限专业人士使用)'
 				}, {
 					xtype : 'fieldset',
 					title : '柱状图/线形图',
