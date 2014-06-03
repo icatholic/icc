@@ -90,6 +90,7 @@ class StatisticController extends Action
         $project_id = trim($this->params()->fromPost('__PROJECT_ID__', ''));
         $collection_id = trim($this->params()->fromPost('__COLLECTION_ID__', ''));
         $name = trim($this->params()->fromPost('name', ''));
+        $defaultQuery = trim($this->params()->fromPost('defaultQuery', ''));
         $yAxisTitle = trim($this->params()->fromPost('yAxisTitle', '')); // Y轴名称
         $yAxisType = trim($this->params()->fromPost('yAxisType', '')); // Y轴统计方法
         $yAxisField = trim($this->params()->fromPost('yAxisField', '')); // Y轴统计字段
@@ -161,10 +162,23 @@ class StatisticController extends Action
             }
         }
         
+        if ($defaultQuery !== '') {
+            if (isJson($defaultQuery)) {
+                try {
+                    $defaultQuery = Json::decode($defaultQuery, Json::TYPE_ARRAY);
+                } catch (\Exception $e) {
+                    return $this->msg(false, '统计条件的json格式错误');
+                }
+            } else {
+                return $this->msg(false, '统计条件的json格式错误');
+            }
+        }
+        
         $datas = array();
         $datas['project_id'] = $project_id;
         $datas['collection_id'] = $collection_id;
         $datas['name'] = $name;
+        $datas['defaultQuery'] = $defaultQuery;
         $datas['yAxisTitle'] = $yAxisTitle; // title string
         $datas['yAxisType'] = $yAxisType; // [Numeric]
         $datas['yAxisField'] = $yAxisField; // array()
@@ -179,7 +193,7 @@ class StatisticController extends Action
         $datas['maxShowNumber'] = $maxShowNumber;
         
         $datas['isDashboard'] = $isDashboard;
-        $datas['dashboardTitle'] = !empty($dashboardTitle) ? $dashboardTitle : $name;
+        $datas['dashboardTitle'] = ! empty($dashboardTitle) ? $dashboardTitle : $name;
         $datas['dashboardQuery'] = $dashboardQuery;
         $datas['statisticPeriod'] = $statisticPeriod;
         $datas['colspan'] = $colspan;
@@ -207,6 +221,7 @@ class StatisticController extends Action
         $project_id = trim($this->params()->fromPost('__PROJECT_ID__', ''));
         $collection_id = trim($this->params()->fromPost('__COLLECTION_ID__', ''));
         $name = trim($this->params()->fromPost('name', ''));
+        $defaultQuery = trim($this->params()->fromPost('defaultQuery', ''));
         $yAxisTitle = trim($this->params()->fromPost('yAxisTitle', '')); // Y轴名称
         $yAxisType = trim($this->params()->fromPost('yAxisType', '')); // Y轴统计方法
         $yAxisField = trim($this->params()->fromPost('yAxisField', '')); // Y轴统计字段
@@ -278,10 +293,23 @@ class StatisticController extends Action
             }
         }
         
+        if ($defaultQuery !== '') {
+            if (isJson($defaultQuery)) {
+                try {
+                    $defaultQuery = Json::decode($defaultQuery, Json::TYPE_ARRAY);
+                } catch (\Exception $e) {
+                    return $this->msg(false, '统计条件的json格式错误');
+                }
+            } else {
+                return $this->msg(false, '统计条件的json格式错误');
+            }
+        }
+        
         $datas = array();
         $datas['project_id'] = $project_id;
         $datas['collection_id'] = $collection_id;
         $datas['name'] = $name;
+        $datas['defaultQuery'] = $defaultQuery;
         $datas['yAxisTitle'] = $yAxisTitle; // title string
         $datas['yAxisType'] = $yAxisType; // [Numeric]
         $datas['yAxisField'] = $yAxisField; // array()
@@ -296,7 +324,7 @@ class StatisticController extends Action
         $datas['maxShowNumber'] = $maxShowNumber;
         
         $datas['isDashboard'] = $isDashboard;
-        $datas['dashboardTitle'] = !empty($dashboardTitle) ? $dashboardTitle : $name;
+        $datas['dashboardTitle'] = ! empty($dashboardTitle) ? $dashboardTitle : $name;
         $datas['dashboardQuery'] = $dashboardQuery;
         $datas['statisticPeriod'] = $statisticPeriod;
         $datas['colspan'] = $colspan;
