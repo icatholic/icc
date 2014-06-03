@@ -56,9 +56,16 @@ class DashboardController extends Action
             if (! empty($statistic['dashboardOut'])) {
                 $model = $this->collection($statistic['dashboardOut'], DB_MAPREDUCE, DEFAULT_CLUSTER);
                 $model->setNoAppendQuery(true);
-                $datas = $model->findAll(array(), array(
+                
+                $sort = array(
                     '$natural' => 1
-                ), 0, $statistic['maxShowNumber']);
+                );
+                if (isset($statistic['seriesType']) && $statistic['seriesType'] == 'column') {
+                    $sort = array(
+                        'value' => - 1
+                    );
+                }
+                $datas = $model->findAll(array(), $sort, 0, $statistic['maxShowNumber']);
                 $statistic['__DATAS__'] = $datas;
                 $rst[] = $statistic;
             }
