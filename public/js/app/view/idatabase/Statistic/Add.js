@@ -71,10 +71,6 @@ Ext.define('icc.view.idatabase.Statistic.Add', {
 							__COLLECTION_ID__: this.__COLLECTION_ID__
 						}]
 					}, {
-						xtype: 'textareafield',
-						name: 'defaultQuery',
-						fieldLabel: '默认统计条件'
-					}, {
 						xtype: 'fieldset',
 						title: 'X轴设定(横向)',
 						collapsed: false,
