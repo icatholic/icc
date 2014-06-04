@@ -321,7 +321,21 @@ class DataController extends Action
             }
         }
         
-        $cursor = $this->_data->find($query, $this->_fields);
+        //开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
+        $fields = $this->_fields;
+        array_walk($fields, function ($value, $key) use(&$fields)
+        {
+            if (strpos($key, '.') !== false) {
+                $tmp = explode('.', $key);
+                if (! isset($fields[$tmp[0]])) {
+                    $fields[$tmp[0]] = true;
+                }
+                unset($fields[$key]);
+            }
+        });
+        //结束修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
+
+        $cursor = $this->_data->find($query, $fields);
         if (! ($cursor instanceof \MongoCursor)) {
             throw new \Exception('无效的$cursor');
         }
@@ -402,7 +416,7 @@ class DataController extends Action
             $query = array();
             $query = $this->searchCondition();
             
-            //增加默认统计条件开始
+            // 增加默认统计条件开始
             if (! empty($statisticInfo['defaultQuery'])) {
                 if (isset($query['$and'])) {
                     $query['$and'][] = $statisticInfo['defaultQuery'];
@@ -410,7 +424,7 @@ class DataController extends Action
                     $query = array_merge($query, $statisticInfo['defaultQuery']);
                 }
             }
-            //增加默认统计条件结束
+            // 增加默认统计条件结束
             
             $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
             
@@ -616,6 +630,7 @@ class DataController extends Action
      */
     public function excelAction()
     {
+        // 先判断是否设定导出字段
         $forwardPlugin = $this->forward();
         $returnValue = $forwardPlugin->dispatch('idatabase/data/index', array(
             'action' => 'excel'
