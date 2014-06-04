@@ -287,8 +287,8 @@ class DataController extends Action
             $keys2d = array_keys($this->_schema['2d']);
             foreach ($keys2d as $field2d) {
                 if (isset($_REQUEST[$field2d])) {
-                    $lng = floatval(trim($_REQUEST[$field2d]['lng']));
-                    $lat = floatval(trim($_REQUEST[$field2d]['lat']));
+                    $lng = isset($_REQUEST[$field2d]['lng']) ? floatval(trim($_REQUEST[$field2d]['lng'])) : 0;
+                    $lat = isset($_REQUEST[$field2d]['lat']) ?floatval(trim($_REQUEST[$field2d]['lat'])) : 0;
                     $distance = ! empty($_REQUEST[$field2d]['distance']) ? floatval($_REQUEST[$field2d]['distance']) : 1;
                     
                     $pipeline = array(
