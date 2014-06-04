@@ -1090,7 +1090,9 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                       rst.count += values[idx].count;
                   } else if(yAxisType=='median') {
                       values[idx].val.forEach(function(v,i){
-                          rst.val.push(v);
+                          if(typeof(v)=='number') {
+                              rst.val.push(v);
+                          }
                       });
                   } else if(yAxisType=='variance') {
                       rst.total += values[idx].total;
@@ -1142,7 +1144,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
             else if(yAxisType=='median') {
                 reducedValue.val.sort(function(a,b){return a>b?1:-1});
                 var length = reducedValue.val.length;
-                rst = reducedValue.val[(length%2==1 ? Math.floor(length/2) : Math.floor(length/2))];
+                rst = reducedValue.val[parseInt(Math.floor(length/2))];
             }
             else if(yAxisType=='variance') {
                 var avg = reducedValue.total / reducedValue.count;
