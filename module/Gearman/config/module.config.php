@@ -1,9 +1,8 @@
 <?php
-use Idatabase\Model\Plugin;
 return array(
     'router' => array(
         'routes' => array(
-            'idatabase' => array(
+            'gearman' => array(
                 'type' => 'Literal',
                 'options' => array(
                     'route' => '/gearman',
@@ -37,28 +36,13 @@ return array(
             )
         )
     ),
-    'service_manager' => array(),
-    'controller_plugins' => array(
-        'invokables' => array(
-            'gearman' => 'My\Common\Plugin\Gearman'
-        ),
-        'aliases' => array(
-            'g' => 'gearman'
-        )
-    ),
-    'console' => array(
-        'router' => array(
-            'routes' => array(
-                'run-statistics' => array(
-                    'options' => array(
-                        'route' => 'dashboard run',
-                        'defaults' => array(
-                            'controller' => 'Gearman\Controller\Works',
-                            'action' => 'run'
-                        )
-                    )
-                )
-            )
-        )
-    )
+//     'service_manager' => array(),
+//     'controller_plugins' => array(
+//         'invokables' => array(
+//             'gearman' => 'My\Common\Plugin\Gearman'
+//         ),
+//         'aliases' => array(
+//             'g' => 'gearman'
+//         )
+//     )
 );

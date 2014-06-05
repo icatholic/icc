@@ -8,7 +8,8 @@ return array(
         'Idatabase',
         'Service',
         'Logs',
-        'ReactZF'
+        'ReactZF',
+        'Gearman'
     ),
     
     // These are various options for the listeners attached to the ModuleManager
