@@ -1,4 +1,10 @@
 <?php
+/**
+ * 为控制器添加Gearman插件
+ * 
+ * @author Young 2014-06-05 
+ *
+ */
 namespace My\Common\Plugin;
 
 use Zend\Mvc\Controller\Plugin\AbstractPlugin;
@@ -6,27 +12,34 @@ use Zend\Mvc\Controller\Plugin\AbstractPlugin;
 class Gearman extends AbstractPlugin
 {
 
+    /**
+     * 
+     * @return \My\Common\Plugin\Gearman
+     */
     public function __invoke()
     {
-        if ($message === null)
-            return $this;
-        return $this->logger($message, $level, $context);
+        return $this;
     }
 
     /**
-     * 任务端
+     * 
+     * @return \GearmanClient
      */
-    public function job()
+    public function client()
     {
-        return $this->getController()
-            ->getServiceLocator()
-            ->get('LogMongodbService');
+        $gmClient = new \GearmanClient();
+        $gmClient->addServers(GEARMAN_SERVERS);
+        return $gmClient;
     }
-    
+
     /**
-     * 服务端
+     * 
+     * @return \GearmanWorker
      */
-    public function worker() {
-        
+    public function worker()
+    {
+        $gmWorker = new \GearmanWorker();
+        $gmWorker->addServers(GEARMAN_SERVERS);
+        return $gmWorker;
     }
 }
