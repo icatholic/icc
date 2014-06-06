@@ -438,7 +438,7 @@ class DataController extends Action
             // 增加默认统计条件结束
             
             // 采用
-            if ($this->checkStatisticIsRunning($statistic_id) === true) {
+            if ($this->cache($statistic_id) !== null) {
                 return $this->msg(true, '统计进行中……');
             } elseif ($wait) {
                 $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);

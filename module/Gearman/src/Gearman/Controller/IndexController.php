@@ -70,6 +70,7 @@ class IndexController extends Action
             $query = $params['query'];
             $method = $params['method'];
             $rst = mapReduce($out, $dataModel, $statisticInfo, $query, $method);
+            $this->cache()->remove($out);
             
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {
