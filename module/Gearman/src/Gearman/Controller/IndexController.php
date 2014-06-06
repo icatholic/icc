@@ -20,6 +20,18 @@ class IndexController extends Action
         return $this->response;
     }
 
+    public function cacheAction()
+    {
+        if (($rst = $this->cache()->load($key)) === false) {
+            $datas = 'my cache content';
+            $this->cache()->save($datas);
+            echo "no cache,but have been saved";
+            return $this->response;
+        }
+        var_dump($rst);
+        return $this->response;
+    }
+
     /**
      * 处理map reduce统计
      *

@@ -168,6 +168,13 @@ class DataController extends Action
     private $_maxDepth = 1000;
 
     /**
+     * Gearman客户端对象
+     *
+     * @var object
+     */
+    private $_gmClient = null;
+
+    /**
      * 初始化函数
      *
      * @see \My\Common\ActionController::init()
@@ -232,6 +239,9 @@ class DataController extends Action
         
         // 自动化为集合创建索引
         $this->_index->autoCreateIndexes(isset($mapCollection['collection']) ? $mapCollection['collection'] : $this->_collection_id);
+        
+        // 建立gearman客户端连接
+        $this->_gmClient = $this->gearman()->client();
     }
 
     /**
@@ -288,7 +298,7 @@ class DataController extends Action
             foreach ($keys2d as $field2d) {
                 if (isset($_REQUEST[$field2d])) {
                     $lng = isset($_REQUEST[$field2d]['lng']) ? floatval(trim($_REQUEST[$field2d]['lng'])) : 0;
-                    $lat = isset($_REQUEST[$field2d]['lat']) ?floatval(trim($_REQUEST[$field2d]['lat'])) : 0;
+                    $lat = isset($_REQUEST[$field2d]['lat']) ? floatval(trim($_REQUEST[$field2d]['lat'])) : 0;
                     $distance = ! empty($_REQUEST[$field2d]['distance']) ? floatval($_REQUEST[$field2d]['distance']) : 1;
                     
                     $pipeline = array(
@@ -321,7 +331,7 @@ class DataController extends Action
             }
         }
         
-        //开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
+        // 开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
         $fields = $this->_fields;
         array_walk($fields, function ($value, $key) use(&$fields)
         {
@@ -333,8 +343,8 @@ class DataController extends Action
                 unset($fields[$key]);
             }
         });
-        //结束修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
-
+        // 结束修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
+        
         $cursor = $this->_data->find($query, $fields);
         if (! ($cursor instanceof \MongoCursor)) {
             throw new \Exception('无效的$cursor');
@@ -390,6 +400,7 @@ class DataController extends Action
     public function statisticAction()
     {
         $action = $this->params()->fromQuery('action', null);
+        $wait = $this->params()->fromQuery('wait', null);
         $export = filter_var($this->params()->fromQuery('export', false));
         $statistic_id = $this->params()->fromQuery('__STATISTIC_ID__', null);
         
@@ -426,7 +437,25 @@ class DataController extends Action
             }
             // 增加默认统计条件结束
             
-            $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
+            // 采用
+            if ($this->checkStatisticIsRunning($statistic_id) === true) {
+                return $this->msg(true, '统计进行中……');
+            } elseif ($wait) {
+                $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
+            } else {
+                // 任务交给后台worker执行
+                $params = array(
+                    'out' => $statistic_id,
+                    'dataModel' => $this->_data,
+                    'statisticInfo' => $statisticInfo,
+                    'query' => $query,
+                    'method' => 'replace'
+                );
+                $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
+                return $this->msg(true, '统计请求被受理');
+            }
+            
+            //$rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
             
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {

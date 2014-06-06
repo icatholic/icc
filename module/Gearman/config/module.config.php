@@ -36,13 +36,13 @@ return array(
             )
         )
     ),
-//     'service_manager' => array(),
-//     'controller_plugins' => array(
-//         'invokables' => array(
-//             'gearman' => 'My\Common\Plugin\Gearman'
-//         ),
-//         'aliases' => array(
-//             'g' => 'gearman'
-//         )
-//     )
+    'service_manager' => array(),
+    'controller_plugins' => array(
+        'invokables' => array(
+            'gearman' => 'My\Common\Plugin\Gearman'
+        ),
+        'aliases' => array(
+            'g' => 'gearman'
+        )
+    )
 );
