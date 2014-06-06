@@ -444,6 +444,7 @@ class DataController extends Action
                 $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
             } else {
                 // 任务交给后台worker执行
+                $this->cache()->save(true,$statistic_id,600);
                 $params = array(
                     'out' => $statistic_id,
                     'dataModel' => $this->_data,
