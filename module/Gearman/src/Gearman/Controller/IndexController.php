@@ -22,7 +22,8 @@ class IndexController extends Action
 
     public function cacheAction()
     {
-        if (($rst = $this->cache()->load($key)) === false) {
+        $key = $this->params('key',null);
+        if (($rst = $this->cache()->load($key)) === null) {
             $datas = 'my cache content';
             $this->cache()->save($datas);
             echo "no cache,but have been saved";

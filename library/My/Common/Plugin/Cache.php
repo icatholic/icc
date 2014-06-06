@@ -25,13 +25,12 @@ class Cache extends AbstractPlugin
         if ($key === null) {
             return $this;
         }
-        
-        $this->_key = $key;
         return $this->load($key);
     }
 
     public function load($key)
     {
+        $this->_key = $key;
         return $this->_cache->getItem($key);
     }
 
@@ -43,8 +42,10 @@ class Cache extends AbstractPlugin
         return $this->_cache->setItem($key, $datas);
     }
 
-    public function remove()
+    public function remove($key)
     {
+        if ($key === null)
+            $key = $this->_key;
         return $this->_cache->removeItem($key);
     }
 }
