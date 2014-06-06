@@ -39,7 +39,7 @@ class IndexController extends Action
      */
     public function mrAction()
     {
-        $gmworker->addFunction("mapreduce", array(
+        $this->_worker->addFunction("mapreduce", array(
             $this,
             'mapReduceWorker'
         ));
@@ -62,8 +62,28 @@ class IndexController extends Action
             $statisticInfo = $params['statisticInfo'];
             $query = $params['query'];
             $method = $params['method'];
-            mapReduce($out, $dataModel, $statisticInfo, $query, $method);
-            $job->sendComplete(serialize($rst));
+            
+            $rst = mapReduce($out, $dataModel, $statisticInfo, $query, $method);
+            
+            if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
+                switch ($rst['code']) {
+                	case 500:
+                	    $job->sendWarning('根据查询条件，未检测到有效的统计数据');
+                	    break;
+                	case 501:
+                	    $job->sendWarning('MapReduce执行失败，原因：' . $rst['msg']);
+                	    break;
+                	case 502:
+                	    $job->sendWarning('程序正在执行中，请勿频繁尝试');
+                	    break;
+                	case 503:
+                	    $job->sendWarning('程序异常：' . $rst['msg']);
+                	    break;
+                }
+                $job->sendFail();
+                return false;
+            }
+            $job->sendComplete();
             return true;
         } catch (\Exception $e) {
             $job->sendException(exceptionMsg($e));
