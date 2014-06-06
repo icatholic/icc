@@ -22,7 +22,7 @@ class IndexController extends Action
 
     /**
      * 处理map reduce统计
-     * 
+     *
      * @return string
      */
     public function mrAction()
@@ -44,8 +44,17 @@ class IndexController extends Action
         try {
             $job->handle();
             $params = unserialize($job->workload());
+            
+            $out = $params['out'];
+            $dataModel = $params['dataModel'];
+            $statisticInfo = $params['statisticInfo'];
+            $query = $params['query'];
+            $method = $params['method'];
+            mapReduce($out, $dataModel, $statisticInfo, $query, $method);
+            $job->sendComplete(serialize($rst));
+            return true;
         } catch (\Exception $e) {
-            var_dump($e);
+            $job->sendException(exceptionMsg($e));
         }
     }
 }

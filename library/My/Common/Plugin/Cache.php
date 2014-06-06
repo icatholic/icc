@@ -1,4 +1,10 @@
 <?php
+/**
+ * 缓存插件，默认使用文本缓存，在集群环境请默认使用memcached缓存
+ * 
+ * @author Young 
+ *
+ */
 namespace My\Common\Plugin;
 
 use Zend\Mvc\Controller\Plugin\AbstractPlugin;
