@@ -50,7 +50,7 @@ class Module
         $eventManager->attach(MvcEvent::EVENT_RENDER, function ($event)
         {
             $objResponse = $event->getResponse();
-            if (! ($objResponse instanceof ConsoleResponse)) {
+            if (method_exists($objResponse, 'getHeaders')) {
                 $objHeaders = $objResponse->getHeaders();
                 $contentType = $objHeaders->get('Content-Type');
                 if ($contentType) {

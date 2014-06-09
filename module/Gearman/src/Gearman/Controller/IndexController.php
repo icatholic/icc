@@ -9,10 +9,13 @@ class IndexController extends Action
 {
 
     private $_worker;
+    
+    private $_data;
 
     public function init()
     {
         $this->_worker = $this->gearman()->worker();
+        $this->_data = $this->model('Idatabase\Model\Data');
     }
 
     public function indexAction()
@@ -42,7 +45,7 @@ class IndexController extends Action
     public function mrAction()
     {
         $this->_worker->addFunction("mapreduce", array(
-            $this,
+            new static(),
             'mapReduceWorker'
         ));
         
@@ -52,7 +55,7 @@ class IndexController extends Action
             }
         }
         
-        return new ConsoleResponse();
+        return $this->response;
     }
 
     /**
@@ -61,18 +64,19 @@ class IndexController extends Action
      * @param \GearmanJob $job            
      * @return boolean
      */
-    private function mapReduceWorker(\GearmanJob $job)
+    public function mapReduceWorker(\GearmanJob $job)
     {
         try {
             $job->handle();
-            
             $params = unserialize($job->workload());
+            var_dump($params);
             $out = $params['out'];
-            $dataModel = $params['dataModel'];
+            $dataModel = $this->collection()->secondary($params['dataCollection']);
             $statisticInfo = $params['statisticInfo'];
             $query = $params['query'];
             $method = $params['method'];
             $rst = mapReduce($out, $dataModel, $statisticInfo, $query, $method);
+            var_dump($rst);
             $this->cache()->remove($out);
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {
@@ -92,10 +96,11 @@ class IndexController extends Action
                 $job->sendFail();
                 return false;
             }
-            sleep(30);//成功的操作等待30秒，用以确保复制集完成同步
+            //sleep(30);//成功的操作等待30秒，用以确保复制集完成同步
             $job->sendComplete();
             return true;
         } catch (\Exception $e) {
+            var_dump(exceptionMsg($e));
             $job->sendException(exceptionMsg($e));
         }
     }

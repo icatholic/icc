@@ -449,7 +449,7 @@ class DataController extends Action
                 // 任务交给后台worker执行
                 $params = array(
                     'out' => $statistic_id,
-                    'dataModel' => $this->_data,
+                    'dataCollection' => $this->_collection_name,
                     'statisticInfo' => $statisticInfo,
                     'query' => $query,
                     'method' => 'replace'
