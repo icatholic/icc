@@ -442,6 +442,9 @@ class DataController extends Action
                 return $this->msg(true, '统计进行中……');
             } elseif ($wait) {
                 $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                if($rst instanceof MongoCollection) {
+                    $rst->setNoAppendQuery(true);
+                }
             } else {
                 // 任务交给后台worker执行
                 $params = array(
@@ -454,12 +457,12 @@ class DataController extends Action
                 $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
                 $stat = $this->_gmClient->jobStatus($jobHandle);
                 if (isset($stat[0]) && $stat[0]) {
-                    $this->cache()->save(true, $statistic_id, 600);
+                    $this->cache()->save(true, $statistic_id, 60);
                 }
                 return $this->msg(true, '统计请求被受理');
             }
             
-            // $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
+            //$rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
             
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {

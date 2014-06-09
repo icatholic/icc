@@ -2,6 +2,7 @@
 namespace Gearman\Controller;
 
 use Zend\View\Model\ViewModel;
+use Zend\Console\Response as ConsoleResponse;
 use My\Common\Controller\Action;
 
 class IndexController extends Action
@@ -50,6 +51,8 @@ class IndexController extends Action
                 echo "return_code: " . $this->_worker->returnCode() . "\n";
             }
         }
+        
+        return new ConsoleResponse();
     }
 
     /**

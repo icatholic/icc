@@ -183,17 +183,19 @@ Ext.define('icc.view.idatabase.Statistic.Chart', {
 		var params = chart.store.proxy.extraParams;
 		var doAjax = Ext.Ajax.request({
 			url : url,
+			method : 'GET',
 			params : params,
 			success : function(response) {
 				var text = response.responseText;
-				var resp = Ext.Json.decode(text);
+				var resp = Ext.JSON.decode(text);
 				if (Ext.isObject(resp) && Ext.Object.getKey(resp, 'success')) {
+					console.info(resp);
 					return false;
 				} else {
+					chart.store.proxy.extraParams.wait = true;
 					chart.store.load(function() {
 						mask.hide();
 						win.__BUTTON__.setDisabled(false);
-						task.destroy();
 					});
 					return true;
 				}

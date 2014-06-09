@@ -44,5 +44,20 @@ return array(
         'aliases' => array(
             'g' => 'gearman'
         )
+    ),
+    'console' => array(
+        'router' => array(
+            'routes' => array(
+                'mapreduce_worker' => array(
+                    'options' => array(
+                        'route' => 'mapreduce worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Index',
+                            'action' => 'mr'
+                        )
+                    )
+                )
+            )
+        )
     )
 );
