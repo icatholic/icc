@@ -444,7 +444,6 @@ class DataController extends Action
                 $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
             } else {
                 // 任务交给后台worker执行
-                $this->cache()->save(true,$statistic_id,600);
                 $params = array(
                     'out' => $statistic_id,
                     'dataModel' => $this->_data,
@@ -452,11 +451,15 @@ class DataController extends Action
                     'query' => $query,
                     'method' => 'replace'
                 );
-                $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
+                $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
+                $stat = $this->_gmClient->jobStatus($jobHandle);
+                if (isset($stat[0]) && $stat[0]) {
+                    $this->cache()->save(true, $statistic_id, 600);
+                }
                 return $this->msg(true, '统计请求被受理');
             }
             
-            //$rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
+            // $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
             
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {
