@@ -48,7 +48,6 @@ class IndexController extends Action
             try {
                 $job->handle();
                 $params = unserialize($job->workload());
-                var_dump($params);
                 $out = $params['out'];
                 $this->_data->setCollection($params['dataCollection']);
                 $dataModel = $this->_data;
@@ -77,7 +76,7 @@ class IndexController extends Action
                     return false;
                 }
                 // sleep(30);//成功的操作等待30秒，用以确保复制集完成同步
-                $job->sendComplete();
+                $job->sendComplete('Complete');
                 return true;
             } catch (\Exception $e) {
                 var_dump(exceptionMsg($e));
