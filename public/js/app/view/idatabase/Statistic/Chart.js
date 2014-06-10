@@ -170,17 +170,22 @@ Ext.define('icc.view.idatabase.Statistic.Chart', {
 			});
 
 			var chart = win.down('chart');
-			this.ajax(win,mask);
-//			chart.store.load(function(records, operation, success) {
-//				mask.hide();
-//				win.__BUTTON__.setDisabled(false);
-//			});
+			this.ajax(win, mask, 0);
+			// chart.store.load(function(records, operation, success) {
+			// mask.hide();
+			// win.__BUTTON__.setDisabled(false);
+			// });
 		}
 	},
-	ajax : function(win, mask) {
+	ajax : function(win, mask, loop) {
+		var self = this;
 		var chart = win.down('chart');
 		var url = chart.store.proxy.url;
 		var params = chart.store.proxy.extraParams;
+		if(loop > 0){
+			params.wait = true;
+		}
+		loop += 1;
 		var doAjax = Ext.Ajax.request({
 			url : url,
 			method : 'GET',
@@ -188,9 +193,10 @@ Ext.define('icc.view.idatabase.Statistic.Chart', {
 			success : function(response) {
 				var text = response.responseText;
 				var resp = Ext.JSON.decode(text);
-				if (Ext.isObject(resp) && Ext.Object.getKey(resp, 'success')) {
-					console.info(resp);
+				if (Ext.isObject(resp) && resp.success) {
+					self.ajax(win, mask, loop);
 					return false;
+
 				} else {
 					chart.store.proxy.extraParams.wait = true;
 					chart.store.load(function() {
@@ -199,12 +205,10 @@ Ext.define('icc.view.idatabase.Statistic.Chart', {
 					});
 					return true;
 				}
+			},
+			failure : function(response, opts) {
+				self.ajax(win, mask, loop);
 			}
-		});
-		
-		var task = Ext.TaskManager.start({
-			run: doAjax,
-			interval: 3000
 		});
 	}
 });
