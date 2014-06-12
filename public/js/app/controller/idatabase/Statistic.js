@@ -205,6 +205,7 @@ Ext.define('icc.controller.idatabase.Statistic', {
                 };
 
                 params = Ext.Object.merge(params, win.__EXTRAPARAMS__);
+                
                 window.location.href = '/idatabase/data/statistic?' + Ext.Object.toQueryString(params);
             }
         };

@@ -437,32 +437,40 @@ class DataController extends Action
             }
             // 增加默认统计条件结束
             
-            // 采用
-            if ($this->cache($statistic_id) !== null) {
-                return $this->msg(true, '统计进行中……');
-            } elseif ($wait) {
-                $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
-                if($rst instanceof MongoCollection) {
+            // 采用数据导出结果
+            if ($export) {
+                if ($this->cache($statistic_id) !== null) {
+                    return $this->msg(true, '重新统计中');
+                } else {
+                    $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
                     $rst->setNoAppendQuery(true);
                 }
             } else {
-                // 任务交给后台worker执行
-                $params = array(
-                    'out' => $statistic_id,
-                    'dataCollection' => $this->_collection_name,
-                    'statisticInfo' => $statisticInfo,
-                    'query' => $query,
-                    'method' => 'replace'
-                );
-                $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
-                $stat = $this->_gmClient->jobStatus($jobHandle);
-                if (isset($stat[0]) && $stat[0]) {
-                    $this->cache()->save(true, $statistic_id, 60);
+                if ($this->cache($statistic_id) !== null) {
+                    return $this->msg(true, '统计进行中……');
+                } elseif ($wait) {
+                    $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                    if ($rst instanceof MongoCollection) {
+                        $rst->setNoAppendQuery(true);
+                    }
+                } else {
+                    // 任务交给后台worker执行
+                    $params = array(
+                        'out' => $statistic_id,
+                        'dataCollection' => $this->_collection_name,
+                        'statisticInfo' => $statisticInfo,
+                        'query' => $query,
+                        'method' => 'replace'
+                    );
+                    $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
+                    $stat = $this->_gmClient->jobStatus($jobHandle);
+                    if (isset($stat[0]) && $stat[0]) {
+                        $this->cache()->save(true, $statistic_id, 60);
+                    }
+                    return $this->msg(true, '统计请求被受理');
                 }
-                return $this->msg(true, '统计请求被受理');
             }
-            
-            //$rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
+            // $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
             
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {
@@ -489,7 +497,16 @@ class DataController extends Action
             $outCollectionName = $rst->getName(); // 输出集合名称
             
             if ($export) {
-                $datas = $rst->findAll(array());
+                $sort = array(
+                    '_id' => 1
+                );
+                if ($statisticInfo['seriesType'] != 'line') {
+                    $sort = array(
+                        'value' => - 1
+                    );
+                }
+                
+                $datas = $rst->findAll(array(), $sort);
                 
                 $datas = $this->replaceRshData($datas, $map);
                 
