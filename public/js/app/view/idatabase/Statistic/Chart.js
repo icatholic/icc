@@ -171,10 +171,6 @@ Ext.define('icc.view.idatabase.Statistic.Chart', {
 
 			var chart = win.down('chart');
 			this.ajax(win, mask, 0);
-			// chart.store.load(function(records, operation, success) {
-			// mask.hide();
-			// win.__BUTTON__.setDisabled(false);
-			// });
 		}
 	},
 	ajax : function(win, mask, loop) {
