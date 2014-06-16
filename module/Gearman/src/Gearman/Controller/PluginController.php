@@ -1,17 +1,14 @@
 <?php
 /**
- * iDatabase项目内数据集合管理
+ * Gearman方式同步plugin插件信息
  *
  * @author young 
- * @version 2013.11.19
+ * @version 2014.06.16
  * 
  */
 namespace Gearman\Controller;
 
-use Zend\View\Model\JsonModel;
-use Zend\Json\Json;
 use My\Common\Controller\Action;
-use Idatabase\Model\PluginData;
 
 class PluginController extends Action
 {
