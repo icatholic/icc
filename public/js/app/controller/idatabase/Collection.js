@@ -428,7 +428,13 @@ Ext.define('icc.controller.idatabase.Collection', {
 				Ext.Msg.confirm('提示信息', '请确认你要同步当前插件的集合或者文档结构?', function(btn) {
 					if (btn == 'yes') {
 						var grid = button.up('gridpanel');
-						
+						var tab = button.up('tabpanel');
+						var mask = new Ext.LoadMask(tab, {
+							autoShow : true,
+							msg : "同步中，请稍后...",
+							useMsg : true
+						});
+
 						var loop = 0;
 						var interval = setInterval(function () {
 							var params = {
@@ -446,6 +452,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 									var text = Ext.JSON.decode(response.responseText, true);
 									if(text.success) {
 										clearInterval(interval);
+										mask.hide();
 										Ext.Msg.alert('提示信息', text.msg);
 										grid.store.load();
 									}
