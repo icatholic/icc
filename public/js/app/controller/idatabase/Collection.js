@@ -429,21 +429,30 @@ Ext.define('icc.controller.idatabase.Collection', {
 					if (btn == 'yes') {
 						var grid = button.up('gridpanel');
 						
-						Ext.Ajax.request({
-							url: '/idatabase/collection/sync',
-							params: {
+						var loop = 0;
+						var interval = setInterval(function () {
+							var params = {
 								__PROJECT_ID__: grid.__PROJECT_ID__,
 								__PLUGIN_ID__: grid.__PLUGIN_ID__
-							},
-							scope: me,
-							success: function(response) {
-								var text = Ext.JSON.decode(response.responseText, true);
-								if(text.success) {
-									Ext.Msg.alert('提示信息', text.msg);
-									grid.store.load();
-								}
+							};
+							if(loop > 0) {
+								params.wait = true;
 							}
-						});
+							Ext.Ajax.request({
+								url: '/idatabase/collection/sync-gearman',
+								params: params,
+								scope: me,
+								success: function(response) {
+									var text = Ext.JSON.decode(response.responseText, true);
+									if(text.success) {
+										clearInterval(interval);
+										Ext.Msg.alert('提示信息', text.msg);
+										grid.store.load();
+									}
+								}
+							});
+							loop += 1;
+						},3000);
 					}
 				}, me);
 			}

@@ -40,6 +40,8 @@ class CollectionController extends Action
     private $_plugin_id = '';
 
     private $_sync;
+    
+    private $_gmClient;
 
     public function init()
     {
@@ -59,6 +61,8 @@ class CollectionController extends Action
         $this->_plugin_data = $this->model('Idatabase\Model\PluginData');
         $this->_lock = $this->model('Idatabase\Model\Lock');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
+        
+        $this->_gmClient = $this->gearman()->client();
     }
 
     /**
@@ -182,7 +186,7 @@ class CollectionController extends Action
     {
         if (! empty($this->_plugin_id)) {
             
-            $wait = $this->params()->fromQuery('wait', false);
+            $wait = $this->params()->fromPost('wait', false);
             $params = array();
             $params['project_id'] = $this->_project_id;
             $params['plugin_id'] = $this->_plugin_id;
@@ -190,7 +194,7 @@ class CollectionController extends Action
             $key = md5(serialize($params));
             if ($this->cache($key) !== null) {
                 return $this->msg(false, '同步进行中……');
-            } elseif ($wait) {
+            } elseif (!empty($wait)) {
                 return $this->msg(true, '同步成功');
             } else {
                 $jobHandle = $this->_gmClient->doBackground('pluginCollectionSync', serialize($params), $key);
@@ -198,6 +202,7 @@ class CollectionController extends Action
                 if (isset($stat[0]) && $stat[0]) {
                     $this->cache()->save(true, $key, 60);
                 }
+                return $this->msg(false, '请求受理'); 
             }
         } else {
             return $this->msg(false, '插件编号为空');
