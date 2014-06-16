@@ -61,7 +61,7 @@ return array(
                     'options' => array(
                         'route' => 'plugin sync worker',
                         'defaults' => array(
-                            'controller' => 'Gearman\Controller\Collection',
+                            'controller' => 'Gearman\Controller\Plugin',
                             'action' => 'sync'
                         )
                     )

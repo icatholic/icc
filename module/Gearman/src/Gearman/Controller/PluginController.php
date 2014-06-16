@@ -6,14 +6,14 @@
  * @version 2013.11.19
  * 
  */
-namespace Idatabase\Controller;
+namespace Gearman\Controller;
 
 use Zend\View\Model\JsonModel;
 use Zend\Json\Json;
 use My\Common\Controller\Action;
 use Idatabase\Model\PluginData;
 
-class CollectionController extends Action
+class PluginController extends Action
 {
     private $_project_plugin;
 
