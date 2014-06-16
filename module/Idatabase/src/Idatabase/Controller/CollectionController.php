@@ -174,18 +174,23 @@ class CollectionController extends Action
     }
 
     /**
-     * 采用Gearman的方式统计数据
+     * 采用Gearman的方式同步插件数据
+     *
      * @return Ambigous <\Zend\View\Model\JsonModel, multitype:string Ambigous <boolean, bool> >
      */
     public function syncGearmanAction()
     {
         if (! empty($this->_plugin_id)) {
+            
+            $wait = $this->params()->fromQuery('wait', false);
             $params = array();
             $params['project_id'] = $this->_project_id;
             $params['plugin_id'] = $this->_plugin_id;
             
             $key = md5(serialize($params));
             if ($this->cache($key) !== null) {
+                return $this->msg(false, '同步进行中……');
+            } elseif ($wait) {
                 return $this->msg(true, '同步成功');
             } else {
                 $jobHandle = $this->_gmClient->doBackground('pluginCollectionSync', serialize($params), $key);

@@ -427,7 +427,8 @@ Ext.define('icc.controller.idatabase.Collection', {
 			click: function(button) {
 				Ext.Msg.confirm('提示信息', '请确认你要同步当前插件的集合或者文档结构?', function(btn) {
 					if (btn == 'yes') {
-						var grid = button.up('gridpanel');				
+						var grid = button.up('gridpanel');
+						
 						Ext.Ajax.request({
 							url: '/idatabase/collection/sync',
 							params: {
@@ -437,8 +438,10 @@ Ext.define('icc.controller.idatabase.Collection', {
 							scope: me,
 							success: function(response) {
 								var text = Ext.JSON.decode(response.responseText, true);
-								Ext.Msg.alert('提示信息', text.msg);
-								grid.store.load();
+								if(text.success) {
+									Ext.Msg.alert('提示信息', text.msg);
+									grid.store.load();
+								}
 							}
 						});
 					}
