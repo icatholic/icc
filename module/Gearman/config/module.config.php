@@ -56,6 +56,15 @@ return array(
                             'action' => 'mr'
                         )
                     )
+                ),
+                'plugin_sync_worker' => array(
+                    'options' => array(
+                        'route' => 'plugin worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Collection',
+                            'action' => 'sync'
+                        )
+                    )
                 )
             )
         )

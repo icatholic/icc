@@ -12,6 +12,7 @@ use Zend\View\Model\JsonModel;
 use Zend\Json\Json;
 use My\Common\Controller\Action;
 use Idatabase\Model\PluginData;
+use Zend\Validator\File\Md5;
 
 class CollectionController extends Action
 {
@@ -132,8 +133,8 @@ class CollectionController extends Action
                 $row['locked'] = true;
             }
             
-            //判断当前集合是否默认数据集合，如果是显示正确的集合
-            if($this->_plugin_data->isDefault(myMongoId($row['_id']))) {
+            // 判断当前集合是否默认数据集合，如果是显示正确的集合
+            if ($this->_plugin_data->isDefault(myMongoId($row['_id']))) {
                 $row['defaultSourceData'] = true;
             } else {
                 $row['defaultSourceData'] = false;
@@ -166,6 +167,32 @@ class CollectionController extends Action
                 return $this->msg(true, '同步成功');
             } else {
                 return $this->msg(false, '该插件中的未发现有效集合');
+            }
+        } else {
+            return $this->msg(false, '插件编号为空');
+        }
+    }
+
+    /**
+     * 采用Gearman的方式统计数据
+     * @return Ambigous <\Zend\View\Model\JsonModel, multitype:string Ambigous <boolean, bool> >
+     */
+    public function syncGearmanAction()
+    {
+        if (! empty($this->_plugin_id)) {
+            $params = array();
+            $params['project_id'] = $this->_project_id;
+            $params['plugin_id'] = $this->_plugin_id;
+            
+            $key = md5(serialize($params));
+            if ($this->cache($key) !== null) {
+                return $this->msg(true, '同步成功');
+            } else {
+                $jobHandle = $this->_gmClient->doBackground('pluginCollectionSync', serialize($params), $key);
+                $stat = $this->_gmClient->jobStatus($jobHandle);
+                if (isset($stat[0]) && $stat[0]) {
+                    $this->cache()->save(true, $key, 60);
+                }
             }
         } else {
             return $this->msg(false, '插件编号为空');
