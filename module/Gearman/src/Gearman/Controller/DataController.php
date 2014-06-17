@@ -25,7 +25,30 @@ class DataController extends Action
      * 
      */
     public function exportAction() {
+        try {
+            $cache = $this->cache();
+            $this->_worker->addFunction("dataExport", function (\GearmanJob $job) use($cache)
+            {
+                $job->handle();
+                $workload = $job->workload();
+                $key = md5($workload);
+                $params = unserialize($workload);
+                $scope = $params['scope'];
+                $plugin_id = $params['plugin_id'];
+            });
         
+            while ($this->_worker->work()) {
+                if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
+                    echo "return_code: " . $this->_worker->returnCode() . "\n";
+                }
+            }
+        
+            return $this->response;
+        } catch (\Exception $e) {
+            var_dump(exceptionMsg($e));
+            $job->sendException(exceptionMsg($e));
+            return false;
+        }
     }
 
 }

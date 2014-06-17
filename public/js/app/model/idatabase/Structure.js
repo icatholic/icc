@@ -31,6 +31,9 @@ Ext.define('icc.model.idatabase.Structure', {
 		name: 'required',
 		type: 'boolean'
 	}, {
+		name: 'export',
+		type: 'boolean'
+	}, {
 		name: 'isFatherField',
 		type: 'boolean'
 	}, {

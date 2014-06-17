@@ -27,13 +27,6 @@ class DataController extends Action
     private $_data;
 
     /**
-     * 执行快速写入或者删除操作时候的对象
-     *
-     * @var object
-     */
-    private $_dataQw;
-
-    /**
      * 读取数据属性结构的mongocollection实例
      *
      * @var object
@@ -331,8 +324,15 @@ class DataController extends Action
             }
         }
         
-        // 开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
         $fields = $this->_fields;
+        if ($action == 'excel') {
+            if (empty($this->_schema['export'])) {
+                return $this->msg(false, '请联系管理员，设定允许导出数据字段的权限');
+            }
+            $fields = $this->_schema['export'];
+            
+        }
+        // 开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
         array_walk($fields, function ($value, $key) use(&$fields)
         {
             if (strpos($key, '.') !== false) {
@@ -1126,6 +1126,7 @@ class DataController extends Action
         $schema = array(
             '2d' => array(),
             'file' => array(),
+            'export' => array(),
             'post' => array(
                 '_id' => array(
                     'type' => '_idfield'
@@ -1170,6 +1171,11 @@ class DataController extends Action
             
             if (isset($row['isFatherField']) && $row['isFatherField']) {
                 $this->_fatherField = $row['field'];
+            }
+            
+            // 检查结构的时候，检查允许导出的字段
+            if (! empty($row['export'])) {
+                $schema['export'][$row['field']] = true;
             }
             
             if (isset($row['isQuick']) && $row['isQuick'] && $row['type'] == 'arrayfield') {

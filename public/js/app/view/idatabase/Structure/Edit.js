@@ -98,6 +98,21 @@ Ext.define('icc.view.idatabase.Structure.Edit', {
 			}]
 		}, {
 			xtype: 'radiogroup',
+			fieldLabel: '作为导出字段',
+			defaultType: 'radiofield',
+			layout: 'hbox',
+			items: [{
+				boxLabel: '是',
+				name: 'export',
+				inputValue: true
+			}, {
+				boxLabel: '否',
+				name: 'export',
+				inputValue: false,
+				checked: true
+			}]
+		}, {
+			xtype: 'radiogroup',
 			fieldLabel: '记录Tree的父节点',
 			defaultType: 'radiofield',
 			layout: 'hbox',
