@@ -371,10 +371,18 @@ Ext.define('icc.controller.idatabase.Data', {
 										scope: me,
 										success: function(response) {
 											var text = Ext.JSON.decode(response.responseText, true);
+											if(loop==0) {
+												if(text.success) {
+													clearInterval(interval);
+													mask.hide();
+													Ext.Msg.alert('提示信息', text.msg);
+												}
+											}
 											if(text.success) {
 												clearInterval(interval);
 												mask.hide();
 												button.setDisabled(false);
+												delete store.proxy.extraParams.wait;
 												window.location.href = '/idatabase/data/index?download=true&' + Ext.Object.toQueryString(store.proxy.extraParams);
 											}
 										}
@@ -383,6 +391,7 @@ Ext.define('icc.controller.idatabase.Data', {
 								},3000);
 							}
 						}, me);
+						return false;
 					} else {
 						button.setDisabled(true);
 						setTimeout(function() {

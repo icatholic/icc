@@ -329,7 +329,7 @@ class DataController extends Action
         $fields = $this->_fields;
         if ($action == 'excel') {
             if (empty($this->_schema['export'])) {
-                return $this->msg(false, '请联系管理员，设定允许导出数据字段的权限');
+                return $this->msg(true, '请联系管理员，设定允许导出数据字段的权限');
             }
             $fields = $this->_schema['export'];
         }
@@ -375,7 +375,7 @@ class DataController extends Action
                 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.xlsx"');
                 header('Cache-Control: max-age=0');
-                file_put_contents("php://out", $binary);
+                echo $binary;
                 exit();
             } else {
                 $params = array();

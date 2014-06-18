@@ -48,18 +48,17 @@ class DataController extends Action
                 $this->_data->setCollection(iCollectionName($collection_id));
                 $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
                 $cursor = $this->_data->find($query, $fields);
-                $datas = array();
-                
+                $excelDatas = array();
                 // 保持拥有全部的字段名，不存在错乱的想象
                 $fieldNames = array_keys($fields);
                 while ($cursor->hasNext()) {
                     $row = $cursor->getNext();
-                    $diff = array_diff(array_keys($row), $fieldNames);
-                    array_walk($diff, function ($items, $key) use(&$row)
-                    {
-                        $row[$items] = '';
-                    });
-                    $datas[] = $row;
+                    $tmp = array();
+                    foreach($fieldNames as $key) {
+                        $tmp[$key] = isset($row[$key]) ? $row[$key] : '';
+                    }
+                    $excelDatas[] = $tmp;
+                    unset($tmp);
                 }
                 
                 // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
@@ -89,11 +88,11 @@ class DataController extends Action
                 }
                 
                 // 结束
-                convertToPureArray($datas);
-                array_walk($datas, function (&$value, $key) use($rshData)
+                convertToPureArray($excelDatas);
+                array_walk($excelDatas, function (&$value, $key) use($rshData)
                 {
                     ksort($value);
-                    array_walk($value, function (&$cell, $field)
+                    array_walk($value, function (&$cell, $field) use($rshData)
                     {
                         if (isset($rshData[$field])) {
                             $cell = isset($rshData[$field][$cell]) ? $rshData[$field][$cell] : '';
@@ -102,11 +101,11 @@ class DataController extends Action
                 });
                 
                 $excel = array(
-                    'title' => array_values($scope->_title),
-                    'result' => $datas
+                    'title' => array_keys($fields),
+                    'result' => $excelDatas
                 );
                 
-                $temp = tempnam(sys_get_temp_dir, 'gearman_export_');
+                $temp = tempnam(sys_get_temp_dir(), 'gearman_export_');
                 arrayToExcel($excel, $exportKey, $temp);
                 $cache->save(file_get_contents($temp), $exportKey, 60);
                 unlink($temp);
