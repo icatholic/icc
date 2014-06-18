@@ -16,6 +16,7 @@ use My\Common\MongoCollection;
 use Psr\Log\AbstractLogger;
 use Aws\CloudFront\Exception\Exception;
 use Zend\Serializer\Serializer;
+use MyProject\Proxies\__CG__\OtherProject\Proxies\__CG__\stdClass;
 
 class DataController extends Action
 {
@@ -348,15 +349,25 @@ class DataController extends Action
         // 增加gearman导出数据统计
         if ($action == 'excel') {
             $wait = $this->params()->fromQuery('wait', false);
+            $download = $this->params()->fromQuery('download', false);
+            
+            $obj = new stdClass();
+            $obj->_collection_id = $this->_collection_id;
+            $obj->_rshCollection = $this->_rshCollection;
+            $obj->_title = $this->_title;
+            $obj->_project_id = $this->_project_id;
+            
             $exportGearmanKey = md5($this->_collection_id . serialize($query));
             if ($this->cache($exportGearmanKey) !== null) {
                 return $this->msg(false, 'Excel表格创建中……');
             } elseif ($wait) {
+                return $this->msg(true, 'Excel创建成功');
+            } elseif ($download) {
                 $params = array();
                 $params['collection_id'] = $this->_collection_id;
                 $params['query'] = $query;
                 $params['fields'] = $fields;
-                $params['scope'] = $this;
+                $params['scope'] = $obj;
                 $workload = serialize($params);
                 $exportKey = md5($workload);
                 
@@ -371,7 +382,8 @@ class DataController extends Action
                 $params['collection_id'] = $this->_collection_id;
                 $params['query'] = $query;
                 $params['fields'] = $fields;
-                $params['scope'] = $this;
+                
+                $params['scope'] = $obj;
                 $workload = serialize($params);
                 $exportKey = md5($workload);
                 

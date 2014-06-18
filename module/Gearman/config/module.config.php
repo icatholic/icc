@@ -65,6 +65,15 @@ return array(
                             'action' => 'sync'
                         )
                     )
+                ),
+                'data_export_worker' => array(
+                    'options' => array(
+                        'route' => 'data export worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Data',
+                            'action' => 'export'
+                        )
+                    )
                 )
             )
         )

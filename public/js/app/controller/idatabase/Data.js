@@ -350,11 +350,37 @@ Ext.define('icc.controller.idatabase.Data', {
 					if (button.action == 'excel') {
 						Ext.Msg.confirm('系统提示', '导出数据有可能需要较长的时间，请点击“导出”按钮后，耐心等待，两次操作间隔需大于30秒！', function(btn) {
 							if (btn == 'yes') {
+								var tab = button.up('tabpanel');
+								var mask = new Ext.LoadMask(tab, {
+									autoShow : true,
+									msg : "Excel表格创建中，请稍后...",
+									useMsg : true
+								});
+								
 								button.setDisabled(true);
-								setTimeout(function() {
-									button.setDisabled(false);
-								}, 30000);
-								window.location.href = '/idatabase/data/index?' + Ext.Object.toQueryString(store.proxy.extraParams);
+								var loop = 0;
+								var interval = setInterval(function () {
+									var params = store.proxy.extraParams;
+									if(loop > 0) {
+										params.wait = true;
+									}
+									Ext.Ajax.request({
+										url: '/idatabase/data/index',
+										params: params,
+										method : 'GET',
+										scope: me,
+										success: function(response) {
+											var text = Ext.JSON.decode(response.responseText, true);
+											if(text.success) {
+												clearInterval(interval);
+												mask.hide();
+												button.setDisabled(false);
+												window.location.href = '/idatabase/data/index?download=true&' + Ext.Object.toQueryString(store.proxy.extraParams);
+											}
+										}
+									});
+									loop += 1;
+								},3000);
 							}
 						}, me);
 					} else {
