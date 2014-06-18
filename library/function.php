@@ -113,7 +113,7 @@ function excelTitle($i)
  * @return 直接浏览器输出excel表格 注意这个函数前不能有任何形式的输出
  *        
  */
-function arrayToExcel($datas, $name = '')
+function arrayToExcel($datas, $name = '', $output = 'php://output')
 {
     resetTimeMemLimit();
     if (empty($name)) {
@@ -188,12 +188,16 @@ function arrayToExcel($datas, $name = '')
         $i ++;
     }
     $objPHPExcel->getActiveSheet()->setTitle('Sheet1');
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="' . $name . '.xlsx"');
-    header('Cache-Control: max-age=0');
     $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
-    $objWriter->save('php://output');
-    exit();
+    if ($output === 'php://output') {
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $name . '.xlsx"');
+        header('Cache-Control: max-age=0');
+        $objWriter->save($output);
+        exit();
+    }
+    $objWriter->save($output);
+    return true;
 }
 
 /**
@@ -746,20 +750,20 @@ function getScriptExecuteInfo()
  */
 // function array_unset_recursive(&$array, $remove)
 // {
-//     if (! is_array($remove)) {
-//         $remove = array(
-//             $remove
-//         );
-//     }
-//     foreach ($array as $key => &$value) {
-//         if (in_array($key, $remove, true)) {
-//             unset($array[$key]);
-//         } else {
-//             if (is_array($value)) {
-//                 array_unset_recursive($value, $remove);
-//             }
-//         }
-//     }
+// if (! is_array($remove)) {
+// $remove = array(
+// $remove
+// );
+// }
+// foreach ($array as $key => &$value) {
+// if (in_array($key, $remove, true)) {
+// unset($array[$key]);
+// } else {
+// if (is_array($value)) {
+// array_unset_recursive($value, $remove);
+// }
+// }
+// }
 // }
 
 /**

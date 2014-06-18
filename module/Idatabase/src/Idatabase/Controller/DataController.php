@@ -15,6 +15,7 @@ use My\Common\Controller\Action;
 use My\Common\MongoCollection;
 use Psr\Log\AbstractLogger;
 use Aws\CloudFront\Exception\Exception;
+use Zend\Serializer\Serializer;
 
 class DataController extends Action
 {
@@ -330,7 +331,6 @@ class DataController extends Action
                 return $this->msg(false, '请联系管理员，设定允许导出数据字段的权限');
             }
             $fields = $this->_schema['export'];
-            
         }
         // 开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
         array_walk($fields, function ($value, $key) use(&$fields)
@@ -344,6 +344,33 @@ class DataController extends Action
             }
         });
         // 结束修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
+        
+        // 增加gearman导出数据统计
+        if ($action == 'excel') {
+            $wait = $this->params()->fromQuery('wait', false);
+            $exportGearmanKey = md5($this->_collection_id . serialize($query));
+            if ($wait && ($binary = $this->cache($exportGearmanKey)) !== null) {
+                header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.xlsx"');
+                header('Cache-Control: max-age=0');
+                file_put_contents("php://out", $binary);
+                exit();
+            } else {
+                $params = array();
+                $params['collection_id'] = $this->_collection_id;
+                $params['query'] = $query;
+                $params['fields'] = $fields;
+                $params['scope'] = $this;
+                $workload = serialize($params);
+                $exportKey = md5($workload);
+                $jobHandle = $this->_gmClient->doBackground('dataExport', $workload, $exportKey);
+                $stat = $this->_gmClient->jobStatus($jobHandle);
+                if (isset($stat[0]) && $stat[0]) {
+                    $this->cache()->save(true, $exportKey, 60);
+                }
+                return $this->msg(false, '请求被受理');
+            }
+        }
         
         $cursor = $this->_data->find($query, $fields);
         if (! ($cursor instanceof \MongoCursor)) {
