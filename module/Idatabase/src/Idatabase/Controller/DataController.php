@@ -351,7 +351,7 @@ class DataController extends Action
             $wait = $this->params()->fromQuery('wait', false);
             $download = $this->params()->fromQuery('download', false);
             
-            $obj = new stdClass();
+            $obj = new \stdClass();
             $obj->_collection_id = $this->_collection_id;
             $obj->_rshCollection = $this->_rshCollection;
             $obj->_title = $this->_title;

@@ -63,7 +63,7 @@ class DataController extends Action
                 }
                 
                 // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
-                
+                $rshData = array();
                 foreach ($scope->_rshCollection as $_id => $detail) {
                     $_id = $this->getCollectionIdByAlias($scope->_project_id, $_id);
                     $model = $this->collection()
@@ -105,9 +105,11 @@ class DataController extends Action
                     'title' => array_values($scope->_title),
                     'result' => $datas
                 );
-                arrayToExcel($excel, $exportKey, 'php://temp');
-                $cache->save(file_get_contents('php://temp'), $exportKey, 60);
                 
+                $temp = tempnam(sys_get_temp_dir, 'gearman_export_');
+                arrayToExcel($excel, $exportKey, $temp);
+                $cache->save(file_get_contents($temp), $exportKey, 60);
+                unlink($temp);
                 $cache->remove($exportGearmanKey);
                 $job->sendComplete('complete');
             });
