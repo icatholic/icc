@@ -62,7 +62,7 @@ class DataController extends Action
                 // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
                 
                 foreach ($scope->_rshCollection as $_id => $detail) {
-                    $_id = $this->getCollectionIdByAlias($scope->project_id, $_id);
+                    $_id = $this->getCollectionIdByAlias($scope->_project_id, $_id);
                     $model = $this->collection()
                         ->secondary(iCollectionName($_id));
                     $cursor = $model->find(array(), array(
@@ -102,7 +102,8 @@ class DataController extends Action
                     'title' => array_values($scope->_title),
                     'result' => $datas
                 );
-                arrayToExcel($excel);
+                arrayToExcel($excel, $exportKey, 'php://temp');
+                $cache->save(file_get_contents('php://temp'), $exportKey, 60);
             });
             
             while ($this->_worker->work()) {
