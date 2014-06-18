@@ -349,7 +349,18 @@ class DataController extends Action
         if ($action == 'excel') {
             $wait = $this->params()->fromQuery('wait', false);
             $exportGearmanKey = md5($this->_collection_id . serialize($query));
-            if ($wait && ($binary = $this->cache($exportGearmanKey)) !== null) {
+            if ($this->cache($exportGearmanKey) !== null) {
+                return $this->msg(false, 'Excel表格创建中……');
+            } elseif ($wait) {
+                $params = array();
+                $params['collection_id'] = $this->_collection_id;
+                $params['query'] = $query;
+                $params['fields'] = $fields;
+                $params['scope'] = $this;
+                $workload = serialize($params);
+                $exportKey = md5($workload);
+                
+                $binary = $this->cache($exportKey);
                 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.xlsx"');
                 header('Cache-Control: max-age=0');
@@ -363,10 +374,11 @@ class DataController extends Action
                 $params['scope'] = $this;
                 $workload = serialize($params);
                 $exportKey = md5($workload);
+                
                 $jobHandle = $this->_gmClient->doBackground('dataExport', $workload, $exportKey);
                 $stat = $this->_gmClient->jobStatus($jobHandle);
                 if (isset($stat[0]) && $stat[0]) {
-                    $this->cache()->save(true, $exportKey, 60);
+                    $this->cache()->save(true, $exportGearmanKey, 600);
                 }
                 return $this->msg(false, '请求被受理');
             }

@@ -37,12 +37,14 @@ class DataController extends Action
             {
                 $job->handle();
                 $workload = $job->workload();
-                $exportKey = md5($workload);
                 $params = unserialize($workload);
                 $scope = $params['scope'];
                 $collection_id = $params['collection_id'];
                 $query = $params['query'];
                 $fields = $params['fields'];
+                $exportKey = md5($workload);
+                $exportGearmanKey = md5($scope->_collection_id.serialize($query));
+                
                 $this->_data->setCollection(iCollectionName($collection_id));
                 $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
                 $cursor = $this->_data->find($query, $fields);
@@ -105,6 +107,9 @@ class DataController extends Action
                 );
                 arrayToExcel($excel, $exportKey, 'php://temp');
                 $cache->save(file_get_contents('php://temp'), $exportKey, 60);
+                
+                $cache->remove($exportGearmanKey);
+                $job->sendComplete('complete');
             });
             
             while ($this->_worker->work()) {
