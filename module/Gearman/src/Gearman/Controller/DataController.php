@@ -15,12 +15,15 @@ class DataController extends Action
 
     private $_worker;
 
+    private $_collection;
+
     private $_data;
 
     public function init()
     {
         $this->_worker = $this->gearman()->worker();
         $this->_data = $this->model('Idatabase\Model\Data');
+        $this->_collection = $this->model('Idatabase\Model\Collection');
     }
 
     /**
@@ -44,16 +47,29 @@ class DataController extends Action
                 $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
                 $cursor = $this->_data->find($query, $fields);
                 $datas = iterator_to_array($cursor, false);
+                
+                // 保持拥有全部的字段名，不存在错乱的想象
+                $fieldNames = array_keys($fields);
+                while ($cursor->hasNext()) {
+                    $row = $cursor->getNext();
+                    $diff = array_diff(array_keys($row), $fieldNames);
+                    array_walk($diff, function ($items, $key) use(&$row)
+                    {
+                        $row[$items] = '';
+                    });
+                }
+                
                 // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
                 
                 foreach ($scope->_rshCollection as $_id => $detail) {
-                    $_id = $this->getCollectionIdByAlias($_id);
-                    $model = $this->collection()->secondary(iCollectionName($_id));
+                    $_id = $this->getCollectionIdByAlias($scope->project_id, $_id);
+                    $model = $this->collection()
+                        ->secondary(iCollectionName($_id));
                     $cursor = $model->find(array(), array(
                         $detail['rshCollectionKeyField'] => true,
                         $detail['rshCollectionValueField'] => true
                     ));
-                
+                    
                     $datas = array();
                     while ($cursor->hasNext()) {
                         $row = $cursor->getNext();
@@ -94,12 +110,36 @@ class DataController extends Action
                     echo "return_code: " . $this->_worker->returnCode() . "\n";
                 }
             }
-            
             return $this->response;
         } catch (\Exception $e) {
             var_dump(exceptionMsg($e));
             $job->sendException(exceptionMsg($e));
             return false;
         }
+    }
+
+    /**
+     * 根据集合的名称获取集合的_id
+     *
+     * @param string $alias            
+     * @throws \Exception or string
+     */
+    private function getCollectionIdByAlias($project_id, $alias)
+    {
+        try {
+            new \MongoId($alias);
+            return $alias;
+        } catch (\MongoException $ex) {}
+        
+        $collectionInfo = $this->_collection->findOne(array(
+            'project_id' => $project_id,
+            'alias' => $alias
+        ));
+        
+        if ($collectionInfo == null) {
+            throw new \Exception('集合名称不存在于指定项目');
+        }
+        
+        return $collectionInfo['_id']->__toString();
     }
 }
