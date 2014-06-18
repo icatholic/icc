@@ -46,7 +46,7 @@ class DataController extends Action
                 $this->_data->setCollection(iCollectionName($collection_id));
                 $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
                 $cursor = $this->_data->find($query, $fields);
-                $datas = iterator_to_array($cursor, false);
+                $datas = array();
                 
                 // 保持拥有全部的字段名，不存在错乱的想象
                 $fieldNames = array_keys($fields);
@@ -57,6 +57,7 @@ class DataController extends Action
                     {
                         $row[$items] = '';
                     });
+                    $datas[] = $row;
                 }
                 
                 // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
