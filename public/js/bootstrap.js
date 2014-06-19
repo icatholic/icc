@@ -7,6 +7,7 @@
 Ext.Loader.addClassPathMappings({
   "Ext": "ext/src",
   "Ext.Msg": "ext/src/window/MessageBox.js",
+  "Ext.form.UEditor": "ext/src/form/Ueditor.js",
   "Ext.rtl.EventObjectImpl": "ext/src/rtl/EventObject.js",
   "ExtThemeNeptune": "ext/packages/ext-theme-neptune/overrides",
   "icc": "app"
@@ -315,6 +316,9 @@ Ext.ClassManager.addNameAlternateMappings({
   ],
   "Ext.form.RadioGroup": [],
   "Ext.form.RadioManager": [],
+  "Ext.form.UEditor": [
+    "Ext.ux.UEditor"
+  ],
   "Ext.form.action.Action": [
     "Ext.form.Action"
   ],
@@ -1351,6 +1355,9 @@ Ext.ClassManager.addNameAliasMappings({
     "widget.radiogroup"
   ],
   "Ext.form.RadioManager": [],
+  "Ext.form.UEditor": [
+    "widget.ueditor"
+  ],
   "Ext.form.action.Action": [],
   "Ext.form.action.DirectLoad": [
     "formaction.directload"
