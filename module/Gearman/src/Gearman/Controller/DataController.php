@@ -116,8 +116,13 @@ class DataController extends Action
                     });
                 });
                 
+                $title = array();
+                foreach(array_keys($fields) as $field) {
+                    $title[] = $scope->_title[$field];
+                }
+                
                 $excel = array(
-                    'title' => array_keys($fields),
+                    'title' => $title,
                     'result' => $excelDatas
                 );
                 
