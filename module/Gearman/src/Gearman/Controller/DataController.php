@@ -18,12 +18,15 @@ class DataController extends Action
     private $_collection;
 
     private $_data;
+    
+    private $_mapping;
 
     public function init()
     {
         $this->_worker = $this->gearman()->worker();
         $this->_data = $this->model('Idatabase\Model\Data');
         $this->_collection = $this->model('Idatabase\Model\Collection');
+        $this->_mapping = $this->model('Idatabase\Model\Mapping');
     }
 
     /**
@@ -45,7 +48,20 @@ class DataController extends Action
                 $exportKey = md5($workload);
                 $exportGearmanKey = md5($scope->_collection_id.serialize($query));
                 
-                $this->_data->setCollection(iCollectionName($collection_id));
+                
+                // 获取映射关系，初始化数据集合model
+                $mapCollection = $this->_mapping->findOne(array(
+                    'project_id' => $scope->_project_id,
+                    'collection_id' => $scope->_collection_id,
+                    'active' => true
+                ));
+                if ($mapCollection != null) {
+                    $this->_data->setCollection($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
+                } else {
+                    $this->_data->setCollection(iCollectionName($collection_id));
+                }
+                
+                
                 $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
                 $cursor = $this->_data->find($query, $fields);
                 $excelDatas = array();

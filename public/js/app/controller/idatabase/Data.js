@@ -368,7 +368,6 @@ Ext.define('icc.controller.idatabase.Data', {
 										url: '/idatabase/data/index',
 										params: params,
 										method : 'GET',
-										scope: me,
 										success: function(response) {
 											var text = Ext.JSON.decode(response.responseText, true);
 											if(loop==0) {
@@ -384,25 +383,26 @@ Ext.define('icc.controller.idatabase.Data', {
 												button.setDisabled(false);
 												delete store.proxy.extraParams.wait;
 												window.location.href = '/idatabase/data/index?download=true&' + Ext.Object.toQueryString(store.proxy.extraParams);
+												return true;
 											}
 										}
 									});
 									loop += 1;
 								},3000);
 							}
-						}, me);
+						});
 						return false;
 					} else {
 						button.setDisabled(true);
 						setTimeout(function() {
 							button.setDisabled(false);
 						}, 3000);
+						store.load(function(records, operation, success) {
+							if (success) {
+								button.setDisabled(false);
+							}
+						});
 					}
-					store.load(function(records, operation, success) {
-						if (success) {
-							button.setDisabled(false);
-						}
-					});
 				}
 			}
 		};
