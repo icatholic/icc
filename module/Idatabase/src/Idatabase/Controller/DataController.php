@@ -168,6 +168,26 @@ class DataController extends Action
      * @var object
      */
     private $_gmClient = null;
+    
+    /**
+     * 保留字段
+     * @var array
+     */
+    private $_filter = array(
+        '_id',
+        'start',
+        'page',
+        'limit',
+        '__create_time__',
+        '__removed__',
+        '__modify_time__',
+        '__old_id__',
+        '__old_data__',
+        '__project_id__',
+        '__collection_id__',
+        '__plugin_id__',
+        '__plugin_collection_id__'
+    );
 
     /**
      * 初始化函数
@@ -396,8 +416,6 @@ class DataController extends Action
             }
         }
         
-        fb($query, 'LOG');
-        fb($fields,'LOG');
         $cursor = $this->_data->find($query, $fields);
         if (! ($cursor instanceof \MongoCursor)) {
             throw new \Exception('无效的$cursor');
@@ -1371,6 +1389,10 @@ class DataController extends Action
             $subQuery = array();
             $not = false;
             $exact = false;
+            
+            if(in_array(strtolower($field),$this->_filter)) {
+                continue;
+            }
             
             if (isset($_REQUEST['exclusive__' . $field]) && filter_var($_REQUEST['exclusive__' . $field], FILTER_VALIDATE_BOOLEAN))
                 $not = true;
