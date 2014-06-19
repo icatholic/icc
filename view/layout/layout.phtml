@@ -25,7 +25,9 @@ echo $this->headScript()
     ->appendFile($this->basePath() . '/js/build/production/icc/app.js?v=' . $this->__VERSION__)
     ->appendFile($this->basePath() . '/js/resources/common.js?v=' . $this->__VERSION__)
     ->appendFile($this->basePath() . '/js/resources/htmlspecialchars.js?v=' . $this->__VERSION__)
-    ->appendFile($this->basePath() . '/css/BoxSelect.js?v=' . $this->__VERSION__);
+    ->appendFile($this->basePath() . '/js/ueditor/ueditor.config.js?v=' . $this->__VERSION__)
+    ->appendFile($this->basePath() . '/js/ueditor/ueditor.all.min.js?v=' . $this->__VERSION__)
+    ->appendFile($this->basePath() . '/js/ueditor/lang/zh-cn/zh-cn.js?v=' . $this->__VERSION__);
 
 ?>
 </head>
