@@ -44,7 +44,10 @@ class StructureController extends Action
         '__removed__',
         '__modify_time__',
         '__old_id__',
-        '__old_data__'
+        '__old_data__',
+        '__project_id__',
+        '__collection_id__',
+        '__plugin_id__'
     );
 
     public function init()
