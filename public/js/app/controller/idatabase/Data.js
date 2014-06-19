@@ -331,7 +331,7 @@ Ext.define('icc.controller.idatabase.Data', {
 			}
 		};
 
-		listeners['idatabaseDataSearch button[action=search],button[action=excel]'] = {
+		listeners['idatabaseDataSearch button[action=search]'] = {
 			click: function(button) {
 				var form = button.up('form').getForm();
 				if (form.isValid()) {
@@ -342,12 +342,35 @@ Ext.define('icc.controller.idatabase.Data', {
 							delete store.proxy.extraParams[items.name];
 						}
 					});
-
-					//store.proxy.extraParams.start = 0;
+					store.proxy.extraParams.start = 0;
 					store.proxy.extraParams.action = button.action;	
 					store.proxy.extraParams = Ext.Object.merge(store.proxy.extraParams, extraParams);
+					button.setDisabled(true);
+					setTimeout(function() {
+						button.setDisabled(false);
+					}, 30000);
+					store.load(function(records, operation, success) {
+						button.setDisabled(false);
+					});
+				}
+			}
+		};
+		
+		listeners['idatabaseDataSearch button[action=excel]'] = {
+				click: function(button) {
+					var form = button.up('form').getForm();
+					if (form.isValid()) {
+						var extraParams = form.getValues(false, true);
+						var store = me.activeDataGrid().store;
+						form.getFields().each(function(items, index) {
+							if (items.xtype != 'hiddenfield') {
+								delete store.proxy.extraParams[items.name];
+							}
+						});
 
-					if (button.action == 'excel') {
+						store.proxy.extraParams.action = button.action;	
+						store.proxy.extraParams = Ext.Object.merge(store.proxy.extraParams, extraParams);
+
 						Ext.Msg.confirm('系统提示', '导出数据有可能需要较长的时间，请点击“导出”按钮后，耐心等待，两次操作间隔需大于30秒！', function(btn) {
 							if (btn == 'yes') {
 								var tab = button.up('tabpanel');
@@ -392,20 +415,10 @@ Ext.define('icc.controller.idatabase.Data', {
 							}
 						});
 						return false;
-					} else {
-						button.setDisabled(true);
-						setTimeout(function() {
-							button.setDisabled(false);
-						}, 3000);
-						store.load(function(records, operation, success) {
-							if (success) {
-								button.setDisabled(false);
-							}
-						});
 					}
 				}
-			}
-		};
+			};
+			
 
 		listeners['idatabaseDataSearch button[action=statistic]'] = {
 			click: function(button) {

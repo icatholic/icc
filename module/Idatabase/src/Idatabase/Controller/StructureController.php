@@ -35,6 +35,16 @@ class StructureController extends Action
 
     private $_fieldRgex = '/^[a-z]{1}[a-z0-9_\.]*$/i';
 
+    private $_filter = array(
+        '_id',
+        'start',
+        'page',
+        'limit',
+        '__CREATE_TIME__',
+        '__REMOVED__',
+        '__MODIFY_TIME__'
+    );
+
     public function init()
     {
         if ($this->action != 'filter') {
@@ -166,6 +176,10 @@ class StructureController extends Action
         $datas['cdnUrl'] = trim($this->params()->fromPost('cdnUrl', ''));
         $datas['xTemplate'] = trim($this->params()->fromPost('xTemplate', ''));
         
+        if (in_array(strtolower($datas['field']), $this->_filter, true)) {
+            return $this->msg(false, '保留字段不允许作为字段名称,保留字段为：' . join(',', $this->_filter));
+        }
+        
         if ($datas['type'] !== 'filefield' && ! empty($datas['cdnUrl'])) {
             return $this->msg(false, '只有当输入类型为“文件类型”时，才需要设定文件资源域名');
         }
@@ -282,6 +296,10 @@ class StructureController extends Action
         $datas['linkageSetValueField'] = trim($this->params()->fromPost('linkageSetValueField', ''));
         $datas['cdnUrl'] = trim($this->params()->fromPost('cdnUrl', ''));
         $datas['xTemplate'] = trim($this->params()->fromPost('xTemplate', ''));
+        
+        if (in_array(strtolower($datas['field']), $this->_filter, true)) {
+            return $this->msg(false, '保留字段不允许作为字段名称,保留字段为：' . join(',', $this->_filter));
+        }
         
         if ($datas['type'] !== 'filefield' && ! empty($datas['cdnUrl'])) {
             return $this->msg(false, '只有当输入类型为“文件类型”时，才需要设定文件资源域名');
@@ -414,6 +432,10 @@ class StructureController extends Action
             
             if ($row['field'] == null) {
                 return $this->msg(false, '请填写字段名称');
+            }
+            
+            if (in_array(strtolower($row['field']), $this->_filter, true)) {
+                return $this->msg(false, '保留字段不允许作为字段名称,保留字段为：' . join(',', $this->_filter));
             }
             
             if (! $this->checkFieldName($row['field'])) {

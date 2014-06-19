@@ -396,6 +396,8 @@ class DataController extends Action
             }
         }
         
+        fb($query, 'LOG');
+        fb($fields,'LOG');
         $cursor = $this->_data->find($query, $fields);
         if (! ($cursor instanceof \MongoCursor)) {
             throw new \Exception('无效的$cursor');
@@ -407,35 +409,35 @@ class DataController extends Action
         }
         
         $cursor->sort($sort);
-        if ($action !== 'excel') {
+        //if ($action !== 'excel') {
             $cursor->skip($start)->limit($limit);
-        }
+        //}
         
         $datas = iterator_to_array($cursor, false);
         $datas = $this->comboboxSelectedValues($datas);
         
-        if ($action == 'excel') {
-            // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
-            $this->dealRshData();
-            // 结束
-            convertToPureArray($datas);
-            array_walk($datas, function (&$value, $key)
-            {
-                ksort($value);
-                array_walk($value, function (&$cell, $field)
-                {
-                    if (isset($this->_rshData[$field])) {
-                        $cell = isset($this->_rshData[$field][$cell]) ? $this->_rshData[$field][$cell] : '';
-                    }
-                });
-            });
+//         if ($action == 'excel') {
+//             // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
+//             $this->dealRshData();
+//             // 结束
+//             convertToPureArray($datas);
+//             array_walk($datas, function (&$value, $key)
+//             {
+//                 ksort($value);
+//                 array_walk($value, function (&$cell, $field)
+//                 {
+//                     if (isset($this->_rshData[$field])) {
+//                         $cell = isset($this->_rshData[$field][$cell]) ? $this->_rshData[$field][$cell] : '';
+//                     }
+//                 });
+//             });
             
-            $excel = array(
-                'title' => array_values($this->_title),
-                'result' => $datas
-            );
-            arrayToExcel($excel);
-        }
+//             $excel = array(
+//                 'title' => array_values($this->_title),
+//                 'result' => $datas
+//             );
+//             arrayToExcel($excel);
+//         }
         return $this->rst($datas, $total, true);
     }
 
