@@ -118,7 +118,7 @@ class DataController extends Action
                 
                 $title = array();
                 foreach(array_keys($fields) as $field) {
-                    $title[] = $scope->_title[$field];
+                    $title[] = isset($scope->_title[$field]) ? $scope->_title[$field] : $field;
                 }
                 
                 $excel = array(
