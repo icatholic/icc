@@ -23,6 +23,9 @@ Ext.define('icc.store.idatabase.Structure.Type', {
 		"name" : '富文本编辑器',
 		"val" : 'htmleditor'
 	}, {
+		"name" : 'UEditor富文本编辑器',
+		"val" : 'ueditor'
+	}, {
 		"name" : '日期控件',
 		"val" : 'datefield'
 	}, {

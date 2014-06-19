@@ -7,7 +7,6 @@
 Ext.Loader.addClassPathMappings({
   "Ext": "ext/src",
   "Ext.Msg": "ext/src/window/MessageBox.js",
-  "Ext.form.UEditor": "ext/src/form/Ueditor.js",
   "Ext.rtl.EventObjectImpl": "ext/src/rtl/EventObject.js",
   "ExtThemeNeptune": "ext/packages/ext-theme-neptune/overrides",
   "icc": "app"
