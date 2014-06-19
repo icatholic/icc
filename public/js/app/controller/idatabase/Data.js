@@ -352,7 +352,9 @@ Ext.define('icc.controller.idatabase.Data', {
 					store.load(function(records, operation, success) {
 						button.setDisabled(false);
 					});
+					return true;
 				}
+				return false;
 			}
 		};
 		
