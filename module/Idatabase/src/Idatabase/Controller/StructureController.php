@@ -40,9 +40,10 @@ class StructureController extends Action
         'start',
         'page',
         'limit',
-        '__CREATE_TIME__',
-        '__REMOVED__',
-        '__MODIFY_TIME__'
+        '__create_time__',
+        '__removed__',
+        '__modify_time__',
+        '__old_id__'
     );
 
     public function init()
