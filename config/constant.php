@@ -16,7 +16,9 @@ defined('DB_ADMIN') || define('DB_ADMIN', 'admin');
 defined('DB_BACKUP') || define('DB_BACKUP', 'backup');
 defined('DB_MAPREDUCE') || define('DB_MAPREDUCE', 'mapreduce');
 defined('DB_LOGS') || define('DB_LOGS', 'logs');
+defined('DB_UMA') || define('DB_UMA', 'umav3');
 defined('GRIDFS_PREFIX') || define('GRIDFS_PREFIX', 'icc');
+
 
 /**
  * 系统全局设定数据库
@@ -71,6 +73,10 @@ defined('MONGOS_DEFAULT_03') || define('MONGOS_DEFAULT_03', '127.0.0.1:27017');
 defined('MONGOS_ANALYSIS_01') || define('MONGOS_ANALYSIS_01', '127.0.0.1:27017');
 defined('MONGOS_ANALYSIS_02') || define('MONGOS_ANALYSIS_02', '127.0.0.1:27017');
 defined('MONGOS_ANALYSIS_03') || define('MONGOS_ANALYSIS_03', '127.0.0.1:27017');
+
+defined('MONGOS_UMA_01') || define('MONGOS_UMA_01', '127.0.0.1:27017');
+defined('MONGOS_UMA_02') || define('MONGOS_UMA_02', '127.0.0.1:27017');
+defined('MONGOS_UMA_03') || define('MONGOS_UMA_03', '127.0.0.1:27017');
 
 defined('GEARMAN_SERVERS')|| define('GEARMAN_SERVERS', '127.0.0.1:4730,127.0.0.1:4730');
 
