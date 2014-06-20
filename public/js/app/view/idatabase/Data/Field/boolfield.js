@@ -4,8 +4,7 @@ Ext.define('icc.view.idatabase.Data.Field.boolfield', {
 	fieldLabel : '是否选择boolean',
 	radioName : 'booleanName',
 	defaults : {
-		flex : 1,
-		xtype : 'radiofield'
+		flex : 1
 	},
 	layout : 'hbox',
 	initComponent : function() {

@@ -618,10 +618,10 @@ Ext.define('icc.controller.idatabase.Collection', {
 						addOrEditField.height = 300;
 						addOrEditField.plugins = [new Ext.create('Ext.ux.form.HtmlEditor.imageUpload', {dragResize:true,dragWheel:true,collection_id:__COLLECTION_ID__})];
 						break;
-//					case 'ueditor':
-//						addOrEditField.__PROJECT_ID__ = __PROJECT_ID__;
-//						addOrEditField.__COLLECTION_ID__ = __COLLECTION_ID__;
-//						break;
+					case 'ueditor':
+						addOrEditField.__PROJECT_ID__ = __PROJECT_ID__;
+						addOrEditField.__COLLECTION_ID__ = __COLLECTION_ID__;
+						break;
 					};
 
 					var rshCollection = record.get('rshCollection');
