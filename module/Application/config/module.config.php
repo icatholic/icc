@@ -162,6 +162,16 @@ return array(
                     DB_BACKUP,
                     DB_LOGS
                 )
+            ),
+            'umav3' => array(
+                'servers' => array(
+                    MONGOS_UMA_01,
+                    MONGOS_UMA_02,
+                    MONGOS_UMA_03
+                ),
+                'dbs' => array(
+                    DB_UMA
+                )
             )
         )
     ),
