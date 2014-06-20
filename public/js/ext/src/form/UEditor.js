@@ -1,7 +1,7 @@
 Ext.define('Ext.form.UEditor', {
-    extend: Ext.form.FieldContainer,
+    extend: 'Ext.form.FieldContainer',
     mixins: {
-        field: Ext.form.field.Field
+        field: 'Ext.form.field.Field'
     },
     alias: 'widget.ueditor',
     alternateClassName: 'Ext.ux.UEditor',
@@ -22,10 +22,10 @@ Ext.define('Ext.form.UEditor', {
                 initialFrameHeight: height
             };
             me.ueditorInstance = UE.getEditor(id, config);
-//            me.ueditorInstance.execCommand('serverparam', {
-//                '__PROJECT_ID__': me.__PROJECT_ID__,
-//                '__COLLECTION_ID__': me.__COLLECTION_ID__
-//            });
+            me.ueditorInstance.execCommand('serverparam', {
+                '__PROJECT_ID__': me.__PROJECT_ID__,
+                '__COLLECTION_ID__': me.__COLLECTION_ID__
+            });
             me.ueditorInstance.ready(function() {
                 me.initialized = true;
                 me.fireEvent('initialize', me);

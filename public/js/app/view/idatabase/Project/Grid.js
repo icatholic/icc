@@ -19,6 +19,14 @@ Ext.define('icc.view.idatabase.Project.Grid', {
 		dataIndex: '__CREATE_TIME__',
 		flex: 1,
 		format: 'Y-m-d'
+	}, {
+		xtype: 'booleancolumn',
+		text: '是否系统集合',
+		dataIndex: 'isSystem',
+		flex: 1,
+		trueText : '√',
+	    falseText : '×',
+	    hidden : true
 	}],
 	initComponent: function() {
 		var me = this;

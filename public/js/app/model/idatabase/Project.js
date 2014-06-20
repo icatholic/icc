@@ -9,5 +9,8 @@ Ext.define('icc.model.idatabase.Project', {
 	}, {
 		name: 'desc',
 		type: 'string'
+	}, {
+		name: 'isSystem',
+		type: 'boolean'
 	}]
 });
