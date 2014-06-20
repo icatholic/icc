@@ -174,11 +174,9 @@ class DataController extends Action
      * @var array
      */
     private $_filter = array(
-        '_id',
         'start',
         'page',
         'limit',
-        '__create_time__',
         '__removed__',
         '__modify_time__',
         '__old_id__',
