@@ -91,17 +91,17 @@
         //首行缩进距离,默认是2em
         //,indentValue:'2em'
 
-        ,initialFrameWidth:800  //初始化编辑器宽度,默认1000
-        ,initialFrameHeight:320  //初始化编辑器高度,默认320
+        //,initialFrameWidth:800  //初始化编辑器宽度,默认1000
+        //,initialFrameHeight:320  //初始化编辑器高度,默认320
 
         //,readonly : false //编辑器初始化结束后,编辑区域是否是只读的，默认是false
 
         //,autoClearEmptyNode : true //getContent时，是否删除空的inlineElement节点（包括嵌套的情况）
 
         //启用自动保存
-        //,enableAutoSave: true
+        ,enableAutoSave: true
         //自动保存间隔时间， 单位ms
-        //,saveInterval: 500
+        ,saveInterval: 500
 
         //,fullscreen : false //是否开启初始化时即全屏，默认关闭
 
