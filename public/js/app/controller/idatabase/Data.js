@@ -339,10 +339,10 @@ Ext.define('icc.controller.idatabase.Data', {
 					var store = me.activeDataGrid().store;
 					form.getFields().each(function(items, index) {
 						if (items.xtype != 'hiddenfield') {
-							delete store.proxy.extraParams[items.name];
+							delete me.activeDataGrid().store.proxy.extraParams[items.name];
 						}
 					});
-					store.proxy.extraParams.start = 0;
+					//store.proxy.extraParams.start = 0;
 					store.proxy.extraParams.action = button.action;	
 					store.proxy.extraParams = Ext.Object.merge(store.proxy.extraParams, extraParams);
 					button.setDisabled(true);
