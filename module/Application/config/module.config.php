@@ -112,7 +112,8 @@ return array(
                     array(
                         MEMCACHED_01,
                         11211
-                    ),array(
+                    ),
+                    array(
                         MEMCACHED_02,
                         11211
                     )
@@ -212,6 +213,21 @@ return array(
         'strategies' => array(
             'ViewJsonStrategy',
             'ViewFeedStrategy'
+        )
+    ),
+    'console' => array(
+        'router' => array(
+            'routes' => array(
+                'mapreduce_worker' => array(
+                    'options' => array(
+                        'route' => 'notify keys',
+                        'defaults' => array(
+                            'controller' => 'Application\Controller\Notify',
+                            'action' => 'keys'
+                        )
+                    )
+                )
+            )
         )
     )
 );

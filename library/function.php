@@ -2,6 +2,9 @@
 use Zend\Http\Request;
 use Zend\Json\Json;
 use My\Common\MongoCollection;
+use Zend\Mail\Message;
+use Zend\Mail\Transport\Smtp as SmtpTransport;
+use Zend\Mail\Transport\SmtpOptions;
 
 /**
  * ICC函数定义集合文件
@@ -222,11 +225,31 @@ function getEmailName($email)
  *            (array|string)
  * @param string $subject            
  * @param string $content            
- * @param string $type
- *            默认是html邮件
  */
-function sendEmail($to, $subject, $content, $type = 'html')
-{}
+function sendEmail($to, $subject, $content)
+{
+    $message = new Message();
+    $message->addTo($to)
+        ->setEncoding('utf-8')
+        ->addFrom('system.monitor@icatholic.net.cn')
+        ->setSubject($subject)
+        ->setBody($content);
+    
+    $transport = new SmtpTransport();
+    $options = new SmtpOptions(array(
+        'name' => 'system.monitor',
+        'host' => 'smtp.icatholic.net.cn',
+        'port' => 25,
+        'connection_class' => 'login',
+        'connection_config' => array(
+            'username' => 'system.monitor@icatholic.net.cn',
+            'password' => 'abc123'
+        )
+    ));
+    $transport->setOptions($options);
+    $transport->send($message);
+    return true;
+}
 
 /**
  * 获取整形的IP地址
