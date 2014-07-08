@@ -51,11 +51,4 @@ class NotifyController extends Action
         echo 'OK';
         return $this->response;
     }
-    
-    public function testAction(){
-        stream_socket_client('tcp://mail.icatholic.net.cn:25', $errorNum, $errorStr, 10);
-        echo $errorNum;
-        echo $errorStr;
-        return $this->response;
-    }
 }
