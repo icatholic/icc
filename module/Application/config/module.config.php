@@ -218,7 +218,7 @@ return array(
     'console' => array(
         'router' => array(
             'routes' => array(
-                'mapreduce_worker' => array(
+                'notify_keys' => array(
                     'options' => array(
                         'route' => 'notify keys',
                         'defaults' => array(
