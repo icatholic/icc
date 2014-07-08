@@ -201,6 +201,7 @@ Ext.define('icc.controller.idatabase.Structure', {
 								url: me.actions.remove,
 								params: {
 									_id: Ext.encode(_id),
+									__PLUGIN_ID__: grid.__PLUGIN_ID__,
 									__PROJECT_ID__: grid.__PROJECT_ID__,
 									__COLLECTION_ID__: grid.__COLLECTION_ID__,
 									__PLUGIN_COLLECTION_ID__: grid.__PLUGIN_COLLECTION_ID__
