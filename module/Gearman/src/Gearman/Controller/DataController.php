@@ -117,6 +117,7 @@ class DataController extends Action
                 });
                 
                 $title = array();
+                ksort($fields);
                 foreach(array_keys($fields) as $field) {
                     $title[] = isset($scope->_title[$field]) ? $scope->_title[$field] : $field;
                 }
