@@ -67,8 +67,12 @@ class ProjectController extends Action
                 )
             );
         }
-
-        return $this->findAll(IDATABASE_PROJECTS, $query);
+        
+        $cursor = $this->_project->find($query);
+        $cursor->sort(array(
+            '_id' => - 1
+        ));
+        return $this->rst(iterator_to_array($cursor, false), $cursor->count(), true);
     }
 
     /**

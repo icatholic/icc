@@ -18,7 +18,7 @@ class DataController extends Action
     private $_collection;
 
     private $_data;
-    
+
     private $_mapping;
 
     public function init()
@@ -46,8 +46,7 @@ class DataController extends Action
                 $query = $params['query'];
                 $fields = $params['fields'];
                 $exportKey = md5($workload);
-                $exportGearmanKey = md5($scope->_collection_id.serialize($query));
-                
+                $exportGearmanKey = md5($scope->_collection_id . serialize($query));
                 
                 // 获取映射关系，初始化数据集合model
                 $mapCollection = $this->_mapping->findOne(array(
@@ -61,7 +60,6 @@ class DataController extends Action
                     $this->_data->setCollection(iCollectionName($collection_id));
                 }
                 
-                
                 $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
                 $cursor = $this->_data->find($query, $fields);
                 $excelDatas = array();
@@ -70,7 +68,7 @@ class DataController extends Action
                 while ($cursor->hasNext()) {
                     $row = $cursor->getNext();
                     $tmp = array();
-                    foreach($fieldNames as $key) {
+                    foreach ($fieldNames as $key) {
                         $tmp[$key] = isset($row[$key]) ? $row[$key] : '';
                     }
                     $excelDatas[] = $tmp;
@@ -118,7 +116,7 @@ class DataController extends Action
                 
                 $title = array();
                 ksort($fields);
-                foreach(array_keys($fields) as $field) {
+                foreach (array_keys($fields) as $field) {
                     $title[] = isset($scope->_title[$field]) ? $scope->_title[$field] : $field;
                 }
                 
