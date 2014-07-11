@@ -38,6 +38,9 @@ class ProjectController extends Action
         $query = array();
         $isSystem = filter_var($this->params()->fromQuery('isSystem', ''), FILTER_VALIDATE_BOOLEAN);
         $search = $this->params()->fromQuery('query', null);
+        $start = intval($this->params()->fromQuery('start', 0));
+        $limit = intval($this->params()->fromQuery('limit', 10));
+        
         if ($search != null) {
             $search = myMongoRegex($search);
             $searchQuery = array(
@@ -69,10 +72,13 @@ class ProjectController extends Action
         }
         
         $cursor = $this->_project->find($query);
+        $total = $cursor->count();
         $cursor->sort(array(
             '_id' => - 1
         ));
-        return $this->rst(iterator_to_array($cursor, false), $cursor->count(), true);
+        $cursor->skip($start);
+        $cursor->limit($limit);
+        return $this->rst(iterator_to_array($cursor, false), $total, true);
     }
 
     /**
