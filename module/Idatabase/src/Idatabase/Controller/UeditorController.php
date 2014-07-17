@@ -1,7 +1,7 @@
 <?php
 
 /**
- * iDatabase文件处理函数
+ * iDatabase整合UEditor
  *
  * @author young 
  * @version 2014.02.16
@@ -21,14 +21,32 @@ class UeditorController extends Action
         $this->_file = $this->model('Idatabase\Model\File');
     }
 
+    public function configAction()
+    {
+        echo '{
+    "imageUrl": "http://localhost/ueditor/php/controller.php?action=uploadimage",
+    "imagePath": "/ueditor/php/",
+    "imageFieldName": "upfile",
+    "imageMaxSize": 2048,
+    "imageAllowFiles": [".png", ".jpg", ".jpeg", ".gif", ".bmp"]
+    "其他配置项...": "其他配置值..."}';
+        return $this->response;
+    }
+
     /**
      * 处理上传文件
+     *
      * @return \Zend\Stdlib\ResponseInterface
      */
     public function uploadAction()
     {
         if (! isset($_FILES['upfile']) || $_FILES['upfile']['error'] !== 0) {
-            echo "upload file fail or no file upload";
+            echo json_encode(array(
+                'state' => "upload file fail or no file upload",
+                'url' => '',
+                'title' => '',
+                'original' => ''
+            ));
             return $this->response;
         }
         
@@ -44,4 +62,7 @@ class UeditorController extends Action
         ));
         return $this->response;
     }
+
+    public function listAction()
+    {}
 }
