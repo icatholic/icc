@@ -352,18 +352,6 @@ class DataController extends Action
             }
             $fields = $this->_schema['export'];
         }
-        // 开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140717
-        foreach ($fields as $key => $value) {
-            if (strpos($key, '.') !== false) {
-                $tmp = explode('.', $key);
-                if (! isset($fields[$tmp[0]])) {
-                    $fields[$tmp[0]] = true;
-                } else {
-                    unset($fields[$key]);
-                }
-            }
-        }
-        // 结束修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
         
         // 增加gearman导出数据统计
         if ($action == 'excel') {
@@ -405,7 +393,6 @@ class DataController extends Action
                 $params['scope'] = $obj;
                 $workload = serialize($params);
                 $exportKey = md5($workload);
-                
                 $jobHandle = $this->_gmClient->doBackground('dataExport', $workload, $exportKey);
                 $stat = $this->_gmClient->jobStatus($jobHandle);
                 if (isset($stat[0]) && $stat[0]) {
@@ -415,6 +402,18 @@ class DataController extends Action
             }
         }
         
+        // 开始修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140717
+        foreach ($fields as $key => $value) {
+            if (strpos($key, '.') !== false) {
+                $tmp = explode('.', $key);
+                if (! isset($fields[$tmp[0]])) {
+                    $fields[$tmp[0]] = true;
+                } else {
+                    unset($fields[$key]);
+                }
+            }
+        }
+        // 结束修正录入点.的子属性节点时，出现覆盖父节点数据的问题。modify20140604
         $cursor = $this->_data->find($query, $fields);
         if (! ($cursor instanceof \MongoCursor)) {
             throw new \Exception('无效的$cursor');

@@ -74,7 +74,6 @@ class DataController extends Action
                     $excelDatas[] = $tmp;
                     unset($tmp);
                 }
-                
                 // 在导出数据的情况下，将关联数据显示为关联集合的显示字段数据
                 $rshData = array();
                 foreach ($scope->_rshCollection as $_id => $detail) {
@@ -103,8 +102,29 @@ class DataController extends Action
                 
                 // 结束
                 convertToPureArray($excelDatas);
-                array_walk($excelDatas, function (&$value, $key) use($rshData)
+                array_walk($excelDatas, function (&$value, $key) use($rshData, $fields)
                 {
+                    $loop = function ($value, $tmp)
+                    {
+                        $new = $value;
+                        $len = count($tmp);
+                        for ($i = 0; $i < $len; $i ++) {
+                            if (isset($new[$tmp[$i]])) {
+                                $new = $new[$tmp[$i]];
+                            } else {
+                                return '';
+                            }
+                        }
+                        return $new;
+                    };
+                    
+                    foreach ($fields as $k => $v) {
+                        if (strpos($k, '.') !== false) {
+                            $tmp = explode('.', $k);
+                            $value[$k] = $loop($value, $tmp);
+                        }
+                    }
+                    
                     ksort($value);
                     array_walk($value, function (&$cell, $field) use($rshData)
                     {
