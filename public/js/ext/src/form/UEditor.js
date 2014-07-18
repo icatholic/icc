@@ -14,22 +14,15 @@ Ext.define('Ext.form.UEditor', {
         me.html = '<script id="' + id + '" type="text/plain" name="' + me.name + '"></script>';
         me.callParent(arguments);
         me.initField();
-        me.on('render', function() {
+        me.on('render', function () {
             var width = me.width - 105;
             var height = me.height - 109;
-            var config = {
-                initialFrameWidth: width,
-                initialFrameHeight: height
-            };
+            var config = {initialFrameWidth: width, initialFrameHeight: height};
             me.ueditorInstance = UE.getEditor(id, config);
-            me.ueditorInstance.execCommand('serverparam', {
-                '__PROJECT_ID__': me.__PROJECT_ID__,
-                '__COLLECTION_ID__': me.__COLLECTION_ID__
-            });
-            me.ueditorInstance.ready(function() {
+            me.ueditorInstance.ready(function () {
                 me.initialized = true;
                 me.fireEvent('initialize', me);
-                me.ueditorInstance.addListener('contentChange', function() {
+                me.ueditorInstance.addListener('contentChange', function () {
                     me.fireEvent('change', me);
                 });
             });

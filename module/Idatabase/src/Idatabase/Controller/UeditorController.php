@@ -21,18 +21,6 @@ class UeditorController extends Action
         $this->_file = $this->model('Idatabase\Model\File');
     }
 
-    public function configAction()
-    {
-        echo '{
-    "imageUrl": "http://localhost/ueditor/php/controller.php?action=uploadimage",
-    "imagePath": "/ueditor/php/",
-    "imageFieldName": "upfile",
-    "imageMaxSize": 2048,
-    "imageAllowFiles": [".png", ".jpg", ".jpeg", ".gif", ".bmp"]
-    "其他配置项...": "其他配置值..."}';
-        return $this->response;
-    }
-
     /**
      * 处理上传文件
      *
@@ -40,27 +28,47 @@ class UeditorController extends Action
      */
     public function uploadAction()
     {
-        if (! isset($_FILES['upfile']) || $_FILES['upfile']['error'] !== 0) {
+        $action = $this->params()->fromQuery('action', 'config');
+        $project_id = $this->params()->fromQuery('__PROJECT_ID__', NULL);
+        $collection_id = $this->params()->fromQuery('__COLLECTION_ID__', NULL);
+        
+        if ($action === 'config') {
+            
+            return $this->response;
+        } elseif ($action === 'list') {
+            $this->_file->findAll(array());
             echo json_encode(array(
-                'state' => "upload file fail or no file upload",
-                'url' => '',
-                'title' => '',
-                'original' => ''
+                "state" => "SUCCESS",
+                "list" => $list,
+                "start" => $start,
+                "total" => count($files)
+            ));
+        } else {
+            if (! isset($_FILES['upfile']) || $_FILES['upfile']['error'] !== 0) {
+                echo json_encode(array(
+                    'state' => "upload file fail or no file upload",
+                    'url' => '',
+                    'title' => '',
+                    'original' => ''
+                ));
+                return $this->response;
+            }
+            
+            $gridFsInfo = $this->_file->storeToGridFS('upfile', array(
+                'project_id' => $project_id,
+                'collection_id' => $collection_id
+            ));
+            
+            $url = DOMAIN . '/file/' . $gridFsInfo['_id']->__toString();
+            $fileName = $_FILES['upfile']['name'];
+            echo json_encode(array(
+                'state' => 'SUCCESS',
+                'url' => $url,
+                'title' => $fileName,
+                'original' => $fileName
             ));
             return $this->response;
         }
-        
-        $gridFsInfo = $this->_file->storeToGridFS('upfile');
-        
-        $url = DOMAIN . '/file/' . $gridFsInfo['_id']->__toString();
-        $fileName = $_FILES['upfile']['name'];
-        echo json_encode(array(
-            'state' => 'SUCCESS',
-            'url' => $url,
-            'title' => $fileName,
-            'original' => $fileName
-        ));
-        return $this->response;
     }
 
     public function listAction()

@@ -101,7 +101,7 @@ class MongoCollection extends \MongoCollection
     /**
      * GridFS连接实例
      *
-     * @var MongoGridFS
+     * @var \MongoGridFS
      */
     private $_fs;
 
@@ -1253,6 +1253,15 @@ class MongoCollection extends \MongoCollection
             ->limit($limit);
         $rst = iterator_to_array($cursor, false);
         return $rst;
+    }
+    
+    /**
+     * 获取GridFS对象
+     * 
+     * @return \My\Common\MongoGridFS
+     */
+    public function getGridFS() {
+        return $this->_fs;
     }
 
     /**
