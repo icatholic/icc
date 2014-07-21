@@ -1258,7 +1258,7 @@ class MongoCollection extends \MongoCollection
     /**
      * 获取GridFS对象
      * 
-     * @return \My\Common\MongoGridFS
+     * @return \MongoGridFS
      */
     public function getGridFS() {
         return $this->_fs;
