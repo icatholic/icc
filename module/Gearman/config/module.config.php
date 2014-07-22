@@ -74,6 +74,15 @@ return array(
                             'action' => 'export'
                         )
                     )
+                ),
+                'data_import_worker' => array(
+                    'options' => array(
+                        'route' => 'data import worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Data',
+                            'action' => 'import'
+                        )
+                    )
                 )
             )
         )

@@ -167,6 +167,63 @@ class DataController extends Action
     }
 
     /**
+     * 导入数据任务
+     */
+    public function importAction()
+    {
+        $cache = $this->cache();
+        $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
+        {
+            $job->handle();
+            $workload = $job->workload();
+            $params = unserialize($workload);
+            $key = $params['key'];
+            $collection_id = $params['collection_id'];
+            // 加载缓存数据
+            $csv = $cache->load($key);
+            
+            // 将检测到的内容格式转换为utf-8
+            $fromEncode = mb_detect_encoding($csv);
+            $toEncode = 'utf-8';
+            $csv = mb_convert_encoding($csv, $toEncode, $fromEncode);
+            
+            // 获取导入字段
+            $arr = str_getcsv($csv);
+            $fields = join(',', array_shift($arr));
+            
+            // 创建临时文件用于导入csv使用
+            $temp = tmpfile();
+            fputcsv($temp, $arr);
+            
+            // 执行导入脚本
+            $host = '10.0.0.31';
+            $port = '57017';
+            $dbName = 'ICCv1';
+            $fp = popen("/home/mongodb/bin/mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv", 'r');
+            pclose($fp);
+            
+            // 增加一些系统默认参数
+            $model = $this->_data->setCollection(iCollectionName($collection_id));
+            $model->update(array(), array(
+                '$set' => array(
+                    '__REMOVED__' => false,
+                    '__CREATE_TIME__' => new MongoDate(),
+                    '__MODIFY_TIME__' => new MongoDate()
+                )
+            ));
+            $job->sendComplete('complete');
+            return true;
+        });
+        
+        while ($this->_worker->work()) {
+            if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
+                echo "return_code: " . $this->_worker->returnCode() . "\n";
+            }
+        }
+        return $this->response;
+    }
+
+    /**
      * 根据集合的名称获取集合的_id
      *
      * @param string $alias            

@@ -71,6 +71,13 @@ class ImportController extends Action
     private $_fields = array();
 
     /**
+     * Gearman客户端
+     *
+     * @var object
+     */
+    private $_gmClient;
+
+    /**
      * 初始化函数
      *
      * @see \My\Common\ActionController::init()
@@ -94,14 +101,38 @@ class ImportController extends Action
         $this->_data = $this->collection($this->_collection_name);
         $this->_structure = $this->model('Idatabase\Model\Structure');
         
+        // 建立gearman客户端连接
+        $this->_gmClient = $this->gearman()->client();
+        
         $this->getSchema();
     }
-    
+
     /**
      * 将导入数据脚本放置到gearman中进行，加快页面的响应速度
      */
-    public function importJobAction() {
+    public function importJobAction()
+    {
+        // 大数据量导采用mongoimport直接导入的方式导入数据
+        $collection_id = trim($this->params()->fromPost('__COLLECTION_ID__', null));
+        $upload = $this->params()->fromFiles('upload');
+        if (empty($collection_id) || empty($upload)) {
+            return $this->msg(false, '上传文件或者集合编号不能为空');
+        }
         
+        $bytes = file_get_contents($upload['tmp_name']);
+        $key = 'import_csv_' . $collection_id;
+        $this->cache()->save($bytes, $key);
+        
+        $workload = array();
+        $workload['key'] = $key;
+        $workload['collection_id'] = $collection_id;
+        $jobHandle = $this->_gmClient->doBackground('dataImport', $workload, $key);
+        $stat = $this->_gmClient->jobStatus($jobHandle);
+        if (isset($stat[0]) && $stat[0]) {
+            return $this->msg(true, '数据导入任务已经被受理，请稍后片刻若干分钟，导入时间取决于数据量(1w/s)。');
+        } else {
+            return $this->msg(false, '任务提交失败');
+        }
     }
 
     /**

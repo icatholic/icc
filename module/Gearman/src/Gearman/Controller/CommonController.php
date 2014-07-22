@@ -23,7 +23,7 @@ class CommonController extends Action
     /**
      * 通用worker组件
      */
-    public function exportAction()
+    public function workerAction()
     {
         try {
             $cache = $this->cache();
@@ -32,8 +32,15 @@ class CommonController extends Action
                 $job->handle();
                 $workload = $job->workload();
                 $params = unserialize($workload);
+                $cmd = $params['__CMD__'];
                 
-                $job->sendComplete('complete');
+                $result = '';
+                $handle = popen("/usr/bin/php -l /home/webs/cloud.umaman.com/public/index.php {$cmd}");
+                while (! feof($handle)) {
+                    $result .= fread($handle, 4096);
+                }
+                pclose($handle);
+                $job->sendComplete($result);
             });
             
             while ($this->_worker->work()) {
@@ -48,5 +55,4 @@ class CommonController extends Action
             return false;
         }
     }
-
 }
