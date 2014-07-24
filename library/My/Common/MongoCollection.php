@@ -865,6 +865,39 @@ class MongoCollection extends \MongoCollection
         $options = ($options === NULL) ? $default : array_merge($default, $options);
         return parent::remove($criteria, $options);
     }
+    
+    /**
+     * 物理更新数据
+     * @param array $criteria
+     * @param array $object
+     * @param array $options
+     * @throws \Exception
+     */
+    public function physicalUpdate($criteria, $object, array $options = NULL) {
+        if (! is_array($criteria))
+            throw new \Exception('$criteria is array');
+        
+        if (empty($object))
+            throw new \Exception('$object is empty');
+        
+        $keys = array_keys($object);
+        foreach ($keys as $key) {
+            // $key = strtolower($key);
+            if (! in_array($key, $this->_updateHaystack, true)) {
+                throw new \Exception('$key must contain ' . join(',', $this->_updateHaystack));
+            }
+        }
+        
+        $default = array(
+            'upsert' => self::upsert,
+            'multiple' => self::multiple,
+            'fsync' => self::fsync,
+            'timeout' => self::timeout
+        );
+        
+        $options = ($options === NULL) ? $default : array_merge($default, $options);
+        return parent::update($criteria, $object, $options);
+    }
 
     /**
      * 更新指定范围的数据

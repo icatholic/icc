@@ -110,11 +110,11 @@ class ImportController extends Action
     /**
      * 将导入数据脚本放置到gearman中进行，加快页面的响应速度
      */
-    public function importJobAction()
+    public function importCsvJobAction()
     {
         // 大数据量导采用mongoimport直接导入的方式导入数据
         $collection_id = trim($this->params()->fromPost('__COLLECTION_ID__', null));
-        $upload = $this->params()->fromFiles('upload');
+        $upload = $this->params()->fromFiles('import');
         if (empty($collection_id) || empty($upload)) {
             return $this->msg(false, '上传文件或者集合编号不能为空');
         }
@@ -126,7 +126,7 @@ class ImportController extends Action
         $workload = array();
         $workload['key'] = $key;
         $workload['collection_id'] = $collection_id;
-        $jobHandle = $this->_gmClient->doBackground('dataImport', $workload, $key);
+        $jobHandle = $this->_gmClient->doBackground('dataImport', serialize($workload), $key);
         $stat = $this->_gmClient->jobStatus($jobHandle);
         if (isset($stat[0]) && $stat[0]) {
             return $this->msg(true, '数据导入任务已经被受理，请稍后片刻若干分钟，导入时间取决于数据量(1w/s)。');

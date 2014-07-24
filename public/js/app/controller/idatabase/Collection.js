@@ -2,7 +2,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 	extend: 'Ext.app.Controller',
 	models: ['idatabase.Collection', 'idatabase.Structure'],
 	stores: ['idatabase.Collection', 'idatabase.Collection.Type', 'idatabase.Structure'],
-	views: ['idatabase.Collection.Grid', 'idatabase.Collection.Add', 'idatabase.Collection.Edit', 'idatabase.Collection.TabPanel', 'idatabase.Collection.Password', 'idatabase.Collection.Dashboard'],
+	views: ['idatabase.Import.Csv','idatabase.Collection.Grid', 'idatabase.Collection.Add', 'idatabase.Collection.Edit', 'idatabase.Collection.TabPanel', 'idatabase.Collection.Password', 'idatabase.Collection.Dashboard'],
 	controllerName: 'idatabaseCollection',
 	plugin: false,
 	__PLUGIN_ID__: '',
@@ -410,6 +410,26 @@ Ext.define('icc.controller.idatabase.Collection', {
 				if (selections.length == 1) {
 					var record = selections[0];
 					var win = Ext.widget('idatabaseImportWindow', {
+						__PROJECT_ID__: grid.__PROJECT_ID__,
+						__COLLECTION_ID__: record.get('_id'),
+						width: 480,
+						height: 320
+					});
+					win.show();
+				} else {
+					Ext.Msg.alert('提示信息', '请选择一项您要编辑的集合');
+				}
+				return true;
+			}
+		};
+		
+		listeners[controllerName + 'Grid button[action=csvimport]'] = {
+			click: function(button) {
+				var grid = button.up('gridpanel');
+				var selections = grid.getSelectionModel().getSelection();
+				if (selections.length == 1) {
+					var record = selections[0];
+					var win = Ext.widget('idatabaseImportCsv', {
 						__PROJECT_ID__: grid.__PROJECT_ID__,
 						__COLLECTION_ID__: record.get('_id'),
 						width: 480,

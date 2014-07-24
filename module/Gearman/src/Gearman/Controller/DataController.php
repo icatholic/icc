@@ -171,6 +171,7 @@ class DataController extends Action
      */
     public function importAction()
     {
+        ini_set("auto_detect_line_endings", true);
         $cache = $this->cache();
         $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
         {
@@ -179,6 +180,7 @@ class DataController extends Action
             $params = unserialize($workload);
             $key = $params['key'];
             $collection_id = $params['collection_id'];
+            
             // 加载缓存数据
             $csv = $cache->load($key);
             
@@ -187,28 +189,48 @@ class DataController extends Action
             $toEncode = 'utf-8';
             $csv = mb_convert_encoding($csv, $toEncode, $fromEncode);
             
+            if (empty($csv)) {
+                echo '$csv is empty';
+                $job->sendFail();
+                return false;
+            }
+            
             // 获取导入字段
-            $arr = str_getcsv($csv);
-            $fields = join(',', array_shift($arr));
+            $arr = $this->csv2arr($csv);
+            $job->sendFail();
+            
+            if (empty($arr)) {
+                echo '$arr is empty';
+                $job->sendFail();
+                return false;
+            }
+            
+            $title = array_shift($arr);
+            $fields = join(',', $title);
             
             // 创建临时文件用于导入csv使用
-            $temp = tmpfile();
-            fputcsv($temp, $arr);
+            $temp = tempnam(sys_get_temp_dir(), 'csv_import_');
+            $handle = fopen($temp, 'w');
+            foreach ($arr as $row) {
+                fputcsv($handle, $row);
+            }
             
             // 执行导入脚本
             $host = '10.0.0.31';
             $port = '57017';
             $dbName = 'ICCv1';
+            //echo "/home/mongodb/bin/mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv";
             $fp = popen("/home/mongodb/bin/mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv", 'r');
             pclose($fp);
             
             // 增加一些系统默认参数
-            $model = $this->_data->setCollection(iCollectionName($collection_id));
-            $model->update(array(), array(
+            $this->_data->setCollection(iCollectionName($collection_id));
+            $now = new \MongoDate();
+            $this->_data->physicalUpdate(array(), array(
                 '$set' => array(
                     '__REMOVED__' => false,
-                    '__CREATE_TIME__' => new MongoDate(),
-                    '__MODIFY_TIME__' => new MongoDate()
+                    '__CREATE_TIME__' => $now,
+                    '__MODIFY_TIME__' => $now
                 )
             ));
             $job->sendComplete('complete');
@@ -246,5 +268,18 @@ class DataController extends Action
         }
         
         return $collectionInfo['_id']->__toString();
+    }
+
+    /**
+     * 转化为数组
+     * @param string $CsvString
+     * @return array
+     */
+    private function csv2arr($CsvString)
+    {
+        $Data = str_getcsv($CsvString, "\n"); // parse the rows
+        foreach ($Data as &$Row)
+            $Row = str_getcsv($Row, ",");
+        return $Data;
     }
 }
