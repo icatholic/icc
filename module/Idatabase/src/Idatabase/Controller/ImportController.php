@@ -127,10 +127,7 @@ class ImportController extends Action
         }
         
         $bytes = file_get_contents($upload['tmp_name']);
-        //$key = 'import_csv_' . $collection_id;
-        //$this->cache()->save($bytes, $key);
         $fileInfo = $this->_file->storeBytesToGridFS($bytes,'import.csv');
-        //fb($fileInfo,'LOG');
         $key = $fileInfo['_id']->__toString();
         
         $workload = array();
