@@ -865,15 +865,17 @@ class MongoCollection extends \MongoCollection
         $options = ($options === NULL) ? $default : array_merge($default, $options);
         return parent::remove($criteria, $options);
     }
-    
+
     /**
      * 物理更新数据
-     * @param array $criteria
-     * @param array $object
-     * @param array $options
+     * 
+     * @param array $criteria            
+     * @param array $object            
+     * @param array $options            
      * @throws \Exception
      */
-    public function physicalUpdate($criteria, $object, array $options = NULL) {
+    public function physicalUpdate($criteria, $object, array $options = NULL)
+    {
         if (! is_array($criteria))
             throw new \Exception('$criteria is array');
         
@@ -1287,13 +1289,14 @@ class MongoCollection extends \MongoCollection
         $rst = iterator_to_array($cursor, false);
         return $rst;
     }
-    
+
     /**
      * 获取GridFS对象
-     * 
+     *
      * @return \MongoGridFS
      */
-    public function getGridFS() {
+    public function getGridFS()
+    {
         return $this->_fs;
     }
 
@@ -1324,7 +1327,11 @@ class MongoCollection extends \MongoCollection
             $id = new \MongoId($id);
         }
         $gridfsFile = $this->_fs->get($id);
-        return $gridfsFile->getBytes();
+        if ($gridfsFile instanceof \MongoGridFSFile) {
+            return $gridfsFile->getBytes();
+        } else {
+            return false;
+        }
     }
 
     /**

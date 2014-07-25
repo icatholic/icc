@@ -20,6 +20,8 @@ class DataController extends Action
     private $_data;
 
     private $_mapping;
+    
+    private $_file;
 
     public function init()
     {
@@ -27,6 +29,7 @@ class DataController extends Action
         $this->_data = $this->model('Idatabase\Model\Data');
         $this->_collection = $this->model('Idatabase\Model\Collection');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
+        $this->_file = $this->model('Idatabase\Model\File');
     }
 
     /**
@@ -172,6 +175,7 @@ class DataController extends Action
     public function importAction()
     {
         ini_set("auto_detect_line_endings", true);
+        ini_set('memory_limit', '4096M');
         $cache = $this->cache();
         $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
         {
@@ -182,7 +186,11 @@ class DataController extends Action
             $collection_id = $params['collection_id'];
             
             // 加载缓存数据
-            $csv = $cache->load($key);
+            //$csv = $cache->load($key);
+            //var_dump($key);
+            $csv = $this->_file->getFileFromGridFS($key);
+            //var_dump($csv);
+            $this->_file->removeFileFromGridFS($key);
             
             // 将检测到的内容格式转换为utf-8
             $fromEncode = mb_detect_encoding($csv);

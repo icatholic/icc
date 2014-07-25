@@ -76,6 +76,12 @@ class ImportController extends Action
      * @var object
      */
     private $_gmClient;
+    
+    /**
+     * 存储文件
+     * @var object
+     */
+    private $_file;
 
     /**
      * 初始化函数
@@ -100,6 +106,7 @@ class ImportController extends Action
         
         $this->_data = $this->collection($this->_collection_name);
         $this->_structure = $this->model('Idatabase\Model\Structure');
+        $this->_file = $this->model('Idatabase\Model\File');
         
         // 建立gearman客户端连接
         $this->_gmClient = $this->gearman()->client();
@@ -120,8 +127,11 @@ class ImportController extends Action
         }
         
         $bytes = file_get_contents($upload['tmp_name']);
-        $key = 'import_csv_' . $collection_id;
-        $this->cache()->save($bytes, $key);
+        //$key = 'import_csv_' . $collection_id;
+        //$this->cache()->save($bytes, $key);
+        $fileInfo = $this->_file->storeBytesToGridFS($bytes,'import.csv');
+        //fb($fileInfo,'LOG');
+        $key = $fileInfo['_id']->__toString();
         
         $workload = array();
         $workload['key'] = $key;
