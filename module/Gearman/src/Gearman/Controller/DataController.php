@@ -20,7 +20,7 @@ class DataController extends Action
     private $_data;
 
     private $_mapping;
-    
+
     private $_file;
 
     public function init()
@@ -179,17 +179,45 @@ class DataController extends Action
         $cache = $this->cache();
         $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
         {
+            $mongoBin = '/home/mongodb/bin/';
+            $host = '10.0.0.31';
+            $port = '57017';
+            $dbName = 'ICCv1';
+            $backupDbName = 'backup';
+            $out = sys_get_temp_dir() . '/';
+            
             $job->handle();
             $workload = $job->workload();
             $params = unserialize($workload);
             $key = $params['key'];
             $collection_id = $params['collection_id'];
+            $physicalDrop = $params['physicalDrop'];
+            $this->_data->setCollection(iCollectionName($collection_id));
             
-            // 加载缓存数据
-            //$csv = $cache->load($key);
-            //var_dump($key);
+            if ($physicalDrop) {
+                // 导出数据为bson
+                $exportCmd = $mongoBin . "mongodump --host {$host} --port {$port} -d $dbName -c idatabase_collection_{$collection_id} -o {$out}";
+                $fp = popen($exportCmd, 'r');
+                pclose($fp);
+                
+                //echo "\n";
+                
+                // 将bson导入到备份数据库
+                $bson = $out . $dbName . '/idatabase_collection_' . $collection_id . '.bson';
+                $backupCollection = 'bak_' . date("YmdHis") . '_' . $collection_id;
+                $restoreCmd = $mongoBin . "mongorestore --host {$host} --port {$port} -d {$backupDbName} -c {$backupCollection} {$bson}";
+                $fp = popen($restoreCmd, 'r');
+                pclose($fp);
+                
+                // 删除导出的bson文件
+                unlink($bson);
+                
+                // drop集合数据库
+                $this->_data->physicalDrop();
+            }
+            
+            // 加载csv数据
             $csv = $this->_file->getFileFromGridFS($key);
-            //var_dump($csv);
             $this->_file->removeFileFromGridFS($key);
             
             // 将检测到的内容格式转换为utf-8
@@ -224,15 +252,10 @@ class DataController extends Action
             }
             
             // 执行导入脚本
-            $host = '10.0.0.31';
-            $port = '57017';
-            $dbName = 'ICCv1';
-            //echo "/home/mongodb/bin/mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv";
-            $fp = popen("/home/mongodb/bin/mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv", 'r');
+            $fp = popen($mongoBin . "mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv", 'r');
             pclose($fp);
             
             // 增加一些系统默认参数
-            $this->_data->setCollection(iCollectionName($collection_id));
             $now = new \MongoDate();
             $this->_data->physicalUpdate(array(), array(
                 '$set' => array(
@@ -280,7 +303,8 @@ class DataController extends Action
 
     /**
      * 转化为数组
-     * @param string $CsvString
+     *
+     * @param string $CsvString            
      * @return array
      */
     private function csv2arr($CsvString)

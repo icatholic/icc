@@ -29,6 +29,21 @@ Ext.define('icc.view.idatabase.Import.Csv', {
                     name: 'import',
                     fieldLabel: '导入文件(*.csv)',
                     allowBlank: false
+                }, {
+                    xtype: 'radiogroup',
+                    fieldLabel: '是否清除原有数据',
+                    defaultType: 'radiofield',
+                    layout: 'hbox',
+                    items: [{
+                        boxLabel: '是',
+                        name: 'physicalDrop',
+                        inputValue: true
+                    }, {
+                        boxLabel: '否',
+                        name: 'physicalDrop',
+                        inputValue: false,
+                        checked: true
+                    }]
                 }]
             }]
         });

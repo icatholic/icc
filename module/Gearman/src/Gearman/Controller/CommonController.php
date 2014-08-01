@@ -35,7 +35,7 @@ class CommonController extends Action
                 $cmd = $params['__CMD__'];
                 
                 $result = '';
-                $handle = popen("/usr/bin/php -l /home/webs/cloud.umaman.com/public/index.php {$cmd}");
+                $handle = popen("/usr/bin/php -l /home/webs/cloud.umaman.com/public/index.php -cw {$cmd}");
                 while (! feof($handle)) {
                     $result .= fread($handle, 4096);
                 }

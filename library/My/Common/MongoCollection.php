@@ -500,7 +500,9 @@ class MongoCollection extends \MongoCollection
             $row = $cursor->getNext();
             $row['__OLD_ID__'] = $row['_id'];
             unset($row['_id']);
-            $target->insert($row);
+            $target->insert($row, array(
+                'w' => 0
+            ));
         }
         return parent::drop();
     }
@@ -868,7 +870,7 @@ class MongoCollection extends \MongoCollection
 
     /**
      * 物理更新数据
-     * 
+     *
      * @param array $criteria            
      * @param array $object            
      * @param array $options            

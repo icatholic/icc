@@ -58,6 +58,7 @@ class AuthController extends Action
         $accountInfo = $this->_account->findOne(array(
             'username' => $username,
             'password' => sha1($password),
+            'active' => true,
             'expire' => array(
                 '$gt' => new \MongoDate()
             )
@@ -66,12 +67,12 @@ class AuthController extends Action
         if ($accountInfo == null) {
             return $this->redirect()->toRoute('login', array(
                 'failure' => true,
-                'code'=>500
+                'code' => 500
             ));
         }
         
         $_SESSION['account'] = $accountInfo;
-        if($accountInfo['role']!=='root') {
+        if ($accountInfo['role'] !== 'root') {
             // 查询用户所具备的权限
             $roleInfo = $this->_role->findOne(array(
                 'role' => $accountInfo['role']
@@ -79,7 +80,7 @@ class AuthController extends Action
             if (empty($roleInfo['resources'])) {
                 return $this->redirect()->toRoute('login', array(
                     'failure' => true,
-                    'code'=>501
+                    'code' => 501
                 ));
             }
             $_SESSION['account']['resources'] = $roleInfo['resources'];

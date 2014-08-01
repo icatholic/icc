@@ -83,6 +83,15 @@ return array(
                             'action' => 'import'
                         )
                     )
+                ),
+                'common_worker' => array(
+                    'options' => array(
+                        'route' => 'common worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Common',
+                            'action' => 'worker'
+                        )
+                    )
                 )
             )
         )

@@ -76,9 +76,10 @@ class ImportController extends Action
      * @var object
      */
     private $_gmClient;
-    
+
     /**
      * 存储文件
+     *
      * @var object
      */
     private $_file;
@@ -121,18 +122,21 @@ class ImportController extends Action
     {
         // 大数据量导采用mongoimport直接导入的方式导入数据
         $collection_id = trim($this->params()->fromPost('__COLLECTION_ID__', null));
+        $physicalDrop = filter_var($this->params()->fromPost('physicalDrop', false), FILTER_VALIDATE_BOOLEAN);
+        
         $upload = $this->params()->fromFiles('import');
         if (empty($collection_id) || empty($upload)) {
             return $this->msg(false, '上传文件或者集合编号不能为空');
         }
         
         $bytes = file_get_contents($upload['tmp_name']);
-        $fileInfo = $this->_file->storeBytesToGridFS($bytes,'import.csv');
+        $fileInfo = $this->_file->storeBytesToGridFS($bytes, 'import.csv');
         $key = $fileInfo['_id']->__toString();
         
         $workload = array();
         $workload['key'] = $key;
         $workload['collection_id'] = $collection_id;
+        $workload['physicalDrop'] = $physicalDrop;
         $jobHandle = $this->_gmClient->doBackground('dataImport', serialize($workload), $key);
         $stat = $this->_gmClient->jobStatus($jobHandle);
         if (isset($stat[0]) && $stat[0]) {
