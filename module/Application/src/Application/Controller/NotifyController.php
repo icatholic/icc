@@ -45,7 +45,9 @@ class NotifyController extends Action
         if (! empty($emailContent))
             sendEmail(array(
                 'youngyang@icatholic.net.cn',
-                'dkding@icatholic.net.cn'
+                'dkding@icatholic.net.cn',
+                'willwan@icatholic.net.cn',
+                'stephen_shao@catholic.net.cn'
             ), 'ICC密钥过期提醒', $emailContent);
         
         echo 'OK';
