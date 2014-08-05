@@ -1257,3 +1257,21 @@ function array_unset_recursive(&$array, $fields, $remove = true)
         }
     }
 }
+
+/**
+ * 删除整个目录
+ * 
+ * @param string $dir            
+ * @return boolean
+ */
+function delDir($dir)
+{
+    $files = array_diff(scandir($dir), array(
+        '.',
+        '..'
+    ));
+    foreach ($files as $file) {
+        (is_dir("$dir/$file")) ? delDir("$dir/$file") : unlink("$dir/$file");
+    }
+    return rmdir($dir);
+}
