@@ -200,7 +200,7 @@ class DataController extends Action
                 $fp = popen($exportCmd, 'r');
                 pclose($fp);
                 
-                //echo "\n";
+                // echo "\n";
                 
                 // 将bson导入到备份数据库
                 $bson = $out . $dbName . '/idatabase_collection_' . $collection_id . '.bson';
@@ -221,9 +221,11 @@ class DataController extends Action
             $this->_file->removeFileFromGridFS($key);
             
             // 将检测到的内容格式转换为utf-8
-            $fromEncode = mb_detect_encoding($csv);
-            $toEncode = 'utf-8';
-            $csv = mb_convert_encoding($csv, $toEncode, $fromEncode);
+            // $fromEncode = mb_detect_encoding($csv);
+            // $toEncode = 'utf-8';
+            // if (mb_check_encoding($csv, $toEncode)) {
+            // $csv = mb_convert_encoding($csv, $toEncode, $fromEncode);
+            // }
             
             if (empty($csv)) {
                 echo '$csv is empty';
@@ -233,8 +235,6 @@ class DataController extends Action
             
             // 获取导入字段
             $arr = $this->csv2arr($csv);
-            $job->sendFail();
-            
             if (empty($arr)) {
                 echo '$arr is empty';
                 $job->sendFail();
@@ -242,6 +242,9 @@ class DataController extends Action
             }
             
             $title = array_shift($arr);
+            array_walk($title, function(&$items){
+                $items = trim($items);
+            });
             $fields = join(',', $title);
             
             // 创建临时文件用于导入csv使用
@@ -252,8 +255,10 @@ class DataController extends Action
             }
             
             // 执行导入脚本
-            $fp = popen($mongoBin . "mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv", 'r');
+            $importCmd = $mongoBin . "mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv";
+            $fp = popen($importCmd, 'r');
             pclose($fp);
+            unlink($temp);
             
             // 增加一些系统默认参数
             $now = new \MongoDate();
