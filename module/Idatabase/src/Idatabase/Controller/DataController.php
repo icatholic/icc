@@ -175,6 +175,7 @@ class DataController extends Action
      * @var array
      */
     private $_filter = array(
+        'action',
         'start',
         'page',
         'limit',
