@@ -4,7 +4,7 @@
  * iDatabase整合UEditor
  *
  * @author young 
- * @version 2014.02.16
+ * @version 2014.08.01
  * 
  */
 namespace Idatabase\Controller;
@@ -22,8 +22,11 @@ class UeditorController extends Action
     }
 
     /**
-     * 处理上传文件
+     * 处理Ueditor的上传文件
      *
+     * @author young
+     * @name 处理Ueditor的上传文件
+     * @version 2014.08.01 young
      * @return \Zend\Stdlib\ResponseInterface
      */
     public function uploadAction()
