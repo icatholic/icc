@@ -38,6 +38,7 @@ class StructureController extends Action
     private $_filter = array(
         '_id',
         'start',
+        'action',
         'page',
         'limit',
         '__create_time__',
