@@ -1011,6 +1011,12 @@ class DataController extends Action
         
         try {
             $datas = $this->dealData($datas);
+            //修正更新数据时候出现mods错误的问题
+            foreach($datas as $key=>$value) {
+                if(strpos($key, '.')!==false) {
+                    unset($datas[$key]);
+                }
+            }
         } catch (\Zend\Json\Exception\RuntimeException $e) {
             return $this->msg(false, $e->getMessage() . $this->_jsonExceptMessage);
         }
