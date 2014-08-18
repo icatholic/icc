@@ -275,6 +275,32 @@ class MongoCollection extends \MongoCollection
          */
         // $this->db->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
         $this->db->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
+        self::autoCreateSystemIndex();
+    }
+
+    /**
+     * 自动创建系统字段索引
+     * 
+     */
+    public function autoCreateSystemIndex()
+    {
+        parent::ensureIndex(array(
+            '__REMOVED__' => 1
+        ), array(
+            'background' => true
+        ));
+        
+        parent::ensureIndex(array(
+            '__CREATE_TIME__' => - 1
+        ), array(
+            'background' => true
+        ));
+        
+        parent::ensureIndex(array(
+            '__MODIFY_TIME__' => - 1
+        ), array(
+            'background' => true
+        ));
     }
 
     /**
