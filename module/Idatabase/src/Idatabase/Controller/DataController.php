@@ -281,6 +281,7 @@ class DataController extends Action
         
         if ($action == 'search' || $action == 'excel') {
             $query = $this->searchCondition();
+            fb($query,'LOG');
         }
         
         if ($search != null) {
@@ -352,6 +353,8 @@ class DataController extends Action
                 return $this->msg(true, '请联系管理员，设定允许导出数据字段的权限');
             }
             $fields = $this->_schema['export'];
+            $fields['__CREATE_TIME__'] = true;
+            $fields['__MODIFY_TIME__'] = true;
         }
         
         // 增加gearman导出数据统计

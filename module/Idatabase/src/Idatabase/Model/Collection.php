@@ -16,6 +16,11 @@ class Collection extends Mongo
     public function init()
     {
         $this->_structure = new Structure($this->config);
+        
+        $this->ensureIndex(array(
+            'project_id' => 1,
+            'alias' => 1
+        ));
     }
 
     /**
@@ -44,5 +49,4 @@ class Collection extends Mongo
             return $collectionInfo['_id']->__toString();
         }
     }
-
 }

@@ -10,6 +10,16 @@ class Index extends Mongo
     protected $collection = IDATABASE_INDEXES;
 
     /**
+     * 初始化功能解释
+     */
+    public function init()
+    {
+        $this->ensureIndex(array(
+            'collection_id' => 1
+        ));
+    }
+
+    /**
      * 自动给给定集合创建索引
      *
      * @param string $collection_id            
