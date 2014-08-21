@@ -280,23 +280,22 @@ class MongoCollection extends \MongoCollection
 
     /**
      * 自动创建系统字段索引
-     * 
      */
     public function autoCreateSystemIndex()
     {
-        parent::ensureIndex(array(
+        parent::createIndex(array(
             '__REMOVED__' => 1
         ), array(
             'background' => true
         ));
         
-        parent::ensureIndex(array(
+        parent::createIndex(array(
             '__CREATE_TIME__' => - 1
         ), array(
             'background' => true
         ));
         
-        parent::ensureIndex(array(
+        parent::createIndex(array(
             '__MODIFY_TIME__' => - 1
         ), array(
             'background' => true
@@ -585,7 +584,7 @@ class MongoCollection extends \MongoCollection
     }
 
     /**
-     * ICC系统默认采用后台创建的方式，建立索引
+     * 新驱动已经抛弃了该方法，但是为了保持一致性，继续支持，但是不建议采用
      *
      * @see MongoCollection::ensureIndex()
      */
@@ -595,7 +594,28 @@ class MongoCollection extends \MongoCollection
         $default['background'] = true;
         // $default['expireAfterSeconds'] = 3600; // 请充分了解后开启此参数，慎用
         $options = ($options === NULL) ? $default : array_merge($default, $options);
-        return parent::ensureIndex($key_keys, $options);
+        if (version_compare(\MongoClient::VERSION, '1.5.0', '>='))
+            return parent::createIndex($key_keys, $options);
+        else
+            return parent::ensureIndex($key_keys, $options);
+    }
+
+    /**
+     * 新的写法，创建索引
+     *
+     * @param array $key_keys            
+     * @param array $options            
+     */
+    public function createIndex($key_keys, array $options = NULL)
+    {
+        $default = array();
+        $default['background'] = true;
+        // $default['expireAfterSeconds'] = 3600; // 请充分了解后开启此参数，慎用
+        $options = ($options === NULL) ? $default : array_merge($default, $options);
+        if (version_compare(\MongoClient::VERSION, '1.5.0', '>='))
+            return parent::createIndex($key_keys, $options);
+        else
+            return parent::ensureIndex($key_keys, $options);
     }
 
     /**

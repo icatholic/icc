@@ -51,7 +51,10 @@ class Mongo extends MongoCollection
     {
         $this->config = $config;
         if (! empty($this->collection)) {
-            $this->setCollection($this->collection);
+            $this->setCollection($this->collection, $this->database, $this->cluster);
+            if (method_exists($this, 'init')) {
+                $this->init();
+            }
         }
     }
 

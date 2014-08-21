@@ -72,13 +72,25 @@ class Module
         }, - 200);
         
         // 在请求完成的时候记录用户行为
-        $eventManager->attach(MvcEvent::EVENT_FINISH, function (MvcEvent $event)
-        {
-            $request = $event->getRequest();
-            $objLog = new \Idatabase\Model\Log();
-            $objLog->insert($a);
-            fb($request,'LOG');
-        }, 0);
+//         $eventManager->attach(MvcEvent::EVENT_FINISH, function (MvcEvent $event)
+//         {
+//             try {
+//                 $app = $event->getApplication();
+//                 $request = $event->getRequest();
+//                 // if($request->get)
+//                 $mongos = $app->getServiceManager()
+//                     ->get('mongos');
+//                 $objLog = new \Idatabase\Model\Log($mongos);
+//                 $objLog->insert(array(
+//                     'uri' => $_SERVER['REQUEST_URI'],
+//                     'session' => $_SESSION,
+//                     'post' => $_POST,
+//                     'get' => $_GET
+//                 ));
+//             } catch (\Exception $e) {
+//                 fb(exceptionMsg($e), 'LOG');
+//             }
+//         }, 0);
     }
 
     public function initFirePHP()

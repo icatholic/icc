@@ -53,15 +53,5 @@ class Module
         $serviceLocator = $app->getServiceManager();
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
-        
-        //增加一个事件
-        $eventManager->attach(MvcEvent::EVENT_FINISH, function (MvcEvent $event)
-        {
-            //记录每一個操作的行为
-            $event->getRequest();
-            $event->getParams();
-            //$event->
-            
-        }, -200);
     }
 }
