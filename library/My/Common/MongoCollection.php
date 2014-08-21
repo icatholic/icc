@@ -283,19 +283,19 @@ class MongoCollection extends \MongoCollection
      */
     public function autoCreateSystemIndex()
     {
-        parent::createIndex(array(
+        static::createIndex(array(
             '__REMOVED__' => 1
         ), array(
             'background' => true
         ));
         
-        parent::createIndex(array(
+        static::createIndex(array(
             '__CREATE_TIME__' => - 1
         ), array(
             'background' => true
         ));
         
-        parent::createIndex(array(
+        static::createIndex(array(
             '__MODIFY_TIME__' => - 1
         ), array(
             'background' => true
