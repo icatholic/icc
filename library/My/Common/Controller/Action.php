@@ -75,6 +75,10 @@ abstract class Action extends AbstractActionController
                     $event->setViewModel($this->deny($e->getMessage()));
                 }
             }
+            
+            //如果通过了身份验证的请求，记录请求数据
+            $_REQUEST;
+            
         }, 200);
     }
 

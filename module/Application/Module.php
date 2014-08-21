@@ -47,7 +47,7 @@ class Module
         $this->initAuthentication();
         
         // 微软这个流氓，低于IE10版本一下的IE浏览器都需要使用text/html格式的Response，否则json在浏览器中会提示下载
-        $eventManager->attach(MvcEvent::EVENT_RENDER, function ($event)
+        $eventManager->attach(MvcEvent::EVENT_RENDER, function (MvcEvent $event)
         {
             $objResponse = $event->getResponse();
             if (method_exists($objResponse, 'getHeaders')) {
@@ -70,6 +70,13 @@ class Module
             $viewModel = $event->getViewModel();
             $viewModel->setTemplate('layout/error');
         }, - 200);
+        
+        // 在请求完成的时候记录用户行为
+        $eventManager->attach(MvcEvent::EVENT_FINISH, function (MvcEvent $event)
+        {
+            $objResponse = $event->getRequest();
+            fb($objResponse,'LOG');
+        }, 0);
     }
 
     public function initFirePHP()
