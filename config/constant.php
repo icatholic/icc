@@ -40,8 +40,6 @@ defined('IDATABASE_PLUGINS') || define('IDATABASE_PLUGINS', 'idatabase_plugins')
 defined('IDATABASE_PLUGINS_COLLECTIONS') || define('IDATABASE_PLUGINS_COLLECTIONS', 'idatabase_plugins_collections');
 defined('IDATABASE_PLUGINS_STRUCTURES') || define('IDATABASE_PLUGINS_STRUCTURES', 'idatabase_plugins_structures');
 defined('IDATABASE_PLUGINS_DATAS') || define('IDATABASE_PLUGINS_DATAS', 'idatabase_plugins_datas');
-defined('IDATABASE_PLUGINS_INDEXES') || define('IDATABASE_PLUGINS_INDEXES', 'idatabase_plugins_indexes');
-defined('IDATABASE_PLUGINS_STATISTIC') || define('IDATABASE_PLUGINS_STATISTIC', 'idatabase_plugins_statistic');
 defined('IDATABASE_PROJECT_PLUGINS') || define('IDATABASE_PROJECT_PLUGINS', 'idatabase_project_plugins');
 defined('IDATABASE_VIEWS') || define('IDATABASE_VIEWS', 'idatabase_views');
 defined('IDATABASE_STATISTIC') || define('IDATABASE_STATISTIC', 'idatabase_statistic');
@@ -53,6 +51,11 @@ defined('IDATABASE_LOCK') || define('IDATABASE_LOCK', 'idatabase_lock');
 defined('IDATABASE_QUICK') || define('IDATABASE_QUICK', 'idatabase_quick');
 defined('IDATABASE_DASHBOARD') || define('IDATABASE_DASHBOARD', 'idatabase_dashboard');
 defined('IDATABASE_FILES') || define('IDATABASE_FILES', 'idatabase_files');
+//2014.08.21增加插件索引与统计同步增加
+defined('IDATABASE_PLUGINS_INDEXES') || define('IDATABASE_PLUGINS_INDEXES', 'idatabase_plugins_indexes');
+defined('IDATABASE_PLUGINS_STATISTIC') || define('IDATABASE_PLUGINS_STATISTIC', 'idatabase_plugins_statistic');
+//2014.08.20增加用户访问日志增加
+defined('IDATABASE_LOGS') || define('IDATABASE_LOGS', 'idatabase_logs');
 
 /**
  * 自定义事件

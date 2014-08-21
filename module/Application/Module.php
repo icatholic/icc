@@ -74,8 +74,10 @@ class Module
         // 在请求完成的时候记录用户行为
         $eventManager->attach(MvcEvent::EVENT_FINISH, function (MvcEvent $event)
         {
-            $objResponse = $event->getRequest();
-            fb($objResponse,'LOG');
+            $request = $event->getRequest();
+            $objLog = new \Idatabase\Model\Log();
+            $objLog->insert($a);
+            fb($request,'LOG');
         }, 0);
     }
 
