@@ -489,7 +489,7 @@ class MongoCollection extends \MongoCollection
 
     /**
      * 直接禁止drop操作,注意备份表中只包含当前集合中的有效数据，__REMOVED__为true的不在此列
-     *
+     * 本操作仅适用于小数据量的集合，对于大数据量集合将会耗时很长，尤其是在集群分片的环境下
      * @see MongoCollection::drop()
      */
     function drop()
