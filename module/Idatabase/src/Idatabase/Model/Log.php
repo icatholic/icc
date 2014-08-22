@@ -19,10 +19,28 @@ class Log extends Mongo
         ));
         
         $this->createIndex(array(
-            '__CREATE_TIME__' => true
+            '__CREATE_TIME__' => -1
         ), array(
             'background' => true,
             'expireAfterSeconds' => 15 * 24 * 3600
+        ));
+    }
+
+    /**
+     * 授权用户行为的跟踪日志
+     *
+     * @return Ambigous <boolean, multitype:>
+     */
+    public function trackingLog()
+    {
+        return $this->insert(array(
+            'uri' => $_SERVER['REQUEST_URI'],
+            'session' => $_SESSION,
+            'post' => $_POST,
+            'get' => $_GET,
+            'server' => $_SERVER
+        ), array(
+            'w' => 0
         ));
     }
 }

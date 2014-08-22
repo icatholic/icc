@@ -611,6 +611,8 @@ class MongoCollection extends \MongoCollection
      */
     public function findOne($query = NULL, $fields = NULL, array $options = NULL)
     {
+        $default = array();
+        $options = ($options === NULL) ? $default : array_merge($default, $options);
         $fields = empty($fields) ? array() : $fields;
         return parent::findOne($this->appendQuery($query), $fields, $options);
     }

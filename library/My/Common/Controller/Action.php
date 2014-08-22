@@ -26,6 +26,7 @@ abstract class Action extends AbstractActionController
         $serviceLocator = $this->getServiceLocator();
         $eventManager->attach(MvcEvent::EVENT_DISPATCH, function ($event) use($eventManager, $serviceLocator)
         {
+            
             // 权限控制
             $namespace = $this->params('__NAMESPACE__');
             $controller = $this->params('controller');
@@ -76,8 +77,12 @@ abstract class Action extends AbstractActionController
                 }
             }
             
-            //如果通过了身份验证的请求，记录请求数据
-            $_REQUEST;
+            // 如果通过了身份验证的请求，记录请求数据
+            $app = $event->getApplication();
+            $mongos = $app->getServiceManager()
+                ->get('mongos');
+            $objLog = new \Idatabase\Model\Log($mongos);
+            $objLog->trackingLog();
             
         }, 200);
     }

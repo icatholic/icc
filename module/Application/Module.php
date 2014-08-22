@@ -12,6 +12,7 @@ use Zend\Authentication\AuthenticationService;
 use Zend\Authentication\Storage\Session as SessionStorage;
 use phpbrowscap\Browscap;
 use Zend\Console\Response as ConsoleResponse;
+use Zend\Mvc\Application;
 
 class Module
 {
@@ -70,26 +71,12 @@ class Module
             $viewModel->setTemplate('layout/error');
         }, - 200);
         
-        // 在请求完成的时候记录用户行为
-        $eventManager->attach(MvcEvent::EVENT_FINISH, function (MvcEvent $event)
-        {
-            try {
-                $app = $event->getApplication();
-                $request = $event->getRequest();
-                // if($request->get)
-                $mongos = $app->getServiceManager()
-                    ->get('mongos');
-                $objLog = new \Idatabase\Model\Log($mongos);
-                $objLog->insert(array(
-                    'uri' => $_SERVER['REQUEST_URI'],
-                    'session' => $_SESSION,
-                    'post' => $_POST,
-                    'get' => $_GET
-                ));
-            } catch (\Exception $e) {
-                fb(exceptionMsg($e), 'LOG');
-            }
-        }, 0);
+        // $eventManager->attach(MvcEvent::EVENT_FINISH, function (MvcEvent $event)
+        // {
+        // $routerMatch = $event->getRouteMatch();
+        // fb($routerMatch->getParam('controller',NULL),'LOG');
+        // fb($routerMatch->getParam('action',NULL),'LOG');
+        // }, - 200);
     }
 
     public function initFirePHP()
@@ -105,5 +92,4 @@ class Module
         \FirePHP::getInstance(true)->setEnabled(true);
         \FB::setOptions($options);
     }
-
 }
