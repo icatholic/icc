@@ -38,12 +38,8 @@ abstract class Mongo
             throw new \Exception('配置信息中缺少cluster参数');
         }
         
+        //如果需要特殊配置，指定MongoClient的$options参数，默认已经满足大多数需求
         $options = array();
-        $options['connectTimeoutMS'] = 60000;
-        $options['socketTimeoutMS'] = 60000;
-        $options['w'] = 1;
-        // $options['w'] = 3;
-        $options['wTimeout'] = 60000;
         
         if (isset($cfg['options']) && ! empty($cfg['options'])) {
             $options = array_merge($options, $cfg['options']);
