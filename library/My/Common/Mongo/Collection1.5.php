@@ -716,8 +716,7 @@ class MongoCollection extends \MongoCollection
             throw new \Exception('$object is NULL');
         
         $default = array(
-            'fsync' => self::fsync,
-            'timeout' => self::timeout
+            'fsync' => self::fsync
         );
         $options = ($options === NULL) ? $default : array_merge($default, $options);
         
@@ -760,8 +759,7 @@ class MongoCollection extends \MongoCollection
             throw new \Exception('$object is NULL');
         
         $default = array(
-            'fsync' => self::fsync,
-            'timeout' => self::timeout
+            'fsync' => self::fsync
         );
         $options = ($options === NULL) ? $default : array_merge($default, $options);
         
@@ -845,8 +843,7 @@ class MongoCollection extends \MongoCollection
         
         $default = array(
             'justOne' => self::justOne,
-            'fsync' => self::fsync,
-            'timeout' => self::timeout
+            'fsync' => self::fsync
         );
         
         $options = ($options === NULL) ? $default : array_merge($default, $options);
@@ -880,8 +877,7 @@ class MongoCollection extends \MongoCollection
         
         $default = array(
             'justOne' => self::justOne,
-            'fsync' => self::fsync,
-            'timeout' => self::timeout
+            'fsync' => self::fsync
         );
         
         $options = ($options === NULL) ? $default : array_merge($default, $options);
@@ -915,8 +911,7 @@ class MongoCollection extends \MongoCollection
         $default = array(
             'upsert' => self::upsert,
             'multiple' => self::multiple,
-            'fsync' => self::fsync,
-            'timeout' => self::timeout
+            'fsync' => self::fsync
         );
         
         $options = ($options === NULL) ? $default : array_merge($default, $options);
@@ -948,8 +943,7 @@ class MongoCollection extends \MongoCollection
         $default = array(
             'upsert' => self::upsert,
             'multiple' => self::multiple,
-            'fsync' => self::fsync,
-            'timeout' => self::timeout
+            'fsync' => self::fsync
         );
         
         $options = ($options === NULL) ? $default : array_merge($default, $options);
