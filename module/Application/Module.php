@@ -44,7 +44,6 @@ class Module
         $moduleRouteListener->attach($eventManager);
         
         $this->initFirePHP();
-        $this->initAuthentication();
         
         // 微软这个流氓，低于IE10版本一下的IE浏览器都需要使用text/html格式的Response，否则json在浏览器中会提示下载
         $eventManager->attach(MvcEvent::EVENT_RENDER, function (MvcEvent $event)
@@ -107,10 +106,4 @@ class Module
         \FB::setOptions($options);
     }
 
-    public function initAuthentication()
-    {
-        // 初始化授权
-        $auth = new AuthenticationService();
-        $auth->setStorage(new SessionStorage('account'));
-    }
 }
