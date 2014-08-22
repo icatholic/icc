@@ -612,7 +612,7 @@ class MongoCollection extends \MongoCollection
     public function findOne($query = NULL, $fields = NULL, array $options = NULL)
     {
         $fields = empty($fields) ? array() : $fields;
-        return parent::findOne($this->appendQuery($query), $fields);
+        return parent::findOne($this->appendQuery($query), $fields, $options);
     }
 
     /**
