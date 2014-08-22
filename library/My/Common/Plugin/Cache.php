@@ -58,8 +58,8 @@ class Cache extends AbstractPlugin
 
     /**
      * 过载处理，调用\Zend\Cache\Storage\StorageInterface里面的方法
-     * @param unknown $name
-     * @param unknown $arguments
+     * @param string $name
+     * @param array $arguments
      * @return mixed
      */
     public function __call($name, $arguments)

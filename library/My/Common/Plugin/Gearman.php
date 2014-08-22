@@ -13,7 +13,7 @@ class Gearman extends AbstractPlugin
 {
 
     /**
-     * 
+     *
      * @return \My\Common\Plugin\Gearman
      */
     public function __invoke()
@@ -22,24 +22,28 @@ class Gearman extends AbstractPlugin
     }
 
     /**
-     * 
+     *
      * @return \GearmanClient
      */
     public function client()
     {
-        $gmClient = new \GearmanClient();
-        $gmClient->addServers(GEARMAN_SERVERS);
-        return $gmClient;
+        if (class_exists('\GearmanClient')) {
+            $gmClient = new \GearmanClient();
+            $gmClient->addServers(GEARMAN_SERVERS);
+            return $gmClient;
+        }
     }
 
     /**
-     * 
+     *
      * @return \GearmanWorker
      */
     public function worker()
     {
-        $gmWorker = new \GearmanWorker();
-        $gmWorker->addServers(GEARMAN_SERVERS);
-        return $gmWorker;
+        if (class_exists('\GearmanWorker')) {
+            $gmWorker = new \GearmanWorker();
+            $gmWorker->addServers(GEARMAN_SERVERS);
+            return $gmWorker;
+        }
     }
 }
