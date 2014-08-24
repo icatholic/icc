@@ -1290,6 +1290,7 @@ function logError($msg)
     
     $msg = join("\t", array(
         date("Y-m-d H:i:s"),
+        $_SERVER["SERVER_ADDR"],
         $msg,
         PHP_EOL
     ));
