@@ -1293,7 +1293,7 @@ function logError($msg)
         $msg,
         PHP_EOL
     ));
-    $fp = fopen(dirname(__DIR__) . '/library/', 'a');
+    $fp = fopen(dirname(__DIR__) . '/logs/' . date("Y-m-d") . 'log', 'a');
     fwrite($fp, $msg);
     fclose($fp);
     return true;

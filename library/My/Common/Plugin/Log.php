@@ -7,18 +7,15 @@ use Monolog\Logger;
 class Log extends AbstractPlugin
 {
 
-    public function __invoke($message = null, $level = Logger::DEBUG, $context = array())
+    public function __invoke($message)
     {
         if ($message === null)
             return $this;
-        return $this->logger($message, $level, $context);
+        return $this->logger($message);
     }
 
-    public function logger($message, $level = Logger::DEBUG, $context = array())
+    public function logger($message)
     {
-        return $this->getController()
-            ->getServiceLocator()
-            ->get('LogMongodbService')
-            ->addRecord($level, $message, $context);
+        return logError($message);
     }
 }
