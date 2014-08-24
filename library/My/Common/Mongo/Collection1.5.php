@@ -1381,9 +1381,7 @@ class MongoCollection extends \MongoCollection
                 fb($err, \FirePHP::LOG);
             } else {
                 if ($err['err'] != null) {
-                    GlobalEventManager::trigger('logError', null, array(
-                        json_encode($err)
-                    ));
+                    logError($err);
                 }
             }
         }

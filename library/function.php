@@ -1260,7 +1260,7 @@ function array_unset_recursive(&$array, $fields, $remove = true)
 
 /**
  * 删除整个目录
- * 
+ *
  * @param string $dir            
  * @return boolean
  */
@@ -1274,4 +1274,27 @@ function delDir($dir)
         (is_dir("$dir/$file")) ? delDir("$dir/$file") : unlink("$dir/$file");
     }
     return rmdir($dir);
+}
+
+/**
+ * 记录错误信息
+ *
+ * @param string $msg            
+ * @return boolean
+ */
+function logError($msg)
+{
+    if (! is_string($msg)) {
+        $msg = json_encode($msg);
+    }
+    
+    $msg = join("\t", array(
+        date("Y-m-d H:i:s"),
+        $msg,
+        PHP_EOL
+    ));
+    $fp = fopen(dirname(__DIR__) . '/library/', 'a');
+    fwrite($fp, $msg);
+    fclose($fp);
+    return true;
 }
