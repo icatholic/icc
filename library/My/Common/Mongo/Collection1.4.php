@@ -1389,10 +1389,10 @@ class MongoCollection extends \MongoCollection
             // 在浏览器中输出错误信息以便发现问题
             if (self::debug) {
                 fb($err, \FirePHP::LOG);
-            } else {
-                if ($err['err'] != null) {
-                    logError($err);
-                }
+            }
+            
+            if ($err['err'] != null) {
+                logError($err);
             }
         }
     }
