@@ -16,6 +16,12 @@ class Log extends AbstractPlugin
 
     public function logger($message)
     {
-        return logError($message);
+        if (APPLICATION_ENV == 'production') {
+            //生产环境记录日志，采用其他解决方案
+            
+        }
+        else {
+            return logError($message);
+        }
     }
 }
