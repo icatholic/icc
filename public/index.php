@@ -11,8 +11,9 @@ if ((PHP_INT_SIZE == 4 ? true : false)) {
 }
 ini_set('memory_limit', '512M'); // 适当放大脚本执行内存的限制
 //set_time_limit(30); // 与PHP-FPM的设定保持一致
-                    
+
 // 初始化应用程序
 chdir(dirname(__DIR__));
+require '../config/constant.php';
 require 'init_autoloader.php';
 Zend\Mvc\Application::init(require 'config/application.config.php')->run();
