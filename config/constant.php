@@ -65,22 +65,22 @@ defined('EVENT_LOG_DEBUG') || define('EVENT_LOG_DEBUG', 'event_log_debug');
 /**
  * 服务器配置信息
  */
-defined('MEMCACHED_01') || define('MEMCACHED_01', '127.0.0.1');
-defined('MEMCACHED_02') || define('MEMCACHED_02', '127.0.0.2');
+defined('MEMCACHED_01') || define('MEMCACHED_01', APPLICATION_ENV == 'production' ? '10.0.0.1' : '127.0.0.1');
+defined('MEMCACHED_02') || define('MEMCACHED_02', APPLICATION_ENV == 'production' ? '10.0.0.2' : '127.0.0.1');
 
-defined('REDIS_01') || define('REDIS_01', '10.0.0.2');
+defined('REDIS_01') || define('REDIS_01', APPLICATION_ENV == 'production' ? '10.0.0.1' : '127.0.0.1');
 
-defined('MONGOS_DEFAULT_01') || define('MONGOS_DEFAULT_01', '127.0.0.1:27017');
-defined('MONGOS_DEFAULT_02') || define('MONGOS_DEFAULT_02', '127.0.0.1:27017');
-defined('MONGOS_DEFAULT_03') || define('MONGOS_DEFAULT_03', '127.0.0.1:27017');
+defined('MONGOS_DEFAULT_01') || define('MONGOS_DEFAULT_01', APPLICATION_ENV == 'production' ? '10.0.0.30:57017' : '127.0.0.1:27017');
+defined('MONGOS_DEFAULT_02') || define('MONGOS_DEFAULT_02', APPLICATION_ENV == 'production' ? '10.0.0.31:57017' : '127.0.0.1:27017');
+defined('MONGOS_DEFAULT_03') || define('MONGOS_DEFAULT_03', APPLICATION_ENV == 'production' ? '10.0.0.32:57017' : '127.0.0.1:27017');
 
-defined('MONGOS_ANALYSIS_01') || define('MONGOS_ANALYSIS_01', '127.0.0.1:27017');
-defined('MONGOS_ANALYSIS_02') || define('MONGOS_ANALYSIS_02', '127.0.0.1:27017');
-defined('MONGOS_ANALYSIS_03') || define('MONGOS_ANALYSIS_03', '127.0.0.1:27017');
+defined('MONGOS_ANALYSIS_01') || define('MONGOS_ANALYSIS_01', APPLICATION_ENV == 'production' ? '10.0.0.30:57017' : '127.0.0.1:27017');
+defined('MONGOS_ANALYSIS_02') || define('MONGOS_ANALYSIS_02', APPLICATION_ENV == 'production' ? '10.0.0.31:57017' : '127.0.0.1:27017');
+defined('MONGOS_ANALYSIS_03') || define('MONGOS_ANALYSIS_03', APPLICATION_ENV == 'production' ? '10.0.0.32:57017' : '127.0.0.1:27017');
 
-defined('MONGOS_UMA_01') || define('MONGOS_UMA_01', '127.0.0.1:27017');
-defined('MONGOS_UMA_02') || define('MONGOS_UMA_02', '127.0.0.1:27017');
-defined('MONGOS_UMA_03') || define('MONGOS_UMA_03', '127.0.0.1:27017');
+defined('MONGOS_UMA_01') || define('MONGOS_UMA_01', APPLICATION_ENV == 'production' ? '10.0.0.30:27017' : '127.0.0.1:27017');
+defined('MONGOS_UMA_02') || define('MONGOS_UMA_02', APPLICATION_ENV == 'production' ? '10.0.0.31:27017' : '127.0.0.1:27017');
+defined('MONGOS_UMA_03') || define('MONGOS_UMA_03', APPLICATION_ENV == 'production' ? '10.0.0.32:27017' : '127.0.0.1:27017');
 
-defined('GEARMAN_SERVERS') || define('GEARMAN_SERVERS', '127.0.0.1:4730,127.0.0.1:4730');
+defined('GEARMAN_SERVERS') || define('GEARMAN_SERVERS', APPLICATION_ENV == 'production' ? '10.0.0.200:4730' : '127.0.0.1:4730,127.0.0.1:4730');
 
