@@ -4,7 +4,7 @@
  */
 defined('ROOT_PATH') || define('ROOT_PATH', dirname(__DIR__));
 defined('CACHE_ADAPTER') || define('CACHE_ADAPTER', 'memcachedCache'); // [fileCache|memcachedCache|redisCache]
-defined('APPLICATION_ENV') || define('APPLICATION_ENV', 'development'); // [development|production]
+defined('APPLICATION_ENV') || define('APPLICATION_ENV', isset($_SERVER['APPLICATION_ENV']) ? $_SERVER['APPLICATION_ENV'] : 'development'); // [development|production]
 defined('DEFAULT_DATABASE') || define('DEFAULT_DATABASE', 'ICCv1');
 defined('DEFAULT_CLUSTER') || define('DEFAULT_CLUSTER', 'default');
 defined('DOMAIN') || define('DOMAIN', 'http://cloud.umaman.com');
@@ -18,7 +18,6 @@ defined('DB_MAPREDUCE') || define('DB_MAPREDUCE', 'mapreduce');
 defined('DB_LOGS') || define('DB_LOGS', 'logs');
 defined('DB_UMA') || define('DB_UMA', 'umav3');
 defined('GRIDFS_PREFIX') || define('GRIDFS_PREFIX', 'icc');
-
 
 /**
  * 系统全局设定数据库
@@ -51,10 +50,10 @@ defined('IDATABASE_LOCK') || define('IDATABASE_LOCK', 'idatabase_lock');
 defined('IDATABASE_QUICK') || define('IDATABASE_QUICK', 'idatabase_quick');
 defined('IDATABASE_DASHBOARD') || define('IDATABASE_DASHBOARD', 'idatabase_dashboard');
 defined('IDATABASE_FILES') || define('IDATABASE_FILES', 'idatabase_files');
-//2014.08.21增加插件索引与统计同步增加
+// 2014.08.21增加插件索引与统计同步增加
 defined('IDATABASE_PLUGINS_INDEXES') || define('IDATABASE_PLUGINS_INDEXES', 'idatabase_plugins_indexes');
 defined('IDATABASE_PLUGINS_STATISTIC') || define('IDATABASE_PLUGINS_STATISTIC', 'idatabase_plugins_statistic');
-//2014.08.20增加用户访问日志增加
+// 2014.08.20增加用户访问日志增加
 defined('IDATABASE_LOGS') || define('IDATABASE_LOGS', 'idatabase_logs');
 
 /**
@@ -83,5 +82,5 @@ defined('MONGOS_UMA_01') || define('MONGOS_UMA_01', '127.0.0.1:27017');
 defined('MONGOS_UMA_02') || define('MONGOS_UMA_02', '127.0.0.1:27017');
 defined('MONGOS_UMA_03') || define('MONGOS_UMA_03', '127.0.0.1:27017');
 
-defined('GEARMAN_SERVERS')|| define('GEARMAN_SERVERS', '127.0.0.1:4730,127.0.0.1:4730');
+defined('GEARMAN_SERVERS') || define('GEARMAN_SERVERS', '127.0.0.1:4730,127.0.0.1:4730');
 
