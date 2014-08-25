@@ -18,9 +18,12 @@
  */
 
 // Composer autoloading
-if (file_exists('vendor/autoload.php')) {
+if (APPLICATION_ENV == 'production') {
+    $loader = include 'icc/vendor/autoload.php';
+} else {
     $loader = include 'vendor/autoload.php';
 }
+
 
 if (! class_exists('Zend\Loader\AutoloaderFactory')) {
     exit('Unable to load ZF2. Run `php composer.phar install` or define a ZF2_PATH environment variable.');
