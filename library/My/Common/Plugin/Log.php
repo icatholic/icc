@@ -17,8 +17,10 @@ class Log extends AbstractPlugin
     public function logger($message)
     {
         if (APPLICATION_ENV == 'production') {
-            //生产环境记录日志，采用其他解决方案
-            
+            //生产环境记录日志，采用gearman解决方案,抛接方式完成记录
+            $gm = new Gearman();
+            $gmClient = $gm->client();
+            return $gmClient->doBackground('logError',$message);
         }
         else {
             return logError($message);
