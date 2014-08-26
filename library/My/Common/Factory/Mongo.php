@@ -38,8 +38,10 @@ abstract class Mongo
             throw new \Exception('配置信息中缺少cluster参数');
         }
         
-        //如果需要特殊配置，指定MongoClient的$options参数，默认已经满足大多数需求
-        $options = array();
+        // 如果需要特殊配置，指定MongoClient的$options参数，默认已经满足大多数需求
+        $options = array(
+            'connect' => false
+        );
         
         if (isset($cfg['options']) && ! empty($cfg['options'])) {
             $options = array_merge($options, $cfg['options']);

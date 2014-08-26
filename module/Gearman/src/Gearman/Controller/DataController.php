@@ -149,7 +149,13 @@ class DataController extends Action
                 );
                 
                 $temp = tempnam(sys_get_temp_dir(), 'gearman_export_');
-                arrayToExcel($excel, $exportKey, $temp);
+                
+                if (count($excel['result']) > 5000) {
+                    arrayToCVS($excel, null, $temp);
+                } else {
+                    arrayToExcel($excel, $exportKey, $temp);
+                }
+                
                 $cache->save(file_get_contents($temp), $exportKey, 60);
                 unlink($temp);
                 $cache->remove($exportGearmanKey);
@@ -179,6 +185,7 @@ class DataController extends Action
         $cache = $this->cache();
         $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
         {
+            $iconvBin = '/usr/bin/';
             $mongoBin = '/home/mongodb/bin/';
             $host = '10.0.0.31';
             $port = '57017';
@@ -220,13 +227,6 @@ class DataController extends Action
             $csv = $this->_file->getFileFromGridFS($key);
             $this->_file->removeFileFromGridFS($key);
             
-            // 将检测到的内容格式转换为utf-8
-            // $fromEncode = mb_detect_encoding($csv);
-            // $toEncode = 'utf-8';
-            // if (mb_check_encoding($csv, $toEncode)) {
-            // $csv = mb_convert_encoding($csv, $toEncode, $fromEncode);
-            // }
-            
             if (empty($csv)) {
                 echo '$csv is empty';
                 $job->sendFail();
@@ -242,17 +242,26 @@ class DataController extends Action
             }
             
             $title = array_shift($arr);
-            array_walk($title, function(&$items){
+            array_walk($title, function (&$items)
+            {
                 $items = trim($items);
             });
             $fields = join(',', $title);
             
             // 创建临时文件用于导入csv使用
+            $tempNoIconv = tempnam(sys_get_temp_dir(), 'csv_import_');
             $temp = tempnam(sys_get_temp_dir(), 'csv_import_');
-            $handle = fopen($temp, 'w');
+            $handle = fopen($tempNoIconv, 'w');
             foreach ($arr as $row) {
                 fputcsv($handle, $row);
             }
+            fclose($handle);
+            
+            //进行编码转换,强制转化为UTF-8
+            $iconvCmd = $iconvBin.'iconv -t UTF-8 ' . $tempNoIconv . ' -o ' . $temp;
+            $fp = popen($iconvCmd,'r');
+            pclose($fp);
+            unlink($tempNoIconv);
             
             // 执行导入脚本
             $importCmd = $mongoBin . "mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv";

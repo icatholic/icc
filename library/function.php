@@ -64,29 +64,41 @@ function isValidMobile($mobile)
  *
  * @param array $datas            
  * @param string $name            
+ * @param string $output            
  */
-function arrayToCVS($datas, $name = '')
+function arrayToCVS($datas, $name = null, $output = null)
 {
     resetTimeMemLimit();
     if (empty($name)) {
         $name = 'export_' . date("Y_m_d_H_i_s");
     }
+    
     $result = array_merge(array(
         $datas['title']
     ), $datas['result']);
-    $tmpname = tempnam(sys_get_temp_dir(), 'export_csv_');
-    $fp = fopen($tmpname, 'w');
-    foreach ($result as $row) {
-        fputcsv($fp, $row, "\t", '"');
-    }
-    fclose($fp);
     
-    header('Content-type: text/csv;');
-    header('Content-Disposition: attachment; filename="' . $name . '.csv"');
-    header("Content-Length:" . filesize($tmpname));
-    echo file_get_contents($tmpname);
-    unlink($tmpname);
-    exit();
+    if (empty($output)) {
+        $tmpname = tempnam(sys_get_temp_dir(), 'export_csv_');
+        $fp = fopen($tmpname, 'w');
+        foreach ($result as $row) {
+            fputcsv($fp, $row, "\t", '"');
+        }
+        fclose($fp);
+        
+        header('Content-type: text/csv;');
+        header('Content-Disposition: attachment; filename="' . $name . '.csv"');
+        header("Content-Length:" . filesize($tmpname));
+        echo file_get_contents($tmpname);
+        unlink($tmpname);
+        exit();
+    } else {
+        $fp = fopen($output, 'w');
+        foreach ($result as $row) {
+            fputcsv($fp, $row, "\t", '"');
+        }
+        fclose($fp);
+        return true;
+    }
 }
 
 /**
