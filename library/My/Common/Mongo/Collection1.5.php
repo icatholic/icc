@@ -443,6 +443,35 @@ class MongoCollection extends \MongoCollection
     }
 
     /**
+     * Execute an aggregation pipeline command and retrieve results through a cursor
+     *
+     * @param array $command            
+     * @param array $options            
+     */
+    public function aggregateCursor(array $command, array $options)
+    {
+        if (! $this->_noAppendQuery) {
+            if (isset($pipeline[0]['$geoNear'])) {
+                $first = array_shift($command);
+                array_unshift($command, array(
+                    '$match' => array(
+                        '__REMOVED__' => false
+                    )
+                ));
+                array_unshift($command, $first);
+            } else {
+                array_unshift($command, array(
+                    '$match' => array(
+                        '__REMOVED__' => false
+                    )
+                ));
+            }
+        }
+        
+        return parent::aggregateCursor($command, $options);
+    }
+
+    /**
      * 批量插入数据
      *
      * @see MongoCollection::batchInsert()
@@ -483,7 +512,7 @@ class MongoCollection extends \MongoCollection
     /**
      * 直接禁止drop操作,注意备份表中只包含当前集合中的有效数据，__REMOVED__为true的不在此列
      * 本操作仅适用于小数据量的集合，对于大数据量集合将会耗时很长，尤其是在集群分片的环境下
-     * 
+     *
      * @see MongoCollection::drop()
      */
     function drop()
@@ -630,6 +659,7 @@ class MongoCollection extends \MongoCollection
         
         if (! empty($sort))
             $cursor->sort($sort);
+        
         if (! empty($skip))
             $cursor->skip($skip);
         
