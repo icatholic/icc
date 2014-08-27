@@ -4,7 +4,7 @@
  */
 defined('ROOT_PATH') || define('ROOT_PATH', dirname(__DIR__));
 defined('CACHE_ADAPTER') || define('CACHE_ADAPTER', 'memcachedCache'); // [fileCache|memcachedCache|redisCache]
-defined('APPLICATION_ENV') || define('APPLICATION_ENV', isset($_SERVER['APPLICATION_ENV']) ? $_SERVER['APPLICATION_ENV'] : 'development'); // [development|production]
+defined('APPLICATION_ENV') || define('APPLICATION_ENV', 'production'); // [development|production]
 defined('DEFAULT_DATABASE') || define('DEFAULT_DATABASE', 'ICCv1');
 defined('DEFAULT_CLUSTER') || define('DEFAULT_CLUSTER', 'default');
 defined('DOMAIN') || define('DOMAIN', 'http://cloud.umaman.com');
