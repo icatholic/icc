@@ -6,9 +6,6 @@ session_start();
 date_default_timezone_set('Asia/Shanghai');
 error_reporting(E_ALL); // 开启全部错误显示
 ini_set("display_errors", 1); // 打开PHP错误提示
-if ((PHP_INT_SIZE == 4 ? true : false)) {
-    ini_set('mongo.native_long', 1); // Mongo采用长整形
-}
 ini_set('memory_limit', '512M'); // 适当放大脚本执行内存的限制
 set_time_limit(30); // 与PHP-FPM的设定保持一致
 

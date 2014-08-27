@@ -4,14 +4,146 @@ CHANGELOG for 1.0.x
 This changelog references the relevant changes done in 1.0 minor versions.
 
 To get the diff for a specific change, go to
-https://github.com/doctrine/mongodb-odm/commit/XXX where XXX is
-the commit hash. To get the diff between two versions, go to
-https://github.com/doctrine/mongodb-odm/compare/VERSION1...VERSION2
+https://github.com/doctrine/mongodb-odm/commit/XXX where XXX is the commit hash.
+To get the diff between two versions, go to
+https://github.com/doctrine/mongodb-odm/compare/XXX...YYY where XXX and YYY are
+the older and newer versions, respectively.
 
 To generate a changelog summary since the last version, run
-`git log --no-merges --oneline LASTVERSION...HEAD`
+`git log --no-merges --oneline XXX...HEAD`
 
-* 1.0.0-BETA9 (2013-06-06)
+1.0.x-dev
+---------
+
+1.0.0-BETA11 (2014-06-06)
+-------------------------
+
+All issues and pull requests in this release may be found under the
+[1.0.0-BETA11 milestone](https://github.com/doctrine/mongodb-odm/issues?milestone=5&state=closed).
+
+#### Ensure cascade mapping option is always set
+
+ClassMetadataInfo's handling of cascade options was refactored in
+[#888](https://github.com/doctrine/mongodb-odm/pull/888) to be more consistent
+with ORM. These changes ensure that `$mapping["cascade"]` is always set, which
+is required by ResolveTargetDocumentListener.
+
+#### Use Reflection API to create document instances in PHP 5.4+
+
+PHP 5.4.29 and 5.5.13 introduced a BC-breaking change to `unserialize()`, which
+broke ODM's ability to instantiate document classes without invoking their
+constructor (used for hydration). The suggested work-around is to use
+`ReflectionClass::newInstanceWithoutConstructor()`, which is available in 5.4+.
+This change was implemented in
+[#893](https://github.com/doctrine/mongodb-odm/pull/893).
+
+1.0.0-BETA10 (2014-05-05)
+-------------------------
+
+All issues and pull requests in this release may be found under the
+[1.0.0-BETA10 milestone](https://github.com/doctrine/mongodb-odm/issues?milestone=2&state=closed).
+
+#### ResolveTargetDocumentListener
+
+[#663](https://github.com/doctrine/mongodb-odm/pull/663) added a new
+ResolveTargetDocumentListener service, which allows `targetDocument` metadata to
+be resolved at runtime. This is based on a corresponding class in ORM, which has
+existed since version 2.2. This promotes loose coupling by allowing interfaces
+or abstract classes to be specified in the owning model's metadata. The service
+will then resolve those values to a concrete class upon the ODM's request.
+
+#### Improved support for differentiating identifier types and non-scalar values
+
+ODM previously required that documents use scalar identifier values. Also, the
+identity map, which UnitOfWork uses to track managed documents, was unable to
+differentiate between numeric strings and actual numeric types. After internal
+refactoring in [#444](https://github.com/doctrine/mongodb-odm/pull/444), it
+should now be possible to use complex types such as MongoBinData and associative
+arrays (i.e. `hash` type) and the identity map should no longer confuse strings
+and numeric types. Embedded documents and references are still not supported as
+identifier values.
+
+#### Classes not listed in discriminator maps
+
+When a discriminator map is used, ODM will store the object's short key instead
+of its FQCN in the discriminator field. Previously, ODM might leave that field
+blank when dealing with a class that was not defined in the map. ODM will now
+fall back to storing the FQCN in this case. This primarily affects embedded
+documents and references.
+
+#### Criteria API
+
+The base DocumentRepository class now implements the Selectable interface from
+the Criteria API in Doctrine Collections 1.1. This brings some consistency with
+ORM; however, ODM's PersistentCollection class does not yet support Selectable.
+This functionality was introduced in
+[#699](https://github.com/doctrine/mongodb-odm/pull/699).
+
+#### Read preferences and Cursor refactoring
+
+ODM's Cursor class was refactored to compose the Doctrine MongoDB Cursor. It
+still extends the base class for backwards compatibility, but methods are now
+proxied rather than simply overridden. This solved a few bugs where the cursor
+states might become inconsistent.
+
+With this refactoring, ODM now has proper support for read preferences in its
+query builder and the UnitOfWork hints, which previously only supported the
+deprecated `slaveOkay` option. Much of this work was implemented in
+[#565](https://github.com/doctrine/mongodb-odm/pull/565).
+
+#### DocumentRepository findAll() and findBy()
+
+The `findAll()` and `findBy()` methods in DocumentRepository previously returned
+a Cursor object, which was not compatible with the ObjectRepository interface in
+Doctrine Common. This has been changed in #752, so these methods now return a
+numerically indexed array. The change also affects the magic repository methods,
+which utilize `findBy()` internally. If users require a Cursor, they should
+utilize the query builder or a custom repository method.
+
+#### Lifecycle callbacks and AlsoLoad
+
+The `@HasLifecycleCallbacks` class annotation is now required for lifecycle
+annotations on methods *declared within that class* to be registered. If a
+parent and child close both register the same lifecycle callback, ODM will only
+invoke it once. Previously, the same callback could be registered and invoked
+multiple times (see [#427](https://github.com/doctrine/mongodb-odm/pull/427),
+[#474](https://github.com/doctrine/mongodb-odm/pull/474), and
+[#695](https://github.com/doctrine/mongodb-odm/pull/695)).
+
+The `@AlsoLoad` method annotation does not require `@HasLifecycleCallbacks` on
+the class in which it is declared. If the method considers multiple fields, it
+will only be invoked once for the first field found. This is consistent with how
+`@AlsoLoad` works for properties. Previously, the method might be invoked
+multiple times.
+
+#### MongoBinData subtype change for BinDataType
+
+BinDataType (type `bin`) now defaults to `0` for its MongoBinData subtype. The
+various binary type classes have all been refactored to extend BinDataType.
+BinDataType's previous subtype, `2`, is available via the BinDataByteArrayType
+class (type `bin_bytearray`); however, users should note that subtype `2` is
+deprecated in the [BSON specification](http://bsonspec.org/#/specification).
+
+#### Priming references
+
+`Builder::prime()` now allows any callable to be registered, where previously
+only Closures were supported. The method will throw an InvalidArgumentException
+if the argument is not a boolean or callable. Boolean `true` may still be passed
+to utilize the default primer. Priming is now deferred until the very end of
+`Query::execute()`, so it will now apply to findAndModify command results.
+
+The signature for primer callables has changed to:
+
+```
+function(DocumentManager $dm, ClassMetadata $class, array $ids, array $hints)
+```
+
+A ClassMetadata instance (of the class to be primed) is now passed as the second
+argument instead of the class name string. The reference field name, which was
+formerly the third argument, has been removed.
+
+1.0.0-BETA9 (2013-06-06)
+------------------------
 
  * 26750bc: Use target class' DocumentPersister when preparing referenceMany criteria
  * bab17db: Improve regression test for #593 to check proxy state

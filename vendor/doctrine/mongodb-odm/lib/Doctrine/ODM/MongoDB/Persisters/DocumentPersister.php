@@ -21,19 +21,15 @@ namespace Doctrine\ODM\MongoDB\Persisters;
 
 use Doctrine\Common\EventManager;
 use Doctrine\MongoDB\Cursor as BaseCursor;
-use Doctrine\MongoDB\Iterator;
-use Doctrine\MongoDB\LoggableCursor as BaseLoggableCursor;
-use Doctrine\ODM\MongoDB\LoggableCursor;
 use Doctrine\ODM\MongoDB\Cursor;
 use Doctrine\ODM\MongoDB\DocumentManager;
-use Doctrine\ODM\MongoDB\Event\OnUpdatePreparedArgs;
 use Doctrine\ODM\MongoDB\Hydrator\HydratorFactory;
 use Doctrine\ODM\MongoDB\LockException;
 use Doctrine\ODM\MongoDB\LockMode;
 use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
-use Doctrine\ODM\MongoDB\MongoDBException;
 use Doctrine\ODM\MongoDB\PersistentCollection;
 use Doctrine\ODM\MongoDB\Proxy\Proxy;
+use Doctrine\ODM\MongoDB\Query\CriteriaMerger;
 use Doctrine\ODM\MongoDB\Query\Query;
 use Doctrine\ODM\MongoDB\Types\Type;
 use Doctrine\ODM\MongoDB\UnitOfWork;
@@ -104,11 +100,18 @@ class DocumentPersister
     private $queuedInserts = array();
 
     /**
-     * Mongo command prefix
+     * Array of queued inserts for the persister to insert.
      *
-     * @var string
+     * @var array
      */
-    private $cmd;
+    private $queuedUpserts = array();
+
+    /**
+     * The CriteriaMerger instance.
+     *
+     * @var CriteriaMerger
+     */
+    private $cm;
 
     /**
      * Initializes a new DocumentPersister instance.
@@ -119,14 +122,13 @@ class DocumentPersister
      * @param UnitOfWork $uow
      * @param HydratorFactory $hydratorFactory
      * @param ClassMetadata $class
-     * @param string $cmd
      */
-    public function __construct(PersistenceBuilder $pb, DocumentManager $dm, EventManager $evm, UnitOfWork $uow, HydratorFactory $hydratorFactory, ClassMetadata $class, $cmd)
+    public function __construct(PersistenceBuilder $pb, DocumentManager $dm, EventManager $evm, UnitOfWork $uow, HydratorFactory $hydratorFactory, ClassMetadata $class, CriteriaMerger $cm = null)
     {
         $this->pb = $pb;
         $this->dm = $dm;
         $this->evm = $evm;
-        $this->cmd = $cmd;
+        $this->cm = $cm ?: new CriteriaMerger();
         $this->uow = $uow;
         $this->hydratorFactory = $hydratorFactory;
         $this->class = $class;
@@ -147,7 +149,7 @@ class DocumentPersister
      */
     public function isQueuedForInsert($document)
     {
-        return isset($this->queuedInserts[spl_object_hash($document)]) ? true : false;
+        return isset($this->queuedInserts[spl_object_hash($document)]);
     }
 
     /**
@@ -159,6 +161,34 @@ class DocumentPersister
     public function addInsert($document)
     {
         $this->queuedInserts[spl_object_hash($document)] = $document;
+    }
+
+    /**
+     * @return array
+     */
+    public function getUpserts()
+    {
+        return $this->queuedUpserts;
+    }
+
+    /**
+     * @param object $document
+     * @return boolean
+     */
+    public function isQueuedForUpsert($document)
+    {
+        return isset($this->queuedUpserts[spl_object_hash($document)]);
+    }
+
+    /**
+     * Adds a document to the queued upserts.
+     * The document remains queued until {@link executeUpserts} is invoked.
+     *
+     * @param object $document The document to queue for insertion.
+     */
+    public function addUpsert($document)
+    {
+        $this->queuedUpserts[spl_object_hash($document)] = $document;
     }
 
     /**
@@ -174,54 +204,40 @@ class DocumentPersister
     /**
      * Executes all queued document insertions.
      *
-     * Queued documents without an ID will inserted in a batch and included in
-     * the resulting array in a tuple alongside their generated ID. Queued
-     * documents with an ID will be upserted individually and omitted from the
-     * returned array.
+     * Queued documents without an ID will inserted in a batch and queued
+     * documents with an ID will be upserted individually.
      *
      * If no inserts are queued, invoking this method is a NOOP.
      *
      * @param array $options Options for batchInsert() and update() driver methods
-     * @return array An array of identifier/document tuples for any documents
-     *               whose identifier was generated during the batch insertions
      */
     public function executeInserts(array $options = array())
     {
         if ( ! $this->queuedInserts) {
-            return array();
+            return;
         }
 
-        $postInsertIds = array();
         $inserts = array();
-        $upserts = array();
         foreach ($this->queuedInserts as $oid => $document) {
-            $upsert = $this->uow->isScheduledForUpsert($document);
-            if ($upsert) {
-                $data = $this->pb->prepareUpsertData($document);
-            } else {
-                $data = $this->pb->prepareInsertData($document);
-            }
+            $data = $this->pb->prepareInsertData($document);
 
             // Set the initial version for each insert
             if ($this->class->isVersioned) {
                 $versionMapping = $this->class->fieldMappings[$this->class->versionField];
                 if ($versionMapping['type'] === 'int') {
-                    $currentVersion = $this->class->reflFields[$this->class->versionField]->getValue($document);
-                    $data[$versionMapping['name']] = $currentVersion;
-                    $this->class->reflFields[$this->class->versionField]->setValue($document, $currentVersion);
-                } elseif ($versionMapping['type'] === 'date') {
-                    $nextVersion = new \DateTime();
-                    $data[$versionMapping['name']] = new \MongoDate($nextVersion->getTimestamp());
+                    $nextVersion = $this->class->reflFields[$this->class->versionField]->getValue($document);
                     $this->class->reflFields[$this->class->versionField]->setValue($document, $nextVersion);
+                } elseif ($versionMapping['type'] === 'date') {
+                    $nextVersionDateTime = new \DateTime();
+                    $nextVersion = new \MongoDate($nextVersionDateTime->getTimestamp());
+                    $this->class->reflFields[$this->class->versionField]->setValue($document, $nextVersionDateTime);
                 }
+                $data[$versionMapping['name']] = $nextVersion;
             }
 
-            if ($upsert) {
-                $upserts[$oid] = $data;
-            } else {
-                $inserts[$oid] = $data;
-            }
+            $inserts[$oid] = $data;
         }
+
         if ($inserts) {
             try {
                 $this->collection->batchInsert($inserts, $options);
@@ -229,30 +245,84 @@ class DocumentPersister
                 $this->queuedInserts = array();
                 throw $e;
             }
-
-            foreach ($inserts as $oid => $data) {
-                $document = $this->queuedInserts[$oid];
-                $postInsertIds[] = array($this->class->getPHPIdentifierValue($data['_id']), $document);
-            }
         }
 
         $this->queuedInserts = array();
+    }
 
-        if ($upserts) {
-            $upsertOptions = $options;
-            $upsertOptions['upsert'] = true;
-            foreach ($upserts as $oid => $data) {
-                $criteria = array('_id' => $data[$this->cmd . 'set']['_id']);
-                unset($data[$this->cmd . 'set']['_id']);
-                // stupid php
-                if (empty($data[$this->cmd . 'set'])) {
-                    $data[$this->cmd . 'set'] = new \stdClass;
-                }
-                $this->collection->update($criteria, $data, $upsertOptions);
+    /**
+     * Executes all queued document upserts.
+     *
+     * Queued documents with an ID are upserted individually.
+     *
+     * If no upserts are queued, invoking this method is a NOOP.
+     *
+     * @param array $options Options for batchInsert() and update() driver methods
+     */
+    public function executeUpserts(array $options = array())
+    {
+        if ( ! $this->queuedUpserts) {
+            return;
+        }
+
+        foreach ($this->queuedUpserts as $oid => $document) {
+            $data = $this->pb->prepareUpsertData($document);
+
+            try {
+                $this->executeUpsert($data, $options);
+                unset($this->queuedUpserts[$oid]);
+            } catch (\MongoException $e) {
+                unset($this->queuedUpserts[$oid]);
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * Executes a single upsert in {@link executeInserts}
+     *
+     * @param array $data
+     * @param array $options
+     */
+    private function executeUpsert(array $data, array $options)
+    {
+        $options['upsert'] = true;
+        $criteria = array('_id' => $data['$set']['_id']);
+        unset($data['$set']['_id']);
+
+        // Do not send an empty $set modifier
+        if (empty($data['$set'])) {
+            unset($data['$set']);
+        }
+
+        /* If there are no modifiers remaining, we're upserting a document with 
+         * an identifier as its only field. Since a document with the identifier
+         * may already exist, the desired behavior is "insert if not exists" and
+         * NOOP otherwise. MongoDB 2.6+ does not allow empty modifiers, so $set
+         * the identifier to the same value in our criteria.
+         *
+         * This will fail for versions before MongoDB 2.6, which require an
+         * empty $set modifier. The best we can do (without attempting to check
+         * server versions in advance) is attempt the 2.6+ behavior and retry
+         * after the relevant exception.
+         *
+         * See: https://jira.mongodb.org/browse/SERVER-12266
+         */
+        if (empty($data)) {
+            $retry = true;
+            $data = array('$set' => array('_id' => $criteria['_id']));
+        }
+
+        try {
+            $this->collection->update($criteria, $data, $options);
+            return;
+        } catch (\MongoCursorException $e) {
+            if (empty($retry) || strpos($e->getMessage(), 'Mod on _id not allowed') === false) {
+                throw $e;
             }
         }
 
-        return $postInsertIds;
+        $this->collection->update($criteria, array('$set' => new \stdClass), $options);
     }
 
     /**
@@ -280,16 +350,15 @@ class DocumentPersister
                 $currentVersion = $this->class->reflFields[$this->class->versionField]->getValue($document);
                 if ($versionMapping['type'] === 'int') {
                     $nextVersion = $currentVersion + 1;
-                    $update[$this->cmd . 'inc'][$versionMapping['name']] = 1;
+                    $update['$inc'][$versionMapping['name']] = 1;
                     $query[$versionMapping['name']] = $currentVersion;
                     $this->class->reflFields[$this->class->versionField]->setValue($document, $nextVersion);
                 } elseif ($versionMapping['type'] === 'date') {
                     $nextVersion = new \DateTime();
-                    $update[$this->cmd . 'set'][$versionMapping['name']] = new \MongoDate($nextVersion->getTimestamp());
+                    $update['$set'][$versionMapping['name']] = new \MongoDate($nextVersion->getTimestamp());
                     $query[$versionMapping['name']] = new \MongoDate($currentVersion->getTimestamp());
                     $this->class->reflFields[$this->class->versionField]->setValue($document, $nextVersion);
                 }
-                $options['safe'] = true;
             }
 
             // Include locking logic so that if the document object in memory is currently
@@ -298,13 +367,13 @@ class DocumentPersister
                 $isLocked = $this->class->reflFields[$this->class->lockField]->getValue($document);
                 $lockMapping = $this->class->fieldMappings[$this->class->lockField];
                 if ($isLocked) {
-                    $update[$this->cmd . 'unset'] = array($lockMapping['name'] => true);
+                    $update['$unset'] = array($lockMapping['name'] => true);
                 } else {
-                    $query[$lockMapping['name']] = array($this->cmd . 'exists' => false);
+                    $query[$lockMapping['name']] = array('$exists' => false);
                 }
             }
 
-            unset($update[$this->cmd . 'set']['_id']);
+            unset($update['$set']['_id']);
             $result = $this->collection->update($query, $update, $options);
 
             if (($this->class->isVersioned || $this->class->isLockable) && ! $result['n']) {
@@ -326,8 +395,7 @@ class DocumentPersister
         $query = array('_id' => $this->class->getDatabaseIdentifierValue($id));
 
         if ($this->class->isLockable) {
-            $query[$this->class->lockField] = array($this->cmd . 'exists' => false);
-            $options['safe'] = true;
+            $query[$this->class->lockField] = array('$exists' => false);
         }
 
         $result = $this->collection->remove($query, $options);
@@ -368,13 +436,14 @@ class DocumentPersister
      */
     public function load($criteria, $document = null, array $hints = array(), $lockMode = 0, array $sort = null)
     {
-        if (is_scalar($criteria) || $criteria instanceof \MongoId) {
+        // TODO: remove this
+        if ($criteria === null || is_scalar($criteria) || $criteria instanceof \MongoId) {
             $criteria = array('_id' => $criteria);
         }
 
         $criteria = $this->prepareQueryOrNewObj($criteria);
-        $criteria = $this->addFilterToPreparedQuery($criteria);
         $criteria = $this->addDiscriminatorToPreparedQuery($criteria);
+        $criteria = $this->addFilterToPreparedQuery($criteria);
 
         $cursor = $this->collection->find($criteria);
 
@@ -406,8 +475,8 @@ class DocumentPersister
     public function loadAll(array $criteria = array(), array $sort = null, $limit = null, $skip = null)
     {
         $criteria = $this->prepareQueryOrNewObj($criteria);
-        $criteria = $this->addFilterToPreparedQuery($criteria);
         $criteria = $this->addDiscriminatorToPreparedQuery($criteria);
+        $criteria = $this->addFilterToPreparedQuery($criteria);
 
         $baseCursor = $this->collection->find($criteria);
         $cursor = $this->wrapCursor($baseCursor);
@@ -442,30 +511,7 @@ class DocumentPersister
      */
     private function wrapCursor(BaseCursor $baseCursor)
     {
-        if ($baseCursor instanceof BaseLoggableCursor) {
-            return new LoggableCursor(
-                $this->dm->getConnection(),
-                $this->collection,
-                $this->dm->getUnitOfWork(),
-                $this->class,
-                $baseCursor,
-                $baseCursor->getQuery(),
-                $baseCursor->getFields(),
-                $this->dm->getConfiguration()->getRetryQuery(),
-                $baseCursor->getLoggerCallable()
-            );
-        }
-
-        return new Cursor(
-            $this->dm->getConnection(),
-            $this->collection,
-            $this->dm->getUnitOfWork(),
-            $this->class,
-            $baseCursor,
-            $baseCursor->getQuery(),
-            $baseCursor->getFields(),
-            $this->dm->getConfiguration()->getRetryQuery()
-        );
+        return new Cursor($baseCursor, $this->dm->getUnitOfWork(), $this->class);
     }
 
     /**
@@ -477,7 +523,7 @@ class DocumentPersister
     public function exists($document)
     {
         $id = $this->class->getIdentifierObject($document);
-        return (boolean) $this->collection->findOne(array(array('_id' => $id)), array('_id'));
+        return (boolean) $this->collection->findOne(array('_id' => $id), array('_id'));
     }
 
     /**
@@ -491,7 +537,7 @@ class DocumentPersister
         $id = $this->uow->getDocumentIdentifier($document);
         $criteria = array('_id' => $this->class->getDatabaseIdentifierValue($id));
         $lockMapping = $this->class->fieldMappings[$this->class->lockField];
-        $this->collection->update($criteria, array($this->cmd . 'set' => array($lockMapping['name'] => $lockMode)));
+        $this->collection->update($criteria, array('$set' => array($lockMapping['name'] => $lockMode)));
         $this->class->reflFields[$this->class->lockField]->setValue($document, $lockMode);
     }
 
@@ -505,7 +551,7 @@ class DocumentPersister
         $id = $this->uow->getDocumentIdentifier($document);
         $criteria = array('_id' => $this->class->getDatabaseIdentifierValue($id));
         $lockMapping = $this->class->fieldMappings[$this->class->lockField];
-        $this->collection->update($criteria, array($this->cmd . 'unset' => array($lockMapping['name'] => true)));
+        $this->collection->update($criteria, array('$unset' => array($lockMapping['name'] => true)));
         $this->class->reflFields[$this->class->lockField]->setValue($document, null);
     }
 
@@ -530,76 +576,6 @@ class DocumentPersister
         }
 
         return $this->uow->getOrCreateDocument($this->class->name, $result, $hints);
-    }
-
-    /**
-     * Prime a collection of documents property with an efficient single query instead of
-     * lazily loading each field with a single query.
-     *
-     * @param Iterator $collection
-     * @param string $fieldName
-     * @param \Closure|boolean $primer
-     * @param array $hints
-     */
-    public function primeCollection(Iterator $collection, $fieldName, $primer, array $hints = array())
-    {
-        $collection = $collection->toArray();
-        if ( ! count($collection)) {
-            return;
-        }
-        $collectionMetaData = $this->dm->getClassMetaData(get_class(current($collection)));
-
-        $fieldMapping = $collectionMetaData->fieldMappings[$fieldName];
-
-        $cmd = $this->cmd;
-        $groupedIds = array();
-
-        foreach ($collection as $element) {
-            if ($fieldMapping['type'] == 'many') {
-                $fieldValue = $collectionMetaData->getFieldValue($element, $fieldName);
-                if ($fieldValue instanceof PersistentCollection) {
-                    foreach ($fieldValue->getMongoData() as $key => $reference) {
-                        if (isset($fieldMapping['simple']) && $fieldMapping['simple']) {
-                            $className = $fieldMapping['targetDocument'];
-                            $mongoId = $reference;
-                        } else {
-                            $className = $this->dm->getClassNameFromDiscriminatorValue($fieldMapping, $reference);
-                            $mongoId = $reference[$cmd . 'id'];
-                        }
-                        $id = $this->dm->getClassMetadata($className)->getPHPIdentifierValue($mongoId);
-                        $document = $this->uow->tryGetById($id, $className);
-                        if ( ! $document || $document instanceof Proxy && ! $document->__isInitialized__) {
-                            if ( ! isset($groupedIds[$className])) {
-                                $groupedIds[$className] = array();
-                            }
-                            $groupedIds[$className][$id] = $mongoId;
-                        }
-                    }
-                }
-            } elseif ($fieldMapping['type'] == 'one') {
-                $document = $collectionMetaData->getFieldValue($element, $fieldName);
-                if ($document && $document instanceof Proxy && ! $document->__isInitialized__) {
-                    $class = $this->dm->getClassMetadata(get_class($document));
-                    $id = $this->uow->getDocumentIdentifier($document);
-                    $groupedIds[$class->name][$id] = $id;
-                }
-            }
-        }
-        foreach ($groupedIds as $className => $ids) {
-            $class = $this->dm->getClassMetadata($className);
-            if ($primer instanceof \Closure) {
-                $primer($this->dm, $className, $fieldName, $ids, $hints);
-            } else {
-                $repository = $this->dm->getRepository($className);
-                $qb = $repository->createQueryBuilder()
-                    ->field($class->identifier)->in($ids);
-                if (isset($hints[Query::HINT_SLAVE_OKAY])) {
-                    $qb->slaveOkay(true);
-                }
-                $query = $qb->getQuery();
-                $query->execute()->toArray();
-            }
-        }
     }
 
     /**
@@ -636,12 +612,16 @@ class DocumentPersister
         $owner = $collection->getOwner();
         if ($embeddedDocuments) {
             foreach ($embeddedDocuments as $key => $embeddedDocument) {
-                $className = $this->dm->getClassNameFromDiscriminatorValue($mapping, $embeddedDocument);
+                $className = $this->uow->getClassNameForAssociation($mapping, $embeddedDocument);
                 $embeddedMetadata = $this->dm->getClassMetadata($className);
                 $embeddedDocumentObject = $embeddedMetadata->newInstance();
 
                 $data = $this->hydratorFactory->hydrate($embeddedDocumentObject, $embeddedDocument);
-                $this->uow->registerManaged($embeddedDocumentObject, null, $data);
+                $id = $embeddedMetadata->identifier && isset($data[$embeddedMetadata->identifier])
+                    ? $data[$embeddedMetadata->identifier]
+                    : null;
+
+                $this->uow->registerManaged($embeddedDocumentObject, $id, $data);
                 $this->uow->setParentAssociation($embeddedDocumentObject, $mapping, $owner, $mapping['name'] . '.' . $key);
                 if ($mapping['strategy'] === 'set') {
                     $collection->set($key, $embeddedDocumentObject);
@@ -656,7 +636,6 @@ class DocumentPersister
     {
         $hints = $collection->getHints();
         $mapping = $collection->getMapping();
-        $cmd = $this->cmd;
         $groupedIds = array();
 
         $sorted = isset($mapping['sort']) && $mapping['sort'];
@@ -666,13 +645,10 @@ class DocumentPersister
                 $className = $mapping['targetDocument'];
                 $mongoId = $reference;
             } else {
-                $className = $this->dm->getClassNameFromDiscriminatorValue($mapping, $reference);
-                $mongoId = $reference[$cmd . 'id'];
+                $className = $this->uow->getClassNameForAssociation($mapping, $reference);
+                $mongoId = $reference['$id'];
             }
             $id = $this->dm->getClassMetadata($className)->getPHPIdentifierValue($mongoId);
-            if ( ! $id) {
-                continue;
-            }
 
             // create a reference to the class and id
             $reference = $this->dm->getReference($className, $id);
@@ -688,14 +664,14 @@ class DocumentPersister
 
             // only query for the referenced object if it is not already initialized or the collection is sorted
             if (($reference instanceof Proxy && ! $reference->__isInitialized__) || $sorted) {
-                $groupedIds[$className][$id] = $mongoId;
+                $groupedIds[$className][] = $mongoId;
             }
         }
         foreach ($groupedIds as $className => $ids) {
             $class = $this->dm->getClassMetadata($className);
             $mongoCollection = $this->dm->getDocumentCollection($className);
-            $criteria = array_merge(
-                array('_id' => array($cmd . 'in' => $ids)),
+            $criteria = $this->cm->merge(
+                array('_id' => array('$in' => array_values($ids))),
                 $this->dm->getFilterCollection()->getFilterCriteria($class),
                 isset($mapping['criteria']) ? $mapping['criteria'] : array()
             );
@@ -710,12 +686,15 @@ class DocumentPersister
             if (isset($mapping['skip'])) {
                 $cursor->skip($mapping['skip']);
             }
-            if (isset($hints[Query::HINT_SLAVE_OKAY])) {
+            if ( ! empty($hints[Query::HINT_SLAVE_OKAY])) {
                 $cursor->slaveOkay(true);
             }
-            $documents = $cursor->toArray();
+            if ( ! empty($hints[Query::HINT_READ_PREFERENCE])) {
+                $cursor->setReadPreference($hints[Query::HINT_READ_PREFERENCE], $hints[Query::HINT_READ_PREFERENCE_TAGS]);
+            }
+            $documents = $cursor->toArray(false);
             foreach ($documents as $documentData) {
-                $document = $this->uow->getById((string) $documentData['_id'], $class->rootDocumentName);
+                $document = $this->uow->getById($documentData['_id'], $class);
                 $data = $this->hydratorFactory->hydrate($document, $documentData);
                 $this->uow->setOriginalDocumentData($document, $data);
                 $document->__isInitialized__ = true;
@@ -728,6 +707,20 @@ class DocumentPersister
 
     private function loadReferenceManyCollectionInverseSide(PersistentCollection $collection)
     {
+        $query = $this->createReferenceManyInverseSideQuery($collection);
+        $documents = $query->execute()->toArray(false);
+        foreach ($documents as $key => $document) {
+            $collection->add($document);
+        }
+    }
+
+    /**
+     * @param PersistentCollection $collection
+     *
+     * @return Query
+     */
+    public function createReferenceManyInverseSideQuery(PersistentCollection $collection)
+    {
         $hints = $collection->getHints();
         $mapping = $collection->getMapping();
         $owner = $collection->getOwner();
@@ -735,7 +728,7 @@ class DocumentPersister
         $targetClass = $this->dm->getClassMetadata($mapping['targetDocument']);
         $mappedByMapping = isset($targetClass->fieldMappings[$mapping['mappedBy']]) ? $targetClass->fieldMappings[$mapping['mappedBy']] : array();
         $mappedByFieldName = isset($mappedByMapping['simple']) && $mappedByMapping['simple'] ? $mapping['mappedBy'] : $mapping['mappedBy'] . '.$id';
-        $criteria = array_merge(
+        $criteria = $this->cm->merge(
             array($mappedByFieldName => $ownerClass->getIdentifierObject($owner)),
             $this->dm->getFilterCollection()->getFilterCriteria($targetClass),
             isset($mapping['criteria']) ? $mapping['criteria'] : array()
@@ -753,39 +746,54 @@ class DocumentPersister
         if (isset($mapping['skip'])) {
             $qb->skip($mapping['skip']);
         }
-        if (isset($hints[Query::HINT_SLAVE_OKAY])) {
+        if ( ! empty($hints[Query::HINT_SLAVE_OKAY])) {
             $qb->slaveOkay(true);
         }
-        $documents = $qb->getQuery()->execute()->toArray();
-        foreach ($documents as $key => $document) {
-            if ($mapping['strategy'] === 'set') {
-                $collection->set($key, $document);
-            } else {
-                $collection->add($document);
-            }
+        if ( ! empty($hints[Query::HINT_READ_PREFERENCE])) {
+            $qb->setReadPreference($hints[Query::HINT_READ_PREFERENCE], $hints[Query::HINT_READ_PREFERENCE_TAGS]);
         }
+
+        return $qb->getQuery();
     }
 
     private function loadReferenceManyWithRepositoryMethod(PersistentCollection $collection)
     {
-        $mapping = $collection->getMapping();
-        $cursor = $this->dm->getRepository($mapping['targetDocument'])->$mapping['repositoryMethod']($collection->getOwner());
-        if (isset($mapping['sort']) && $mapping['sort']) {
-            $cursor->sort($mapping['sort']);
-        }
-        if (isset($mapping['limit']) && $mapping['limit']) {
-            $cursor->limit($mapping['limit']);
-        }
-        if (isset($mapping['skip']) && $mapping['skip']) {
-            $cursor->skip($mapping['skip']);
-        }
-        if (isset($hints[Query::HINT_SLAVE_OKAY])) {
-            $cursor->slaveOkay(true);
-        }
-        $documents = $cursor->toArray();
+        $cursor = $this->createReferenceManyWithRepositoryMethodCursor($collection);
+        $documents = $cursor->toArray(false);
         foreach ($documents as $document) {
             $collection->add($document);
         }
+    }
+
+    /**
+     * @param PersistentCollection $collection
+     *
+     * @return Cursor
+     */
+    public function createReferenceManyWithRepositoryMethodCursor(PersistentCollection $collection)
+    {
+        $hints = $collection->getHints();
+        $mapping = $collection->getMapping();
+        $cursor = $this->dm->getRepository($mapping['targetDocument'])
+            ->$mapping['repositoryMethod']($collection->getOwner());
+
+        if (isset($mapping['sort'])) {
+            $cursor->sort($mapping['sort']);
+        }
+        if (isset($mapping['limit'])) {
+            $cursor->limit($mapping['limit']);
+        }
+        if (isset($mapping['skip'])) {
+            $cursor->skip($mapping['skip']);
+        }
+        if ( ! empty($hints[Query::HINT_SLAVE_OKAY])) {
+            $cursor->slaveOkay(true);
+        }
+        if ( ! empty($hints[Query::HINT_READ_PREFERENCE])) {
+            $cursor->setReadPreference($hints[Query::HINT_READ_PREFERENCE], $hints[Query::HINT_READ_PREFERENCE_TAGS]);
+        }
+
+        return $cursor;
     }
 
     /**
@@ -823,7 +831,8 @@ class DocumentPersister
      * Adds discriminator criteria to an already-prepared query.
      *
      * This method should be used once for query criteria and not be used for
-     * nested expressions.
+     * nested expressions. It should be called before
+     * {@link DocumentPerister::addFilterToPreparedQuery()}.
      *
      * @param array $preparedQuery
      * @return array
@@ -833,9 +842,9 @@ class DocumentPersister
         /* If the class has a discriminator field, which is not already in the
          * criteria, inject it now. The field/values need no preparation.
          */
-        if ($this->class->hasDiscriminator() && ! isset($preparedQuery[$this->class->discriminatorField['name']])) {
+        if ($this->class->hasDiscriminator() && ! isset($preparedQuery[$this->class->discriminatorField])) {
             $discriminatorValues = $this->getClassDiscriminatorValues($this->class);
-            $preparedQuery[$this->class->discriminatorField['name']] = array('$in' => $discriminatorValues);
+            $preparedQuery[$this->class->discriminatorField] = array('$in' => $discriminatorValues);
         }
 
         return $preparedQuery;
@@ -845,22 +854,22 @@ class DocumentPersister
      * Adds filter criteria to an already-prepared query.
      *
      * This method should be used once for query criteria and not be used for
-     * nested expressions.
+     * nested expressions. It should be called after
+     * {@link DocumentPerister::addDiscriminatorToPreparedQuery()}.
      *
      * @param array $preparedQuery
      * @return array
      */
     public function addFilterToPreparedQuery(array $preparedQuery)
     {
-        /* If filter criteria exists for this class, prepare it and merge the
-         * existing query over it. This makes it possible to override filter
-         * criteria.
+        /* If filter criteria exists for this class, prepare it and merge
+         * over the existing query.
          *
          * @todo Consider recursive merging in case the filter criteria and
          * prepared query both contain top-level $and/$or operators.
          */
         if ($filterCriteria = $this->dm->getFilterCollection()->getFilterCriteria($this->class)) {
-            $preparedQuery = array_merge($this->prepareQueryOrNewObj($filterCriteria), $preparedQuery);
+            $preparedQuery = $this->cm->merge($preparedQuery, $this->prepareQueryOrNewObj($filterCriteria));
         }
 
         return $preparedQuery;
@@ -879,16 +888,24 @@ class DocumentPersister
         $preparedQuery = array();
 
         foreach ($query as $key => $value) {
-            if (isset($key[0]) && $key[0] === $this->cmd && is_array($value)) {
-                $preparedQuery[$key] = $this->prepareQueryOrNewObj($value);
-            } else {
-                list($key, $value) = $this->prepareQueryElement($key, $value, null, true);
-                if (is_array($value)) {
-                    $preparedQuery[$key] = $this->prepareQueryOrNewObj($value);
-                } else {
-                    $preparedQuery[$key] = Type::convertPHPToDatabaseValue($value);
+            // Recursively prepare logical query clauses
+            if (in_array($key, array('$and', '$or', '$nor')) && is_array($value)) {
+                foreach ($value as $k2 => $v2) {
+                    $preparedQuery[$key][$k2] = $this->prepareQueryOrNewObj($v2);
                 }
+                continue;
             }
+
+            if (isset($key[0]) && $key[0] === '$' && is_array($value)) {
+                $preparedQuery[$key] = $this->prepareQueryOrNewObj($value);
+                continue;
+            }
+
+            list($key, $value) = $this->prepareQueryElement($key, $value, null, true);
+
+            $preparedQuery[$key] = is_array($value)
+                ? array_map('Doctrine\ODM\MongoDB\Types\Type::convertPHPToDatabaseValue', $value)
+                : Type::convertPHPToDatabaseValue($value);
         }
 
         return $preparedQuery;
@@ -917,18 +934,34 @@ class DocumentPersister
             $mapping = $class->fieldMappings[$fieldName];
             $fieldName = $mapping['name'];
 
-            if ( ! $prepareValue || empty($mapping['reference']) || empty($mapping['simple'])) {
+            if ( ! $prepareValue) {
+                return array($fieldName, $value);
+            }
+
+            // Prepare mapped, embedded objects
+            if ( ! empty($mapping['embedded']) && is_object($value) &&
+                ! $this->dm->getMetadataFactory()->isTransient(get_class($value))) {
+                return array($fieldName, $this->pb->prepareEmbeddedDocumentValue($mapping, $value));
+            }
+
+            // No further preparation unless we're dealing with a simple reference
+            if (empty($mapping['reference']) || empty($mapping['simple'])) {
                 return array($fieldName, $value);
             }
 
             // Additional preparation for one or more simple reference values
-            if ( ! is_array($value)) {
-                $targetClass = $this->dm->getClassMetadata($mapping['targetDocument']);
+            $targetClass = $this->dm->getClassMetadata($mapping['targetDocument']);
 
+            if ( ! is_array($value)) {
                 return array($fieldName, $targetClass->getDatabaseIdentifierValue($value));
             }
 
-            return array($fieldName, $this->prepareQueryOrNewObj($value));
+            // Objects without operators or with DBRef fields can be converted immediately
+            if ( ! $this->hasQueryOperators($value) || $this->hasDBRefFields($value)) {
+                return array($fieldName, $targetClass->getDatabaseIdentifierValue($value));
+            }
+
+            return array($fieldName, $this->prepareQueryExpression($value, $targetClass));
         }
 
         // Process identifier fields
@@ -943,18 +976,12 @@ class DocumentPersister
                 return array($fieldName, $class->getDatabaseIdentifierValue($value));
             }
 
-            foreach ($value as $k => $v) {
-                // Process query operators (e.g. "$in")
-                if (isset($k[0]) && $k[0] === $this->cmd && is_array($v)) {
-                    foreach ($v as $k2 => $v2) {
-                        $value[$k][$k2] = $class->getDatabaseIdentifierValue($v2);
-                    }
-                } else {
-                    $value[$k] = $class->getDatabaseIdentifierValue($v);
-                }
+            // Objects without operators or with DBRef fields can be converted immediately
+            if ( ! $this->hasQueryOperators($value) || $this->hasDBRefFields($value)) {
+                return array($fieldName, $class->getDatabaseIdentifierValue($value));
             }
 
-            return array($fieldName, $value);
+            return array($fieldName, $this->prepareQueryExpression($value, $class));
         }
 
         // No processing for unmapped, non-identifier, non-dotted field names
@@ -978,8 +1005,8 @@ class DocumentPersister
         $mapping = $class->fieldMappings[$e[0]];
         $e[0] = $mapping['name'];
 
-        // Hash fields will not be prepared beyond the field name
-        if ($mapping['type'] === 'hash') {
+        // Hash and raw fields will not be prepared beyond the field name
+        if ($mapping['type'] === Type::HASH || $mapping['type'] === Type::RAW) {
             $fieldName = implode('.', $e);
 
             return array($fieldName, $value);
@@ -994,15 +1021,23 @@ class DocumentPersister
             $objectProperty = $e[1];
             $objectPropertyPrefix = '';
             $nextObjectProperty = implode('.', array_slice($e, 2));
-        } else {
+        } elseif (isset($e[2])) {
             $fieldName = $e[0] . '.' . $e[1] . '.' . $e[2];
             $objectProperty = $e[2];
             $objectPropertyPrefix = $e[1] . '.';
             $nextObjectProperty = implode('.', array_slice($e, 3));
+        } else {
+            $fieldName = $e[0] . '.' . $e[1];
+
+            return array($fieldName, $value);
         }
 
         // No further processing for fields without a targetDocument mapping
         if ( ! isset($mapping['targetDocument'])) {
+            if ($nextObjectProperty) {
+                $fieldName .= '.'.$nextObjectProperty;
+            }
+
             return array($fieldName, $value);
         }
 
@@ -1010,6 +1045,10 @@ class DocumentPersister
 
         // No further processing for unmapped targetDocument fields
         if ( ! $targetClass->hasField($objectProperty)) {
+            if ($nextObjectProperty) {
+                $fieldName .= '.'.$nextObjectProperty;
+            }
+
             return array($fieldName, $value);
         }
 
@@ -1031,18 +1070,12 @@ class DocumentPersister
                 return array($fieldName, $targetClass->getDatabaseIdentifierValue($value));
             }
 
-            foreach ($value as $k => $v) {
-                // Process query operators (e.g. "$in")
-                if (isset($k[0]) && $k[0] === $this->cmd && is_array($v)) {
-                    foreach ($v as $k2 => $v2) {
-                        $value[$k][$k2] = $class->getDatabaseIdentifierValue($v2);
-                    }
-                } else {
-                    $value[$k] = $class->getDatabaseIdentifierValue($v);
-                }
+            // Objects without operators or with DBRef fields can be converted immediately
+            if ( ! $this->hasQueryOperators($value) || $this->hasDBRefFields($value)) {
+                return array($fieldName, $targetClass->getDatabaseIdentifierValue($value));
             }
 
-            return array($fieldName, $value);
+            return array($fieldName, $this->prepareQueryExpression($value, $targetClass));
         }
 
         /* The property path may include a third field segment, excluding the
@@ -1061,6 +1094,96 @@ class DocumentPersister
         }
 
         return array($fieldName, $value);
+    }
+
+    /**
+     * Prepares a query expression.
+     *
+     * @param array|object  $expression
+     * @param ClassMetadata $class
+     * @return array
+     */
+    private function prepareQueryExpression($expression, $class)
+    {
+        foreach ($expression as $k => $v) {
+            // Ignore query operators whose arguments need no type conversion
+            if (in_array($k, array('$exists', '$type', '$mod', '$size'))) {
+                continue;
+            }
+
+            // Process query operators whose argument arrays need type conversion
+            if (in_array($k, array('$in', '$nin', '$all')) && is_array($v)) {
+                foreach ($v as $k2 => $v2) {
+                    $expression[$k][$k2] = $class->getDatabaseIdentifierValue($v2);
+                }
+                continue;
+            }
+
+            // Recursively process expressions within a $not operator
+            if ($k === '$not' && is_array($v)) {
+                $expression[$k] = $this->prepareQueryExpression($v, $class);
+                continue;
+            }
+
+            $expression[$k] = $class->getDatabaseIdentifierValue($v);
+        }
+
+        return $expression;
+    }
+
+    /**
+     * Checks whether the value has DBRef fields.
+     *
+     * This method doesn't check if the the value is a complete DBRef object,
+     * although it should return true for a DBRef. Rather, we're checking that
+     * the value has one or more fields for a DBref. In practice, this could be
+     * $elemMatch criteria for matching a DBRef.
+     *
+     * @param mixed $value
+     * @return boolean
+     */
+    private function hasDBRefFields($value)
+    {
+        if ( ! is_array($value) && ! is_object($value)) {
+            return false;
+        }
+
+        if (is_object($value)) {
+            $value = get_object_vars($value);
+        }
+
+        foreach ($value as $key => $_) {
+            if ($key === '$ref' || $key === '$id' || $key === '$db') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks whether the value has query operators.
+     *
+     * @param mixed $value
+     * @return boolean
+     */
+    private function hasQueryOperators($value)
+    {
+        if ( ! is_array($value) && ! is_object($value)) {
+            return false;
+        }
+
+        if (is_object($value)) {
+            $value = get_object_vars($value);
+        }
+
+        foreach ($value as $key => $_) {
+            if (isset($key[0]) && $key[0] === '$') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

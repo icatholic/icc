@@ -66,6 +66,9 @@ class YamlDriver extends FileDriver
                 $class->setCustomRepositoryClass($element['repositoryClass']);
             }
         } elseif ($element['type'] === 'mappedSuperclass') {
+            $class->setCustomRepositoryClass(
+                isset($element['repositoryClass']) ? $element['repositoryClass'] : null
+            );
             $class->isMappedSuperclass = true;
         } elseif ($element['type'] === 'embeddedDocument') {
             $class->isEmbeddedDocument = true;
@@ -79,10 +82,7 @@ class YamlDriver extends FileDriver
             $class->setInheritanceType(constant('Doctrine\ODM\MongoDB\Mapping\ClassMetadata::INHERITANCE_TYPE_' . strtoupper($element['inheritanceType'])));
         }
         if (isset($element['discriminatorField'])) {
-            $class->setDiscriminatorField(array_intersect_key(
-                $element['discriminatorField'],
-                array('fieldName' => 1, 'name' => 1)
-            ));
+            $class->setDiscriminatorField($this->parseDiscriminatorField($element['discriminatorField']));
         }
         if (isset($element['discriminatorMap'])) {
             $class->setDiscriminatorMap($element['discriminatorMap']);
@@ -108,6 +108,7 @@ class YamlDriver extends FileDriver
                     $mapping['fieldName'] = $fieldName;
                 }
                 if (isset($mapping['type']) && $mapping['type'] === 'collection') {
+                    // Note: this strategy is not actually used
                     $mapping['strategy'] = isset($mapping['strategy']) ? $mapping['strategy'] : 'pushAll';
                 }
                 if (isset($mapping['type']) && ! empty($mapping['embedded'])) {
@@ -206,7 +207,7 @@ class YamlDriver extends FileDriver
             $mapping['name'] = $embed['name'];
         }
         if (isset($embed['discriminatorField'])) {
-            $mapping['discriminatorField'] = $embed['discriminatorField'];
+            $mapping['discriminatorField'] = $this->parseDiscriminatorField($embed['discriminatorField']);
         }
         if (isset($embed['discriminatorMap'])) {
             $mapping['discriminatorMap'] = $embed['discriminatorMap'];
@@ -218,6 +219,7 @@ class YamlDriver extends FileDriver
     {
         $mapping = array(
             'cascade'          => isset($reference['cascade']) ? $reference['cascade'] : null,
+            'orphanRemoval'    => isset($reference['orphanRemoval']) ? $reference['orphanRemoval'] : false,
             'type'             => $type,
             'reference'        => true,
             'simple'           => isset($reference['simple']) ? (boolean) $reference['simple'] : false,
@@ -234,7 +236,7 @@ class YamlDriver extends FileDriver
             $mapping['name'] = $reference['name'];
         }
         if (isset($reference['discriminatorField'])) {
-            $mapping['discriminatorField'] = $reference['discriminatorField'];
+            $mapping['discriminatorField'] = $this->parseDiscriminatorField($reference['discriminatorField']);
         }
         if (isset($reference['discriminatorMap'])) {
             $mapping['discriminatorMap'] = $reference['discriminatorMap'];
@@ -246,6 +248,39 @@ class YamlDriver extends FileDriver
             $mapping['criteria'] = $reference['criteria'];
         }
         $this->addFieldMapping($class, $mapping);
+    }
+
+    /**
+     * Parses the class or field-level "discriminatorField" option.
+     *
+     * If the value is an array, check the "name" option before falling back to
+     * the deprecated "fieldName" option (for BC). Otherwise, the value must be
+     * a string.
+     *
+     * @param array|string $discriminatorField
+     * @return string
+     * @throws \InvalidArgumentException if the value is neither a string nor an
+     *                                   array with a "name" or "fieldName" key.
+     */
+    private function parseDiscriminatorField($discriminatorField)
+    {
+        if (is_string($discriminatorField)) {
+            return $discriminatorField;
+        }
+
+        if ( ! is_array($discriminatorField)) {
+            throw new \InvalidArgumentException('Expected array or string for discriminatorField; found: ' . gettype($discriminatorField));
+        }
+
+        if (isset($discriminatorField['name'])) {
+            return (string) $discriminatorField['name'];
+        }
+
+        if (isset($discriminatorField['fieldName'])) {
+            return (string) $discriminatorField['fieldName'];
+        }
+
+        throw new \InvalidArgumentException('Expected "name" or "fieldName" key in discriminatorField array; found neither.');
     }
 
     /**

@@ -19,8 +19,9 @@
 
 namespace Doctrine\ODM\MongoDB\Tools;
 
-use Doctrine\Common\Util\Inflector;
+use Doctrine\Common\Inflector\Inflector;
 use Doctrine\ODM\MongoDB\Mapping\ClassMetadataInfo;
+use Doctrine\ODM\MongoDB\Types\Type;
 
 /**
  * Generic class used to generate PHP5 document classes from ClassMetadataInfo instances
@@ -65,10 +66,10 @@ class DocumentGenerator
     /** The class all generated documents should extend */
     private $classToExtend;
 
-    /** Whether or not to generation annotations */
+    /** Whether or not to generate annotations */
     private $generateAnnotations = false;
 
-    /** Whether or not to generated sub methods */
+    /** Whether or not to generate stub methods */
     private $generateDocumentStubMethods = false;
 
     /** Whether or not to update the document class if it exists already */
@@ -127,10 +128,10 @@ public function <methodName>(<methodTypeHint>$<variableName>)
 
     private static $removeMethodTemplate =
 '/**
-* <description>
-*
-* @param <variableType$<variableName>
-*/
+ * <description>
+ *
+ * @param <variableType>$<variableName>
+ */
 public function <methodName>(<methodTypeHint>$<variableName>)
 {
 <spaces>$this-><fieldName>->removeElement($<variableName>);
@@ -543,6 +544,10 @@ public function <methodName>()
                 $lines[] = ' * )';
             }
 
+            if ( ! empty($metadata->lifecycleCallbacks)) {
+                $lines[] = ' * @ODM\HasLifecycleCallbacks';
+            }
+
             $methods = array(
                 'generateInheritanceAnnotation',
                 'generateDiscriminatorFieldAnnotation',
@@ -561,24 +566,23 @@ public function <methodName>()
         return implode("\n", $lines);
     }
 
-    private function generateInheritanceAnnotation($metadata)
+    private function generateInheritanceAnnotation(ClassMetadataInfo $metadata)
     {
-        if ($metadata->inheritanceType != ClassMetadataInfo::INHERITANCE_TYPE_NONE) {
+        if ($metadata->inheritanceType !== ClassMetadataInfo::INHERITANCE_TYPE_NONE) {
             return '@ODM\\InheritanceType("' . $this->getInheritanceTypeString($metadata->inheritanceType) . '")';
         }
     }
 
-    private function generateDiscriminatorFieldAnnotation($metadata)
+    private function generateDiscriminatorFieldAnnotation(ClassMetadataInfo $metadata)
     {
-        if ($metadata->inheritanceType != ClassMetadataInfo::INHERITANCE_TYPE_NONE) {
-            $discrField = $metadata->discriminatorField;
-            return '@ODM\\DiscriminatorField(fieldName="' . $discrField['fieldName'] . '")';
+        if ($metadata->inheritanceType === ClassMetadataInfo::INHERITANCE_TYPE_SINGLE_COLLECTION) {
+            return '@ODM\\DiscriminatorField(name="' . $metadata->discriminatorField . '")';
         }
     }
 
     private function generateDiscriminatorMapAnnotation(ClassMetadataInfo $metadata)
     {
-        if ($metadata->inheritanceType != ClassMetadataInfo::INHERITANCE_TYPE_NONE) {
+        if ($metadata->inheritanceType === ClassMetadataInfo::INHERITANCE_TYPE_SINGLE_COLLECTION) {
             $inheritanceClassMap = array();
 
             foreach ($metadata->discriminatorMap as $type => $class) {
@@ -640,21 +644,21 @@ public function <methodName>()
 
     private function generateDocumentLifecycleCallbackMethods(ClassMetadataInfo $metadata)
     {
-        if (isset($metadata->lifecycleCallbacks) && $metadata->lifecycleCallbacks) {
-            $methods = array();
-
-            foreach ($metadata->lifecycleCallbacks as $name => $callbacks) {
-                foreach ($callbacks as $callback) {
-                    if ($code = $this->generateLifecycleCallbackMethod($name, $callback, $metadata)) {
-                        $methods[] = $code;
-                    }
-                }
-            }
-
-            return implode("\n\n", $methods);
+        if (empty($metadata->lifecycleCallbacks)) {
+            return '';
         }
 
-        return "";
+        $methods = array();
+
+        foreach ($metadata->lifecycleCallbacks as $event => $callbacks) {
+            foreach ($callbacks as $callback) {
+                if ($code = $this->generateLifecycleCallbackMethod($event, $callback, $metadata)) {
+                    $methods[] = $code;
+                }
+            }
+        }
+
+        return implode("\n\n", $methods);
     }
 
     private function generateDocumentAssociationMappingProperties(ClassMetadataInfo $metadata)
@@ -701,44 +705,45 @@ public function <methodName>()
 
     private function generateDocumentStubMethod(ClassMetadataInfo $metadata, $type, $fieldName, $typeHint = null)
     {
-        $methodName = $type . Inflector::classify($fieldName);
+        // Add/remove methods should use the singular form of the field name
+        $formattedFieldName = in_array($type, array('add', 'remove'))
+            ? Inflector::singularize($fieldName)
+            : $fieldName;
 
-        // TODO: This needs actual plural -> singular conversion
-        if (in_array($type, array('add', 'remove')) && substr($methodName, -1) == 's') {
-            $methodName = substr($methodName, 0, -1);
-        }
+        $methodName = $type . Inflector::classify($formattedFieldName);
+        $variableName = Inflector::camelize($formattedFieldName);
 
         if ($this->hasMethod($methodName, $metadata)) {
             return;
         }
 
-        $var = sprintf('%sMethodTemplate', $type);
-        $template = self::$$var;
+        $description = ucfirst($type) . ' ' . $variableName;
 
+        $types = Type::getTypesMap();
+        $methodTypeHint = $typeHint && ! isset($types[$typeHint]) ? '\\' . $typeHint . ' ' : null;
         $variableType = $typeHint ? $typeHint . ' ' : null;
 
-        $types = \Doctrine\ODM\MongoDB\Types\Type::getTypesMap();
-        $methodTypeHint = $typeHint && ! isset($types[$typeHint]) ? '\\' . $typeHint . ' ' : null;
-
         $replacements = array(
-            '<description>'    => ucfirst($type) . ' ' . $fieldName,
+            '<description>'    => $description,
             '<methodTypeHint>' => $methodTypeHint,
             '<variableType>'   => $variableType,
-            '<variableName>'   => Inflector::camelize($fieldName),
+            '<variableName>'   => $variableName,
             '<methodName>'     => $methodName,
             '<fieldName>'      => $fieldName,
         );
 
+        $templateVar = sprintf('%sMethodTemplate', $type);
+
         $method = str_replace(
             array_keys($replacements),
             array_values($replacements),
-            $template
+            self::$$templateVar
         );
 
         return $this->prefixCodeWithSpaces($method);
     }
 
-    private function generateLifecycleCallbackMethod($name, $methodName, $metadata)
+    private function generateLifecycleCallbackMethod($name, $methodName, ClassMetadataInfo $metadata)
     {
         if ($this->hasMethod($methodName, $metadata)) {
             return;
@@ -926,7 +931,13 @@ public function <methodName>()
 
             case ClassMetadataInfo::GENERATOR_TYPE_UUID:
                 return 'UUID';
+                
+            case ClassMetadataInfo::GENERATOR_TYPE_ALNUM:
+                return 'ALNUM';
 
+            case ClassMetadataInfo::GENERATOR_TYPE_CUSTOM:
+                return 'CUSTOM';
+                
             case ClassMetadataInfo::GENERATOR_TYPE_NONE:
                 return 'NONE';
 

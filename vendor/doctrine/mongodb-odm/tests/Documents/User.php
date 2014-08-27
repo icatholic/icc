@@ -2,6 +2,7 @@
 
 namespace Documents;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ODM\MongoDB\Mapping\ClassMetadata;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 
@@ -35,6 +36,9 @@ class User extends BaseDocument
     /** @ODM\ReferenceMany(targetDocument="Group", cascade={"all"}) */
     protected $groups;
 
+    /** @ODM\ReferenceMany(targetDocument="Group", cascade={"all"}, strategy="addToSet") */
+    protected $uniqueGroups;
+
     /** @ODM\ReferenceMany(targetDocument="Group", name="groups", sort={"name"="asc"}) */
     protected $sortedAscGroups;
 
@@ -43,9 +47,6 @@ class User extends BaseDocument
 
     /** @ODM\ReferenceOne(targetDocument="Account", cascade={"all"}) */
     protected $account;
-
-    /** @ODM\ReferenceMany(targetDocument="Account", cascade={"all"}) */
-    protected $accounts;
 
     /** @ODM\Int */
     protected $hits = 0;
@@ -70,11 +71,11 @@ class User extends BaseDocument
 
     public function __construct()
     {
-        $this->phonenumbers = new \Doctrine\Common\Collections\ArrayCollection();
-        $this->groups = array();
-        $this->sortedGroups = array();
-        $this->sortedGroupsAsc = array();
-        $this->posts = array();
+        $this->phonenumbers = new ArrayCollection();
+        $this->groups = new ArrayCollection();
+        $this->sortedGroups = new ArrayCollection();
+        $this->sortedGroupsAsc = new ArrayCollection();
+        $this->posts = new ArrayCollection();
         $this->createdAt = new \DateTime();
     }
 
@@ -215,6 +216,21 @@ class User extends BaseDocument
         return false;
     }
 
+    public function getUniqueGroups()
+    {
+        return $this->uniqueGroups;
+    }
+
+    public function setUniqueGroups($groups)
+    {
+        $this->uniqueGroups = $groups;
+    }
+
+    public function addUniqueGroup(Group $group)
+    {
+        $this->uniqueGroups[] = $group;
+    }
+
     public function getHits()
     {
         return $this->hits;
@@ -268,7 +284,7 @@ class User extends BaseDocument
     {
         foreach ($this->posts as $key => $post) {
             if ($post->getId() === $id) {
-                unset($this->groups[$key]);
+                unset($this->posts[$key]);
                 return true;
             }
         }

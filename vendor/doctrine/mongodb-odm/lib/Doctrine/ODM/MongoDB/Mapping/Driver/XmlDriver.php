@@ -59,6 +59,9 @@ class XmlDriver extends FileDriver
                 $class->setCustomRepositoryClass((string) $xmlRoot['repository-class']);
             }
         } elseif ($xmlRoot->getName() == 'mapped-superclass') {
+            $class->setCustomRepositoryClass(
+                isset($xmlRoot['repository-class']) ? (string) $xmlRoot['repository-class'] : null
+            );
             $class->isMappedSuperclass = true;
         } elseif ($xmlRoot->getName() == 'embedded-document') {
             $class->isEmbeddedDocument = true;
@@ -78,10 +81,12 @@ class XmlDriver extends FileDriver
         }
         if (isset($xmlRoot->{'discriminator-field'})) {
             $discrField = $xmlRoot->{'discriminator-field'};
-            $class->setDiscriminatorField(array(
-                'name' => isset($discrField['name']) ? (string) $discrField['name'] : null,
-                'fieldName' => (string) $discrField['fieldName'],
-            ));
+            /* XSD only allows for "name", which is consistent with association
+             * configurations, but fall back to "fieldName" for BC.
+             */
+            $class->setDiscriminatorField(
+                isset($discrField['name']) ? (string) $discrField['name'] : (string) $discrField['fieldName']
+            );
         }
         if (isset($xmlRoot->{'discriminator-map'})) {
             $map = array();
@@ -112,6 +117,18 @@ class XmlDriver extends FileDriver
                         $mapping[$key] = ('true' === $mapping[$key]) ? true : false;
                     }
                 }
+                if (isset($mapping['id']) && $mapping['id'] === true && isset($mapping['strategy'])) {
+                    $mapping['options'] = array();
+                    if (isset($field->{'id-generator-option'})) {
+                        foreach ($field->{'id-generator-option'} as $generatorOptions) {
+                            $attributesGenerator = iterator_to_array($generatorOptions->attributes());
+                            if (isset($attributesGenerator['name']) && isset($attributesGenerator['value'])) {
+                                $mapping['options'][(string) $attributesGenerator['name']] = (string) $attributesGenerator['value'];
+                            }
+                        }
+                    }
+                } 
+                
                 if (isset($attributes['not-saved'])) {
                     $mapping['notSaved'] = ('true' === $attributes['not-saved']) ? true : false;
                 }
@@ -150,8 +167,6 @@ class XmlDriver extends FileDriver
 
     private function addFieldMapping(ClassMetadataInfo $class, $mapping)
     {
-        $keys = null;
-
         if (isset($mapping['name'])) {
             $name = $mapping['name'];
         } elseif (isset($mapping['fieldName'])) {
@@ -161,41 +176,40 @@ class XmlDriver extends FileDriver
         }
 
         if (isset($mapping['type']) && $mapping['type'] === 'collection') {
+            // Note: this strategy is not actually used
             $mapping['strategy'] = isset($mapping['strategy']) ? $mapping['strategy'] : 'pushAll';
         }
-        if (isset($mapping['index'])) {
-            $keys = array(
-                $name => isset($mapping['order']) ? $mapping['order'] : 'asc'
-            );
+
+        $class->mapField($mapping);
+
+        // Index this field if either "index", "unique", or "sparse" are set
+        if ( ! (isset($mapping['index']) || isset($mapping['unique']) || isset($mapping['sparse']))) {
+            return;
+        }
+
+        $keys = array($name => isset($mapping['order']) ? $mapping['order'] : 'asc');
+        $options = array();
+
+        if (isset($mapping['background'])) {
+            $options['background'] = (boolean) $mapping['background'];
+        }
+        if (isset($mapping['drop-dups'])) {
+            $options['dropDups'] = (boolean) $mapping['drop-dups'];
+        }
+        if (isset($mapping['index-name'])) {
+            $options['name'] = (string) $mapping['index-name'];
+        }
+        if (isset($mapping['safe'])) {
+            $options['safe'] = (boolean) $mapping['safe'];
+        }
+        if (isset($mapping['sparse'])) {
+            $options['sparse'] = (boolean) $mapping['sparse'];
         }
         if (isset($mapping['unique'])) {
-            $keys = array(
-                $name => isset($mapping['order']) ? $mapping['order'] : 'asc'
-            );
+            $options['unique'] = (boolean) $mapping['unique'];
         }
-        if ($keys !== null) {
-            $options = array();
-            if (isset($mapping['index-name'])) {
-                $options['name'] = (string) $mapping['index-name'];
-            }
-            if (isset($mapping['drop-dups'])) {
-                $options['dropDups'] = (boolean) $mapping['drop-dups'];
-            }
-            if (isset($mapping['background'])) {
-                $options['background'] = (boolean) $mapping['background'];
-            }
-            if (isset($mapping['safe'])) {
-                $options['safe'] = (boolean) $mapping['safe'];
-            }
-            if (isset($mapping['unique'])) {
-                $options['unique'] = (boolean) $mapping['unique'];
-            }
-            if (isset($mapping['sparse'])) {
-                $options['sparse'] = (boolean) $mapping['sparse'];
-            }
-            $class->addIndex($keys, $options);
-        }
-        $class->mapField($mapping);
+
+        $class->addIndex($keys, $options);
     }
 
     private function addEmbedMapping(ClassMetadataInfo $class, $embed, $type)
@@ -243,6 +257,7 @@ class XmlDriver extends FileDriver
         $attributes = $reference->attributes();
         $mapping = array(
             'cascade'          => $cascade,
+            'orphanRemoval'    => isset($attributes['orphan-removal']) ? $reference['orphan-removal'] : false,
             'type'             => $type,
             'reference'        => true,
             'simple'           => isset($attributes['simple']) ? (boolean) $attributes['simple'] : false,
@@ -293,41 +308,49 @@ class XmlDriver extends FileDriver
     private function addIndex(ClassMetadataInfo $class, \SimpleXmlElement $xmlIndex)
     {
         $attributes = $xmlIndex->attributes();
+
+        $keys = array();
+
+        foreach ($xmlIndex->{'key'} as $key) {
+            $keys[(string) $key['name']] = isset($key['order']) ? (string) $key['order'] : 'asc';
+        }
+
         $options = array();
+
+        if (isset($attributes['background'])) {
+            $options['background'] = ('true' === (string) $attributes['background']);
+        }
+        if (isset($attributes['drop-dups'])) {
+            $options['dropDups'] = ('true' === (string) $attributes['drop-dups']);
+        }
         if (isset($attributes['name'])) {
             $options['name'] = (string) $attributes['name'];
         }
-        if (isset($attributes['drop-dups'])) {
-            $options['dropDups'] = ((string) $attributes['dropDups'] == 'false') ? false : true;
-        }
-        if (isset($attributes['background'])) {
-            $options['background'] = ((string) $attributes['background'] == 'false') ? false : true;
-        }
         if (isset($attributes['safe'])) {
-            $options['safe'] = ((string) $attributes['safe'] == 'false') ? false : true;
-        }
-        if (isset($attributes['unique'])) {
-            $options['unique'] = ((string) $attributes['unique'] == 'false') ? false : true;
+            $options['safe'] = ('true' === (string) $attributes['safe']);
         }
         if (isset($attributes['sparse'])) {
-            $options['sparse'] = ((string) $attributes['sparse'] == 'false') ? false : true;
+            $options['sparse'] = ('true' === (string) $attributes['sparse']);
         }
-        $index = array(
-            'keys' => array(),
-            'options' => $options
-        );
-        foreach ($xmlIndex->{'key'} as $key) {
-            $index['keys'][(string) $key['name']] = isset($key['order']) ? (string) $key['order'] : 'asc';
+        if (isset($attributes['unique'])) {
+            $options['unique'] = ('true' === (string) $attributes['unique']);
         }
+
         if (isset($xmlIndex->{'option'})) {
             foreach ($xmlIndex->{'option'} as $option) {
                 $value = (string) $option['value'];
-                $value = $value === 'true' ? true : $value;
-                $value = $value === 'false' ? false : $value;
-                $index['options'][(string) $option['name']] = $value;
+                if ($value === 'true') {
+                    $value = true;
+                } elseif ($value === 'false') {
+                    $value = false;
+                } elseif (is_numeric($value)) {
+                    $value = preg_match('/^[-]?\d+$/', $value) ? (integer) $value : (float) $value;
+                }
+                $options[(string) $option['name']] = $value;
             }
         }
-        $class->addIndex($index['keys'], $index['options']);
+
+        $class->addIndex($keys, $options);
     }
 
     /**

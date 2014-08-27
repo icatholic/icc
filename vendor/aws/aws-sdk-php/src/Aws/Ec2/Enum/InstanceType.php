@@ -53,4 +53,12 @@ class InstanceType extends Enum
     const CC2_8XLARGE = 'cc2.8xlarge';
     const G2_2XLARGE = 'g2.2xlarge';
     const CG1_4XLARGE = 'cg1.4xlarge';
+    const R3_LARGE = 'r3.large';
+    const R3_XLARGE = 'r3.xlarge';
+    const R3_2XLARGE = 'r3.2xlarge';
+    const R3_4XLARGE = 'r3.4xlarge';
+    const R3_8XLARGE = 'r3.8xlarge';
+    const T2_MICRO = 't2.micro';
+    const T2_SMALL = 't2.small';
+    const T2_MEDIUM = 't2.medium';
 }

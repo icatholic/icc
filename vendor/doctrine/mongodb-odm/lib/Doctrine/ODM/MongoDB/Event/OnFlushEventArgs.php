@@ -19,36 +19,11 @@
 
 namespace Doctrine\ODM\MongoDB\Event;
 
-use Doctrine\Common\EventArgs;
-use Doctrine\ODM\MongoDB\DocumentManager;
-
 /**
  * Provides event arguments for the onFlush event.
  *
- * @since       1.0
- * @author      Jonathan H. Wage <jonwage@gmail.com>
- * @author      Roman Borschel <roman@code-factory.org>
+ * @since 1.0
  */
-class OnFlushEventArgs extends EventArgs
+class OnFlushEventArgs extends ManagerEventArgs
 {
-    /**
-     * @var DocumentManager
-     */
-    private $dm;
-
-    /**
-     * @param DocumentManager $dm
-     */
-    public function __construct(DocumentManager $dm)
-    {
-        $this->dm = $dm;
-    }
-
-    /**
-     * @return DocumentManager
-     */
-    public function getDocumentManager()
-    {
-        return $this->dm;
-    }
 }

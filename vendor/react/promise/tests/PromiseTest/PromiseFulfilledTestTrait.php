@@ -4,12 +4,15 @@ namespace React\Promise\PromiseTest;
 
 trait PromiseFulfilledTestTrait
 {
+    /**
+     * @return \React\Promise\PromiseAdapter\PromiseAdapterInterface
+     */
     abstract public function getPromiseTestAdapter();
 
     /** @test */
-    public function thenShouldForwardResultWhenCallbackIsNull()
+    public function fulfilledPromiseShouldBeImmutable()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -17,8 +20,46 @@ trait PromiseFulfilledTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(1));
 
-        $resolve(1);
-        $promise()
+        $adapter->resolve(1);
+        $adapter->resolve(2);
+
+        $adapter->promise()
+            ->then(
+                $mock,
+                $this->expectCallableNever()
+            );
+    }
+
+    /** @test */
+    public function fulfilledPromiseShouldInvokeNewlyAddedCallback()
+    {
+        $adapter = $this->getPromiseTestAdapter();
+
+        $adapter->resolve(1);
+
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke')
+            ->with($this->identicalTo(1));
+
+        $adapter->promise()
+            ->then($mock, $this->expectCallableNever());
+    }
+
+    /** @test */
+    public function thenShouldForwardResultWhenCallbackIsNull()
+    {
+        $adapter = $this->getPromiseTestAdapter();
+
+        $mock = $this->createCallableMock();
+        $mock
+            ->expects($this->once())
+            ->method('__invoke')
+            ->with($this->identicalTo(1));
+
+        $adapter->resolve(1);
+        $adapter->promise()
             ->then(
                 null,
                 $this->expectCallableNever()
@@ -32,7 +73,7 @@ trait PromiseFulfilledTestTrait
     /** @test */
     public function thenShouldForwardCallbackResultToNextCallback()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -40,8 +81,8 @@ trait PromiseFulfilledTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(2));
 
-        $resolve(1);
-        $promise()
+        $adapter->resolve(1);
+        $adapter->promise()
             ->then(
                 function ($val) {
                     return $val + 1;
@@ -57,7 +98,7 @@ trait PromiseFulfilledTestTrait
     /** @test */
     public function thenShouldForwardPromisedCallbackResultValueToNextCallback()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -65,8 +106,8 @@ trait PromiseFulfilledTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(2));
 
-        $resolve(1);
-        $promise()
+        $adapter->resolve(1);
+        $adapter->promise()
             ->then(
                 function ($val) {
                     return \React\Promise\resolve($val + 1);
@@ -82,7 +123,7 @@ trait PromiseFulfilledTestTrait
     /** @test */
     public function thenShouldSwitchFromCallbacksToErrbacksWhenCallbackReturnsARejection()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -90,8 +131,8 @@ trait PromiseFulfilledTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(2));
 
-        $resolve(1);
-        $promise()
+        $adapter->resolve(1);
+        $adapter->promise()
             ->then(
                 function ($val) {
                     return \React\Promise\reject($val + 1);
@@ -107,7 +148,7 @@ trait PromiseFulfilledTestTrait
     /** @test */
     public function thenShouldSwitchFromCallbacksToErrbacksWhenCallbackThrows()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $exception = new \Exception();
 
@@ -123,8 +164,8 @@ trait PromiseFulfilledTestTrait
             ->method('__invoke')
             ->with($this->identicalTo($exception));
 
-        $resolve(1);
-        $promise()
+        $adapter->resolve(1);
+        $adapter->promise()
             ->then(
                 $mock,
                 $this->expectCallableNever()

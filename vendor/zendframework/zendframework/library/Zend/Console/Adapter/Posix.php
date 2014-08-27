@@ -358,7 +358,7 @@ class Posix extends AbstractAdapter
      * Change TTY (Console) mode
      *
      * @link  http://en.wikipedia.org/wiki/Stty
-     * @param $mode
+     * @param string $mode
      */
     protected function setTTYMode($mode)
     {
@@ -373,6 +373,7 @@ class Posix extends AbstractAdapter
      * Get the final color code and throw exception on error
      *
      * @param  null|int|Xterm256 $color
+     * @param  string            $type  (optional) Foreground 'fg' or background 'bg'.
      * @throws Exception\BadMethodCallException
      * @return string
      */
@@ -392,8 +393,9 @@ class Posix extends AbstractAdapter
         if ($color !== null) {
             if (!isset(static::$ansiColorMap[$type][$color])) {
                 throw new Exception\BadMethodCallException(sprintf(
-                        'Unknown color "%s". Please use one of the Zend\Console\ColorInterface constants or use Zend\Console\Color\Xterm256::calculate',
-                        $color
+                    'Unknown color "%s". Please use one of the Zend\Console\ColorInterface constants '
+                    . 'or use Zend\Console\Color\Xterm256::calculate',
+                    $color
                 ));
             }
 

@@ -24,6 +24,13 @@ use Aws\S3\Sync\KeyConverter;
  */
 class ChangedFilesIteratorTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    public function setUp()
+    {
+        if (!\can_mock_internal_classes()) {
+            $this->markTestSkipped('Cannot mock internal classes');
+        }
+    }
+
     public function testRetrievesAndCachesTargetData()
     {
         $ctime = strtotime('January 1, 2013');

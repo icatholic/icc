@@ -1,33 +1,34 @@
-### Welcome to the *Zend Framework 2.2* Release!
+### Welcome to the *Zend Framework 2.3* Release!
 
-Master: [![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=master)](http://travis-ci.org/zendframework/zf2)
-Develop: [![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=develop)](http://travis-ci.org/zendframework/zf2)
+Master:
+[![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=master)](http://travis-ci.org/zendframework/zf2)
+[![Coverage Status](https://coveralls.io/repos/zendframework/zf2/badge.png?branch=master)](https://coveralls.io/r/zendframework/zf2)
+Develop:
+[![Build Status](https://secure.travis-ci.org/zendframework/zf2.png?branch=develop)](http://travis-ci.org/zendframework/zf2)
+[![Coverage Status](https://coveralls.io/repos/zendframework/zf2/badge.png?branch=develop)](https://coveralls.io/r/zendframework/zf2)
 
 ## RELEASE INFORMATION
 
-*Zend Framework 2.2.6*
+*Zend Framework 2.3.2*
 
-This is the sixth maintenance release for the 2.2 series.
+This is the second maintenance release for the version 2.3 series.
 
-06 Mar 2014
+12 Aug 2014
 
-### UPDATES IN 2.2.6
+### UPDATES IN 2.3.2
 
-**This release contains security updates:**
+Notable changes include:
 
-- **ZF2014-01:** Potential XXE/XEE attacks using PHP functions:
-  `simplexml_load_*`, `DOMDocument::loadXML`, and `xml_parse`. A new component,
-  `ZendXml`, was introduced to mitigate XML eXternal Entity and XML Entity
-  Expansion vectors that are present in older versions of libxml2 and/or PHP.
-  `Zend\Json\Json::fromXml()` and `Zend\XmlRpc`'s `Response` and `Fault` classes
-  were potentially vulnerable to these attacks. If you use either of these
-  components, we recommend upgrading immediately.
+- [#6295](https://github.com/zendframework/zf2/pull/6295) introduces a slight change to how `Zend\Form\Fieldset` handles disabled values. Previously, they were represented in the form, and still processed on submit, which allowed the possibility of changing the value. This pull request modifies the behavior to extract the original value from any bound data if present and use that value instead, which is the correct behavior.
+- [#6423](https://github.com/zendframework/zf2/pull/6423) modifies the behavior of `Zend\Validator\File\UploadFile` to only return the `FILE_NOT_FOUND` error if upload was successful; previously, it incorrectly would report this error even if an error occurred during upload.
+
+In all, over 120 issues were resolved for this release.
 
 Please see [CHANGELOG.md](CHANGELOG.md).
 
 ### SYSTEM REQUIREMENTS
 
-Zend Framework 2 requires PHP 5.3.3 or later; we recommend using the
+Zend Framework 2 requires PHP 5.3.23 or later; we recommend using the
 latest PHP version whenever possible.
 
 ### INSTALLATION

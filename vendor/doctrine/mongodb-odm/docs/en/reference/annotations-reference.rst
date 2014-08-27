@@ -7,17 +7,36 @@ given with short explanations on their context and usage.
 @AlsoLoad
 ---------
 
-Specify an additional mongodb field to check for and load data from it if it exists.
+Specify one or more MongoDB fields to use for loading data if the original field
+does not exist.
 
 .. code-block:: php
 
     <?php
 
-    /** @Field @AlsoLoad("oldFieldName")*/
-    private $fieldName;
+    /** @String @AlsoLoad("name") */
+    public $fullName;
 
-The above ``$fieldName`` will be loaded from ``fieldName`` if it exists and will fallback to ``oldFieldName``
-if it does not exist.
+The ``$fullName`` property will be lodaed from ``fullName`` if it exists, but
+fall back to ``name`` if it does not exist. If multiple fall back fields are
+specified, ODM will consider them in order until the first is found.
+
+Additionally, ``@AlsoLoad`` may annotate a method with one or more field names.
+Before normal hydration, the field(s) will be considered in order and the method
+will be invoked with the first value found as its single argument.
+
+.. code-block:: php
+
+    <?php
+
+    /** @AlsoLoad({"name", "fullName"}) */
+    public function populateFirstAndLastName($name)
+    {
+        list($this->firstName, $this->lastName) = explode(' ', $name);
+    }
+
+For additional information on using ``@AlsoLoad``, see
+:doc:`Migrations <migrating-schemas>`.
 
 @Bin
 ----
@@ -114,18 +133,13 @@ Alias of @Field, with "type" attribute set to
 "collection". Stores and retrieves the value as numeric indexed
 array.
 
-Optional attributes:
-
--
-    strategy - The strategy to use to persist the data. Possible values are ``set`` and ``pushAll``; ``pushAll`` is the default.
-
 Example:
 
 .. code-block:: php
 
     <?php
 
-    /** @Collection(strategy="pushAll") */
+    /** @Collection */
     private $tags = array();
 
 @Date
@@ -145,16 +159,11 @@ MongoDate http://www.php.net/manual/en/class.mongodate.php.
 @DiscriminatorField
 -------------------
 
-This annotation is a required annotation for the topmost/super
-class of an inheritance hierarchy. It specifies the details of the
-field which saves the name of the class, which the document is
-actually instantiated as.
-
-Required attributes:
-
-- 
-   fieldName - The field name of the discriminator. This name is also
-   used during Array hydration as key to specify the class-name.
+This annotation is required for the top-most class in a
+:ref:`single collection inheritance <single_collection_inheritance>` hierarchy.
+It takes a string as its only argument, which specifies the database field to
+store a class name or key (if a discriminator map is used). ODM uses this field
+during hydration to select the instantiation class.
 
 Example:
 
@@ -164,22 +173,28 @@ Example:
 
     /**
      * @Document
-     * @DiscriminatorField(fieldName="type")
+     * @InheritanceType("SINGLE_COLLECTION")
+     * @DiscriminatorField("type")
      */
     class SuperUser
     {
         // ...
     }
 
+.. note::
+
+    For backwards compatibility, the discriminator field may also be specified
+    via either the ``name`` or ``fieldName`` annotation attributes.
+
 @DiscriminatorMap
 -----------------
 
-The discriminator map is a required annotation on the top-most/super
-class in an inheritance hierarchy. It takes an array as only
-argument which defines which class should be saved under which name
-in the database. Keys are the database value and values are the
-classes, either as fully- or as unqualified class names depending
-if the classes are in the namespace or not.
+This annotation is required for the top-most class in a
+:ref:`single collection inheritance <single_collection_inheritance>` hierarchy.
+It takes an array as its only argument, which maps keys to class names. The
+class names may be fully qualified or relative to the current namespace. When
+a document is persisted to the database, its class name key will be stored in
+the discriminator field instead of the fully qualified class name.
 
 .. code-block:: php
 
@@ -188,24 +203,22 @@ if the classes are in the namespace or not.
     /**
      * @Document
      * @InheritanceType("SINGLE_COLLECTION")
-     * @DiscriminatorField(fieldName="discr")
+     * @DiscriminatorField("type")
      * @DiscriminatorMap({"person" = "Person", "employee" = "Employee"})
      */
     class Person
     {
-        /**
-         * @Field(type="string")
-         */
-        private $discr;
         // ...
     }
+
+.. _annotation_distance:
 
 @Distance
 ---------
 
-Use the @Distance annotation in combination with geospatial
-indexes and when running $near queries the property will be
-populated with a distance value.
+This annotation can be used in combination with geospatial indexes and the
+:ref:`geoNear() <geonear>` query method to populate the property with the
+calculated distance value.
 
 .. code-block:: php
 
@@ -237,15 +250,16 @@ populated with a distance value.
         public $longitude;
     }
 
-Now you can run a near() query and access the distance. Get the
-closest city to a set of coordinates:
+Now you can run a ``geoNear()`` query and access the computed distance. The
+following example would return the distance of the closest city to the query
+coordinates:
 
 .. code-block:: php
 
     <?php
 
     $city = $this->dm->createQuery('City')
-        ->field('coordinates')->near(50, 60)
+        ->geoNear(50, 60)
         ->limit(1)
         ->getQuery()
         ->getSingleResult();
@@ -307,11 +321,14 @@ Optional attributes:
 -
     targetDocument - A full class name of the target document.
 -
-    discriminatorField - The field name to store the discriminator value in.
+    discriminatorField - The database field name to store the discriminator
+    value within the embedded document.
 -
     discriminatorMap - Map of discriminator values to class names.
 -
-    strategy - The strategy to use to persist the reference. Possible values are `set` and `pushAll` and `pushAll` is the default.
+    strategy - The strategy used to persist changes to the collection. Possible
+    values are ``addToSet``, ``pushAll``, ``set``, and ``setArray``. ``pushAll``
+    is the default. See :ref:`collection_strategies` for more information.
 
 Example:
 
@@ -357,7 +374,8 @@ Optional attributes:
 - 
     targetDocument - A full class name of the target document.
 - 
-    discriminatorField - The field name to store the discriminator value in.
+    discriminatorField - The database field name to store the discriminator
+    value within the embedded document.
 -
     discriminatorMap - Map of discriminator values to class names.
 -
@@ -499,7 +517,7 @@ Examples:
     protected $username;
     
     /**
-     * @Field(type="string" name="origin")
+     * @Field(type="string", name="origin")
      */
     protected $country;
     
@@ -523,6 +541,28 @@ class upon retrieval
 Alias of @Field, with "type" attribute set to
 "float"
 
+.. _haslifecyclecallbacks:
+
+@HasLifecycleCallbacks
+----------------------
+
+This annotation must be set on the document class to instruct Doctrine to check
+for lifecycle callback annotations on public methods. Using `@PreFlush`_,
+`@PreLoad`_, `@PostLoad`_, `@PrePersist`_, `@PostPersist`_, `@PreRemove`_,
+`@PostRemove`_, `@PreUpdate`_, or `@PostUpdate`_ on methods without this
+annotation will cause Doctrine to ignore the callbacks.
+
+.. code-block:: php
+
+    <?php
+
+    /** @Document @HasLifecycleCallbacks */
+    class User
+    {
+        /** @PostPersist */
+        public function sendWelcomeEmail() {}
+    }
+
 @Hash
 -----
 
@@ -532,9 +572,9 @@ Alias of @Field, with "type" attribute set to
 @Id
 ---
 
-The annotated instance variable will be marked as document
-identifier. This annotation is a marker only and has no required or
-optional attributes.
+The annotated instance variable will be marked as the document identifier. The
+default behavior is to store a MongoId instance, but you may customize this via
+the :ref:`strategy <basic_mapping_identifiers>` attribute.
 
 Example:
 
@@ -644,14 +684,9 @@ property:
 @InheritanceType
 ----------------
 
-In an inheritance hierarchy you have to use this annotation on the
-topmost/super class to define which strategy should be used for
-inheritance. Currently SINGLE\_COLLECTION and
-COLLECTION\_PER\_CLASS are supported.
-
-This annotation has always been used in conjunction with the
-@DiscriminatorMap and
-@DiscriminatorField annotations.
+This annotation must appear on the top-most class in an
+:ref:`inheritance hierarchy <inheritance_mapping>`. ``SINGLE_COLLECTION`` and
+``COLLECTION_PER_CLASS`` are currently supported.
 
 Examples:
 
@@ -662,7 +697,6 @@ Examples:
     /**
      * @Document
      * @InheritanceType("COLLECTION_PER_CLASS")
-     * @DiscriminatorMap({"person"="Person", "employee"="Employee"})
      */
     class Person
     {
@@ -672,6 +706,7 @@ Examples:
     /**
      * @Document
      * @InheritanceType("SINGLE_COLLECTION")
+     * @DiscriminatorField("type")
      * @DiscriminatorMap({"person"="Person", "employee"="Employee"})
      */
     class Person
@@ -728,13 +763,15 @@ they exist but never saved.
 @PostLoad
 ---------
 
-Marks a method on the document to be called as a @PostLoad event.
+Marks a method on the document class to be called on the ``postLoad`` event. The
+`@HasLifecycleCallbacks`_ annotation must be present on the same class for the
+method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -746,17 +783,20 @@ Marks a method on the document to be called as a @PostLoad event.
         }
     }
 
+See :ref:`lifecycle_events` for more information.
+
 @PostPersist
 ------------
 
-Marks a method on the document to be called as a @PostPersist
-event.
+Marks a method on the document class to be called on the ``postPersist`` event.
+The `@HasLifecycleCallbacks`_ annotation must be present on the same class for
+the method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -768,16 +808,20 @@ event.
         }
     }
 
+See :ref:`lifecycle_events` for more information.
+
 @PostRemove
 -----------
 
-Marks a method on the document to be called as a @PostRemove event.
+Marks a method on the document class to be called on the ``postRemove`` event.
+The `@HasLifecycleCallbacks`_ annotation must be present on the same class for
+the method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -789,16 +833,20 @@ Marks a method on the document to be called as a @PostRemove event.
         }
     }
 
+See :ref:`lifecycle_events` for more information.
+
 @PostUpdate
 -----------
 
-Marks a method on the document to be called as a @PostUpdate event.
+Marks a method on the document class to be called on the ``postUpdate`` event.
+The `@HasLifecycleCallbacks`_ annotation must be present on the same class for
+the method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -810,16 +858,45 @@ Marks a method on the document to be called as a @PostUpdate event.
         }
     }
 
-@PreLoad
---------
+See :ref:`lifecycle_events` for more information.
 
-Marks a method on the document to be called as a @PreLoad event.
+@PreFlush
+---------
+
+Marks a method on the document class to be called on the ``preFlush`` event. The
+`@HasLifecycleCallbacks`_ annotation must be present on the same class for the
+method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
+    class Article
+    {
+        // ...
+    
+        /** @PreFlush */
+        public function preFlush()
+        {
+            // ...
+        }
+    }
+
+See :ref:`lifecycle_events` for more information.
+
+@PreLoad
+--------
+
+Marks a method on the document class to be called on the ``preLoad`` event. The
+`@HasLifecycleCallbacks`_ annotation must be present on the same class for the
+method to be registered.
+
+.. code-block:: php
+
+    <?php
+
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -831,16 +908,20 @@ Marks a method on the document to be called as a @PreLoad event.
         }
     }
 
+See :ref:`lifecycle_events` for more information.
+
 @PrePersist
 -----------
 
-Marks a method on the document to be called as a @PrePersist event.
+Marks a method on the document class to be called on the ``prePersist`` event.
+The `@HasLifecycleCallbacks`_ annotation must be present on the same class for
+the method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -852,16 +933,20 @@ Marks a method on the document to be called as a @PrePersist event.
         }
     }
 
+See :ref:`lifecycle_events` for more information.
+
 @PreRemove
 ----------
 
-Marks a method on the document to be called as a @PreRemove event.
+Marks a method on the document class to be called on the ``preRemove`` event.
+The `@HasLifecycleCallbacks`_ annotation must be present on the same class for
+the method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -873,16 +958,20 @@ Marks a method on the document to be called as a @PreRemove event.
         }
     }
 
+See :ref:`lifecycle_events` for more information.
+
 @PreUpdate
 ----------
 
-Marks a method on the document to be called as a @PreUpdate event.
+Marks a method on the document class to be called on the ``preUpdate`` event.
+The `@HasLifecycleCallbacks`_ annotation must be present on the same class for
+the method to be registered.
 
 .. code-block:: php
 
     <?php
 
-    /** @Document */
+    /** @Document @HasLifecycleCallbacks */
     class Article
     {
         // ...
@@ -893,6 +982,10 @@ Marks a method on the document to be called as a @PreUpdate event.
             // ...
         }
     }
+
+See :ref:`lifecycle_events` for more information.
+
+.. _annotations_reference_reference_many:
 
 @ReferenceMany
 --------------
@@ -905,11 +998,14 @@ Optional attributes:
 -
     targetDocument - A full class name of the target document.
 -
-    simple - Create simple references and only store a ``MongoId`` instead of a ``DBRef``.
+    simple - Create simple references and only store the referenced document's
+    identifier (e.g. ``MongoId``) instead of a `DBRef`_. Note that simple
+    references are not compatible with the discriminators.
 -
     cascade - Cascade Option
 - 
-    discriminatorField - The field name to store the discriminator value in.
+    discriminatorField - The field name to store the discriminator value within
+    the `DBRef`_ object.
 -
     discriminatorMap - Map of discriminator values to class names.
 -
@@ -927,7 +1023,9 @@ Optional attributes:
 -
     skip - Skip for the query that loads the reference.
 -
-    strategy - The strategy to use to persist the reference. Possible values are ``set`` and ``pushAll``; ``pushAll`` is the default.
+    strategy - The strategy used to persist changes to the collection. Possible
+    values are ``addToSet``, ``pushAll``, ``set``, and ``setArray``. ``pushAll``
+    is the default. See :ref:`collection_strategies` for more information.
 
 Example:
 
@@ -950,6 +1048,8 @@ Example:
      */
     private $cart;
 
+.. _annotations_reference_reference_one:
+
 @ReferenceOne
 -------------
 
@@ -960,11 +1060,14 @@ Optional attributes:
 -
     targetDocument - A full class name of the target document.
 -
-    simple - Create simple references and only store a ``MongoId`` instead of a ``DBRef``.
+    simple - Create simple references and only store the referenced document's
+    identifier (e.g. ``MongoId``) instead of a `DBRef`_. Note that simple
+    references are not compatible with the discriminators.
 -
     cascade - Cascade Option
 - 
-    discriminatorField - The field name to store the discriminator value in.
+    discriminatorField - The field name to store the discriminator value within
+    the `DBRef`_ object.
 -
     discriminatorMap - Map of discriminator values to class names.
 -
@@ -1037,3 +1140,4 @@ Defines a unique index on the given document.
     /** @String @UniqueIndex */
     private $email;
 
+.. _`DBRef`: http://docs.mongodb.org/manual/reference/database-references/#dbref
