@@ -64,6 +64,13 @@ abstract class Action extends AbstractActionController
                         $event->setViewModel($this->deny());
                     }
                 }
+                
+                // 如果通过了身份验证的请求，记录请求数据
+                $app = $event->getApplication();
+                $mongos = $app->getServiceManager()
+                    ->get('mongos');
+                $objLog = new \Idatabase\Model\Log($mongos);
+                $objLog->trackingLog();
             }
             
             $this->preDispatch();
@@ -76,14 +83,6 @@ abstract class Action extends AbstractActionController
                     $event->setViewModel($this->deny($e->getMessage()));
                 }
             }
-            
-            // 如果通过了身份验证的请求，记录请求数据
-            $app = $event->getApplication();
-            $mongos = $app->getServiceManager()
-                ->get('mongos');
-            $objLog = new \Idatabase\Model\Log($mongos);
-            $objLog->trackingLog();
-            
         }, 200);
     }
 
