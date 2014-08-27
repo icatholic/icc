@@ -2,13 +2,14 @@
 <phpunit
 	backupGlobals="false"
 	strict="true"
-	colors="true"
+	colors="false"
 	verbose="false"
 	bootstrap="bootstrap.php"
 	convertErrorsToExceptions="true"
 	convertNoticesToExceptions="true"
 	convertWarningsToExceptions="true"
-	mapTestClassNameToCoveredClassName="true">
+	mapTestClassNameToCoveredClassName="true"
+	timeoutForSmallTests="2">
 
 	<php>
 		<ini name="error_reporting" value="-1"/>

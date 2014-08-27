@@ -43,7 +43,6 @@ class Svg extends AbstractRenderer
      */
     protected $userWidth = 0;
 
-
     /**
      * Flag to determime if drawPolygon has been run once already
      * @var bool
@@ -149,9 +148,11 @@ class Svg extends AbstractRenderer
             $this->rootElement->setAttribute('width', $width);
             $this->rootElement->setAttribute('height', $height);
 
-            $this->appendRootElement('title',
-                                      array(),
-                                      "Barcode " . strtoupper($this->barcode->getType()) . " " . $this->barcode->getText());
+            $this->appendRootElement(
+                'title',
+                array(),
+                "Barcode " . strtoupper($this->barcode->getType()) . " " . $this->barcode->getText()
+            );
         } else {
             $this->readRootElement();
             $width = $this->rootElement->getAttribute('width');
@@ -165,7 +166,7 @@ class Svg extends AbstractRenderer
             'height' => ($this->topOffset + $barcodeHeight - 1),
             'fill' => $imageBackgroundColor);
 
-        if($this->transparentBackground) {
+        if ($this->transparentBackground) {
             $rect['fill-opacity'] = 0;
         }
 
@@ -274,7 +275,7 @@ class Svg extends AbstractRenderer
 
     /**
      * Draw the barcode in the rendering resource
-     * @return mixed
+     * @return DOMDocument
      */
     public function draw()
     {
@@ -319,14 +320,14 @@ class Svg extends AbstractRenderer
             $points[3][1] + $this->topOffset - sin($orientation),
         );
         $newPoints = implode(' ', $newPoints);
+        $attributes = array();
         $attributes['points'] = $newPoints;
         $attributes['fill'] = $color;
 
         // SVG passes a rect in as the first call to drawPolygon, we'll need to intercept
         // this and set transparency if necessary.
-        $objId = spl_object_hash($this);
-        if(!$this->drawPolygonExecuted) {
-            if($this->transparentBackground) {
+        if (!$this->drawPolygonExecuted) {
+            if ($this->transparentBackground) {
                 $attributes['fill-opacity'] = '0';
             }
             $this->drawPolygonExecuted = true;
@@ -351,6 +352,7 @@ class Svg extends AbstractRenderer
         $color = 'rgb(' . implode(', ', array(($color & 0xFF0000) >> 16,
                                               ($color & 0x00FF00) >> 8,
                                               ($color & 0x0000FF))) . ')';
+        $attributes = array();
         $attributes['x'] = $position[0] + $this->leftOffset;
         $attributes['y'] = $position[1] + $this->topOffset;
         //$attributes['font-family'] = $font;

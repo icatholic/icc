@@ -17,7 +17,9 @@
 
 // Included nicejson function to beautify the result JSON file.
 // This library is not mandatory.
-include_once dirname(__FILE__).'/nicejson/nicejson.php';
+if( file_exists(dirname(__FILE__).'/nicejson/nicejson.php') ) {
+	include_once dirname(__FILE__).'/nicejson/nicejson.php';
+}
 
 // Include Mobile Detect.
 require_once dirname(__FILE__).'/../Mobile_Detect.php';
@@ -45,7 +47,9 @@ $json = array(
 					// If match is found, triggers 'isMobile' to be true.
 					'browsers' => $detect->getBrowsers(),
 					// If match is found, triggers 'isMobile' to be true.
-					'os'       => $detect->getOperatingSystems()
+					'os'       => $detect->getOperatingSystems(),
+					// Various utilities. To be further discussed.
+					'utilities' => $detect->getUtilities()
 				)
 
 			);

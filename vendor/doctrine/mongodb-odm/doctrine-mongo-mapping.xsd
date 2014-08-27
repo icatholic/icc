@@ -37,7 +37,7 @@
       <xs:element name="embed-many" type="odm:embed-many" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="reference-one" type="odm:reference-one" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="reference-many" type="odm:reference-many" minOccurs="0" maxOccurs="unbounded"/>
-      <xs:element name="discriminator-field" type="odm:discriminator-field-document" minOccurs="0"/>
+      <xs:element name="discriminator-field" type="odm:discriminator-field" minOccurs="0"/>
       <xs:element name="discriminator-map" type="odm:discriminator-map" minOccurs="0"/>
       <xs:element name="lifecycle-callbacks" type="odm:lifecycle-callbacks" minOccurs="0"/>
       <xs:element name="indexes" type="odm:indexes" minOccurs="0"/>
@@ -53,19 +53,32 @@
   </xs:complexType>
 
   <xs:complexType name="field">
+    <xs:sequence>
+      <xs:element name="id-generator-option" type="odm:id-generator-option" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>  
     <xs:attribute name="id" type="xs:boolean" default="false" />
     <xs:attribute name="name" type="xs:NMTOKEN" />
     <xs:attribute name="type" type="xs:NMTOKEN" default="string" />
     <xs:attribute name="strategy" type="xs:NMTOKEN" default="pushAll" />
     <xs:attribute name="fieldName" type="xs:NMTOKEN" />
-    <xs:attribute name="unique" type="xs:boolean" />
-    <xs:attribute name="drop-dups" type="xs:boolean" />
-    <xs:attribute name="order" type="xs:NMTOKEN" />
     <xs:attribute name="embed" type="xs:boolean" />
-    <xs:attribute name="sparse" type="xs:boolean" />
     <xs:attribute name="file" type="xs:boolean" />
     <xs:attribute name="distance" type="xs:boolean" />
     <xs:attribute name="reference" type="xs:boolean" />
+    <!-- index options -->
+    <xs:attribute name="background" type="xs:boolean" />
+    <xs:attribute name="drop-dups" type="xs:boolean" />
+    <xs:attribute name="index" type="xs:boolean" />
+    <xs:attribute name="index-name" type="xs:NMTOKEN" />
+    <xs:attribute name="order" type="xs:NMTOKEN" />
+    <xs:attribute name="safe" type="xs:boolean" />
+    <xs:attribute name="sparse" type="xs:boolean" />
+    <xs:attribute name="unique" type="xs:boolean" />
+  </xs:complexType>
+  
+  <xs:complexType name="id-generator-option">
+    <xs:attribute name="name" type="xs:NMTOKEN" use="required"/>
+    <xs:attribute name="value" type="xs:string" use="required"/>
   </xs:complexType>
 
   <xs:complexType name="embed-one">
@@ -180,11 +193,6 @@
     <xs:sequence>
       <xs:element name="discriminator-mapping" type="odm:discriminator-mapping" minOccurs="1" maxOccurs="unbounded"/>
     </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="discriminator-field-document">
-    <xs:attribute name="fieldName" type="xs:NMTOKEN" use="required"/>
-    <xs:attribute name="name" type="xs:NMTOKEN" use="optional"/>
   </xs:complexType>
 
   <xs:complexType name="discriminator-field">

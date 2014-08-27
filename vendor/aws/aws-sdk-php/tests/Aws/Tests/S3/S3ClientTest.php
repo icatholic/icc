@@ -49,7 +49,9 @@ class S3ClientTest extends \Guzzle\Tests\GuzzleTestCase
             array('bucket-name', true),
             array('bucket', true),
             array('my.bucket.com', true),
-            array('test-fooCaps', false)
+            array('test-fooCaps', false),
+            array('w-w', true),
+            array('w------', false)
         );
     }
 
@@ -79,8 +81,11 @@ class S3ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCreatesPresignedUrls()
     {
-        /** @var $client S3Client */
-        $client = $this->getServiceBuilder()->get('s3', true);
+        $client = S3Client::factory(array(
+            'region' => 'us-east-1',
+            'key'    => 'foo',
+            'secret' => 'bar'
+        ));
         $request = $client->get('/foobar');
         $original = (string) $request;
         $url = $client->createPresignedUrl($request, 1342138769);
@@ -95,8 +100,11 @@ class S3ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCreatesPresignedUrlsWithSpecialCharacters()
     {
-        /** @var $client S3Client */
-        $client = $this->getServiceBuilder()->get('s3', true);
+        $client = S3Client::factory(array(
+            'region' => 'us-east-1',
+            'key'    => 'foo',
+            'secret' => 'bar'
+        ));
         $request = $client->get('/foobar test: abc/+%.a');
         $url = $client->createPresignedUrl($request, 1342138769);
         $this->assertContains('https://s3.amazonaws.com/foobar%20test%3A%20abc/%2B%25.a?AWSAccessKeyId=', $url);
@@ -426,17 +434,6 @@ class S3ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $sig = $this->getMockBuilder('Aws\S3\S3SignatureV4')
             ->disableOriginalConstructor()
             ->getMock();
-        $s3 = S3Client::factory(array(Options::SIGNATURE => $sig));
-        $this->assertSame($sig, $s3->getSignature());
-    }
-
-    /**
-     * @expectedException \Aws\Common\Exception\InvalidArgumentException
-     */
-    public function testEnsuresSignatureImplementsS3Signature()
-    {
-        $sig = $this->getMockBuilder('Aws\Common\Signature\SignatureInterface')
-            ->getMockForAbstractClass();
         $s3 = S3Client::factory(array(Options::SIGNATURE => $sig));
         $this->assertSame($sig, $s3->getSignature());
     }

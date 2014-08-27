@@ -99,12 +99,12 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'type' => 'one',
             'embedded' => true,
             'targetDocument' => 'Documents\Address',
-            'isCascadeCallbacks' => false,
-            'isCascadeDetach' => false,
-            'isCascadeMerge' => false,
-            'isCascadePersist' => false,
-            'isCascadeRefresh' => false,
-            'isCascadeRemove' => false,
+            'isCascadeCallbacks' => true,
+            'isCascadeDetach' => true,
+            'isCascadeMerge' => true,
+            'isCascadePersist' => true,
+            'isCascadeRefresh' => true,
+            'isCascadeRemove' => true,
             'isInverseSide' => false,
             'isOwningSide' => true,
             'nullable' => false,
@@ -118,12 +118,12 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'type' => 'many',
             'embedded' => true,
             'targetDocument' => 'Documents\Phonenumber',
-            'isCascadeCallbacks' => false,
-            'isCascadeDetach' => false,
-            'isCascadeMerge' => false,
-            'isCascadePersist' => false,
-            'isCascadeRefresh' => false,
-            'isCascadeRemove' => false,
+            'isCascadeCallbacks' => true,
+            'isCascadeDetach' => true,
+            'isCascadeMerge' => true,
+            'isCascadePersist' => true,
+            'isCascadeRefresh' => true,
+            'isCascadeRemove' => true,
             'isInverseSide' => false,
             'isOwningSide' => true,
             'nullable' => false,
@@ -138,6 +138,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'reference' => true,
             'simple' => true,
             'targetDocument' => 'Documents\Profile',
+            'cascade' => array('remove', 'persist', 'refresh', 'merge', 'detach', 'callbacks'),
             'isCascadeCallbacks' => true,
             'isCascadeDetach' => true,
             'isCascadeMerge' => true,
@@ -153,6 +154,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'repositoryMethod' => null,
             'limit' => null,
             'skip' => null,
+            'orphanRemoval' => false,
         ), $classMetadata->fieldMappings['profile']);
 
         $this->assertEquals(array(
@@ -163,6 +165,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'reference' => true,
             'simple' => false,
             'targetDocument' => 'Documents\Account',
+            'cascade' => array('remove', 'persist', 'refresh', 'merge', 'detach', 'callbacks'),
             'isCascadeCallbacks' => true,
             'isCascadeDetach' => true,
             'isCascadeMerge' => true,
@@ -178,6 +181,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'repositoryMethod' => null,
             'limit' => null,
             'skip' => null,
+            'orphanRemoval' => false,
         ), $classMetadata->fieldMappings['account']);
 
         $this->assertEquals(array(
@@ -188,6 +192,7 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'reference' => true,
             'simple' => false,
             'targetDocument' => 'Documents\Group',
+            'cascade' => array('remove', 'persist', 'refresh', 'merge', 'detach', 'callbacks'),
             'isCascadeCallbacks' => true,
             'isCascadeDetach' => true,
             'isCascadeMerge' => true,
@@ -203,11 +208,13 @@ abstract class AbstractDriverTest extends \PHPUnit_Framework_TestCase
             'repositoryMethod' => null,
             'limit' => null,
             'skip' => null,
+            'orphanRemoval' => false,
         ), $classMetadata->fieldMappings['groups']);
 
-        $this->assertEquals(array(
-            'postPersist' => array('doStuffOnPostPersist', 'doOtherStuffOnPostPersist'),
-            'prePersist' => array('doStuffOnPrePersist')
+        $this->assertEquals(
+            array(
+                'postPersist' => array('doStuffOnPostPersist', 'doOtherStuffOnPostPersist'),
+                'prePersist' => array('doStuffOnPrePersist'),
             ),
             $classMetadata->lifecycleCallbacks
         );

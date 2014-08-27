@@ -9,7 +9,7 @@
 namespace Zend\Test\PHPUnit\Controller;
 
 use PHPUnit_Framework_ExpectationFailedException;
-use Zend\Dom;
+use Zend\Dom\Document;
 
 abstract class AbstractHttpControllerTestCase extends AbstractControllerTestCase
 {
@@ -37,6 +37,16 @@ abstract class AbstractHttpControllerTestCase extends AbstractControllerTestCase
         $headers        = $response->getHeaders();
         $responseHeader = $headers->get($header, false);
         return $responseHeader;
+    }
+
+    /**
+     * Assert response has the given reason phrase
+     *
+     * @param string $phrase
+     */
+    public function assertResponseReasonPhrase($phrase)
+    {
+        $this->assertEquals($phrase, $this->getResponse()->getReasonPhrase());
     }
 
     /**
@@ -84,7 +94,7 @@ abstract class AbstractHttpControllerTestCase extends AbstractControllerTestCase
         $responseHeader = $this->getResponseHeader($header);
         if (!$responseHeader) {
             throw new PHPUnit_Framework_ExpectationFailedException(sprintf(
-                'Failed asserting response header, header "%s" do not exists',
+                'Failed asserting response header, header "%s" doesn\'t exist',
                 $header
             ));
         }
@@ -125,7 +135,7 @@ abstract class AbstractHttpControllerTestCase extends AbstractControllerTestCase
         $responseHeader = $this->getResponseHeader($header);
         if (!$responseHeader) {
             throw new PHPUnit_Framework_ExpectationFailedException(sprintf(
-                'Failed asserting response header, header "%s" do not exists',
+                'Failed asserting response header, header "%s" doesn\'t exist',
                 $header
             ));
         }
@@ -158,7 +168,7 @@ abstract class AbstractHttpControllerTestCase extends AbstractControllerTestCase
         $responseHeader = $this->getResponseHeader($header);
         if (!$responseHeader) {
             throw new PHPUnit_Framework_ExpectationFailedException(sprintf(
-                'Failed asserting response header, header "%s" do not exists',
+                'Failed asserting response header, header "%s" doesn\'t exist',
                 $header
             ));
         }
@@ -200,7 +210,7 @@ abstract class AbstractHttpControllerTestCase extends AbstractControllerTestCase
         $responseHeader = $this->getResponseHeader($header);
         if (!$responseHeader) {
             throw new PHPUnit_Framework_ExpectationFailedException(sprintf(
-                'Failed asserting response header, header "%s" do not exists',
+                'Failed asserting response header, header "%s" doesn\'t exist',
                 $header
             ));
         }
@@ -360,17 +370,20 @@ abstract class AbstractHttpControllerTestCase extends AbstractControllerTestCase
      *
      * @param  string $path
      * @param  bool $useXpath
-     * @return array
+     * @return Document\NodeList
      */
     private function query($path, $useXpath = false)
     {
         $response = $this->getResponse();
-        $dom      = new Dom\Query($response->getContent());
+        $document = new Document($response->getContent());
+
         if ($useXpath) {
-            $dom->registerXpathNamespaces($this->xpathNamespaces);
-            return $dom->queryXpath($path);
+            $document->registerXpathNamespaces($this->xpathNamespaces);
         }
-        return $dom->execute($path);
+
+        $result   = Document\Query::execute($path, $document, $useXpath ? Document\Query::TYPE_XPATH : Document\Query::TYPE_CSS);
+
+        return $result;
     }
 
     /**

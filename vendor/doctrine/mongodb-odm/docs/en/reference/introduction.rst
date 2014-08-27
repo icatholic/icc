@@ -23,80 +23,81 @@ Here is a quick example of some PHP object documents that demonstrates a few of 
 .. code-block:: php
 
     <?php
+    use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 
-    /** @MappedSuperclass */
+    /** @ODM\MappedSuperclass */
     abstract class BaseEmployee
     {
-        /** @Id */
+        /** @ODM\Id */
         private $id;
     
-        /** @Increment */
+        /** @ODM\Increment */
         private $changes = 0;
     
-        /** @Collection */
+        /** @ODM\Collection */
         private $notes = array();
     
-        /** @String */
+        /** @ODM\String */
         private $name;
     
-        /** @Float */
+        /** @ODM\Float */
         private $salary;
     
-        /** @Date */
+        /** @ODM\Date */
         private $started;
     
-        /** @Date */
+        /** @ODM\Date */
         private $left;
     
-        /** @EmbedOne(targetDocument="Address") */
+        /** @ODM\EmbedOne(targetDocument="Address") */
         private $address;
     
         // ...
     }
     
-    /** @Document */
+    /** @ODM\Document */
     class Employee extends BaseEmployee
     {
-        /** @ReferenceOne(targetDocument="Documents\Manager") */
+        /** @ODM\ReferenceOne(targetDocument="Documents\Manager") */
         private $manager;
     
         // ...
     }
     
-    /** @Document */
+    /** @ODM\Document */
     class Manager extends BaseEmployee
     {
-        /** @ReferenceMany(targetDocument="Documents\Project") */
+        /** @ODM\ReferenceMany(targetDocument="Documents\Project") */
         private $projects = array();
     
         // ...
     }
     
-    /** @EmbeddedDocument */
+    /** @ODM\EmbeddedDocument */
     class Address
     {
-        /** @String */
+        /** @ODM\String */
         private $address;
     
-        /** @String */
+        /** @ODM\String */
         private $city;
     
-        /** @String */
+        /** @ODM\String */
         private $state;
     
-        /** @String */
+        /** @ODM\String */
         private $zipcode;
     
         // ...
     }
     
-    /** @Document */
+    /** @ODM\Document */
     class Project
     {
-        /** @Id */
+        /** @ODM\Id */
         private $id;
     
-        /** @String */
+        /** @ODM\String */
         private $name;
     
         public function __construct($name)
@@ -275,34 +276,46 @@ running!
 Setup
 -----
 
-Before we can begin setting up the code we need to download the
-Doctrine MongoDB package. You can learn about how to download the
-code `here <http://www.doctrine-project.org/projects/mongodb_odm/download>`_.
-The easiest way is to just clone it using git:
+Before we can begin, we'll need to install the Doctrine MongoDB ODM library and
+its dependencies. The easiest way to do this is with `Composer`_:
 
 ::
 
-    $ mkdir doctrine-mongodb-odm-test
-    $ cd doctrine-mongodb-odm-test
-    $ git clone git://github.com/doctrine/mongodb-odm.git lib/vendor/doctrine-mongodb-odm
-    $ cd lib/vendor/doctrine-mongodb-odm
-    $ git submodule init
-    $ git submodule update
+    $ composer require "doctrine/mongodb-odm=~1.0.0-BETA10@dev"
 
-Now that we have the code, we can begin our setup. First in a file named ``bootstrap.php` 
-bootstrap file you need to require the ``ClassLoader`` from the
-``Doctrine\Common`` namespace which is included in the vendor
-libraries:
+Once ODM and its dependencies have been downloaded, we can begin by creating a
+``bootstrap.php`` file in our project's root directory, where Composer's
+``vendor/`` directory also resides. Let's start by importing some of the classes
+we'll use:
 
 .. code-block:: php
 
     <?php
 
-    // doctrine-mongodb-odm-test/bootstrap.php
+    use Doctrine\MongoDB\Connection;
+    use Doctrine\ODM\MongoDB\Configuration;
+    use Doctrine\ODM\MongoDB\DocumentManager;
+    use Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver;
 
-    require 'lib/vendor/doctrine-mongodb-odm/lib/vendor/doctrine-common/lib/Doctrine/Common/ClassLoader.php';
+The first bit of code will be to import Composer's autoloader, so these classes
+can actually be loaded:
 
-At the top of your bootstrap file, you need to tell PHP which namespaces you want to use:
+.. code-block:: php
+
+    <?php
+
+    // ...
+
+    if ( ! file_exists($file = __DIR__.'/vendor/autoload.php')) {
+        throw new RuntimeException('Install dependencies to run this script.');
+    }
+
+    $loader = require_once $file;
+
+Note that instead of simply requiring the file, we assign its return value to
+the ``$loader`` variable. Assuming document classes will be stored in the
+``Documents/`` directory (with a namespace to match), we can register them with
+the autoloader like so:
 
 .. code-block:: php
 
@@ -310,105 +323,97 @@ At the top of your bootstrap file, you need to tell PHP which namespaces you wan
 
     // ...
 
-    use Doctrine\Common\ClassLoader,
-        Doctrine\Common\Annotations\AnnotationReader,
-        Doctrine\ODM\MongoDB\DocumentManager,
-        Doctrine\MongoDB\Connection,
-        Doctrine\ODM\MongoDB\Configuration,
-        Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver;
+    $loader->add('Documents', __DIR__);
 
-Next we need to setup the ``ClassLoader`` instances for all of the classes we need to autoload:
+Ultimately, our application will utilize ODM through its ``DocumentManager``
+class. Before we can instantiate a ``DocumentManager``, we need to construct the
+``Connection`` and ``Configuration`` objects required by its factory method:
 
 .. code-block:: php
 
     <?php
 
     // ...
-    
-    // ODM Classes
-    $classLoader = new ClassLoader('Doctrine\ODM\MongoDB', 'lib/vendor/doctrine-mongodb-odm/lib');
-    $classLoader->register();
-    
-    // Common Classes
-    $classLoader = new ClassLoader('Doctrine\Common', 'lib/vendor/doctrine-mongodb-odm/lib/vendor/doctrine-common/lib');
-    $classLoader->register();
-    
-    // MongoDB Classes
-    $classLoader = new ClassLoader('Doctrine\MongoDB', 'lib/vendor/doctrine-mongodb-odm/lib/vendor/doctrine-mongodb/lib');
-    $classLoader->register();
-    
-    // Document classes
-    $classLoader = new ClassLoader('Documents', __DIR__);
-    $classLoader->register();
 
-Now we can configure the ODM and create our ``DocumentManager`` instance:
+    $connection = new Connection();
+    $config = new Configuration();
+
+Next, we'll specify some essential configuration options. The following assumes
+that we will store generated proxy and hydrator classes in the ``Proxies/`` and
+``Hydrators/`` directories, respectively. Additionally, we'll define a default
+database name to use for document classes that do not specify a database in
+their mapping.
 
 .. code-block:: php
 
     <?php
 
     // ...
+
+    $config->setProxyDir(__DIR__ . '/Proxies');
+    $config->setProxyNamespace('Proxies');
+    $config->setHydratorDir(__DIR__ . '/Hydrators');
+    $config->setHydratorNamespace('Hydrators');
+    $config->setDefaultDB('doctrine_odm');
+
+The easiest way to define mappings for our document classes is with annotations.
+We'll need to specify an annotation driver in our configuration (with one or
+more paths) and register the annotations for the driver:
+
+.. code-block:: php
+
+    <?php
+
+    // ...
+
+    $config->setMetadataDriverImpl(AnnotationDriver::create(__DIR__ . '/Documents'));
+
+    AnnotationDriver::registerAnnotationClasses();
+
+At this point, we have everything necessary to construct a ``DocumentManager``:
+
+.. code-block:: php
+
+    <?php
+
+    // ...
+
+    $dm = DocumentManager::create($connection, $config);
+
+The final ``bootstrap.php`` file should look like this:
+
+.. code-block:: php
+
+    <?php
+
+    use Doctrine\MongoDB\Connection;
+    use Doctrine\ODM\MongoDB\Configuration;
+    use Doctrine\ODM\MongoDB\DocumentManager;
+    use Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver;
+
+    if ( ! file_exists($file = __DIR__.'/vendor/autoload.php')) {
+        throw new RuntimeException('Install dependencies to run this script.');
+    }
+
+    $loader = require_once $file;
+    $loader->add('Documents', __DIR__);
+
+    $connection = new Connection();
 
     $config = new Configuration();
-    $config->setProxyDir(__DIR__ . '/cache');
+    $config->setProxyDir(__DIR__ . '/Proxies');
     $config->setProxyNamespace('Proxies');
-
-    $config->setHydratorDir(__DIR__ . '/cache');
+    $config->setHydratorDir(__DIR__ . '/Hydrators');
     $config->setHydratorNamespace('Hydrators');
+    $config->setDefaultDB('doctrine_odm');
+    $config->setMetadataDriverImpl(AnnotationDriver::create(__DIR__ . '/Documents'));
 
-    $reader = new AnnotationReader();
-    $reader->setDefaultAnnotationNamespace('Doctrine\ODM\MongoDB\Mapping\\');
-    $config->setMetadataDriverImpl(new AnnotationDriver($reader, __DIR__ . '/Documents'));
+    AnnotationDriver::registerAnnotationClasses();
 
-    $dm = DocumentManager::create(new Connection(), $config);
-
-Your final bootstrap code should look like the following:
-
-.. code-block:: php
-
-    <?php
-
-    // doctrine-mongodb-odm-test/bootstrap.php
-
-    require 'lib/vendor/doctrine-mongodb-odm/lib/vendor/doctrine-common/lib/Doctrine/Common/ClassLoader.php';
-
-    use Doctrine\Common\ClassLoader,
-        Doctrine\Common\Annotations\AnnotationReader,
-        Doctrine\ODM\MongoDB\DocumentManager,
-        Doctrine\MongoDB\Connection,
-        Doctrine\ODM\MongoDB\Configuration,
-        Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver;
-
-    // ODM Classes
-    $classLoader = new ClassLoader('Doctrine\ODM\MongoDB', 'lib/vendor/doctrine-mongodb-odm/lib');
-    $classLoader->register();
-
-    // Common Classes
-    $classLoader = new ClassLoader('Doctrine\Common', 'lib/vendor/doctrine-mongodb-odm/lib/vendor/doctrine-common/lib');
-    $classLoader->register();
-
-    // MongoDB Classes
-    $classLoader = new ClassLoader('Doctrine\MongoDB', 'lib/vendor/doctrine-mongodb-odm/lib/vendor/doctrine-mongodb/lib');
-    $classLoader->register();
-
-    // Document classes
-    $classLoader = new ClassLoader('Documents', __DIR__);
-    $classLoader->register();
-
-    $config = new Configuration();
-    $config->setProxyDir(__DIR__ . '/cache');
-    $config->setProxyNamespace('Proxies');
-
-    $config->setHydratorDir(__DIR__ . '/cache');
-    $config->setHydratorNamespace('Hydrators');
-
-    $reader = new AnnotationReader();
-    $reader->setDefaultAnnotationNamespace('Doctrine\ODM\MongoDB\Mapping\\');
-    $config->setMetadataDriverImpl(new AnnotationDriver($reader, __DIR__ . '/Documents'));
-
-    $dm = DocumentManager::create(new Connection(), $config);
+    $dm = DocumentManager::create($connection, $config);
 
 That is it! Your ``DocumentManager`` instance is ready to be used!
 
 .. _MongoDB: http://mongodb.org
 .. _10gen: http://www.10gen.com
+.. _Composer: http://getcomposer.org/

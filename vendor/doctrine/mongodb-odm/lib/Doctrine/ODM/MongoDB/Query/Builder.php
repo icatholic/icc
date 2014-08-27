@@ -47,6 +47,14 @@ class Builder extends \Doctrine\MongoDB\Query\Builder
     private $class;
 
     /**
+     * The current field we are operating on.
+     *
+     * @todo Change this to private once ODM requires doctrine/mongodb 1.1+
+     * @var string
+     */
+    protected $currentField;
+
+    /**
      * Whether or not to hydrate the data to documents.
      *
      * @var boolean
@@ -78,14 +86,12 @@ class Builder extends \Doctrine\MongoDB\Query\Builder
      * Construct a Builder
      *
      * @param DocumentManager $dm
-     * @param string $cmd
      * @param string[]|string|null $documentName (optional) an array of document names, the document name, or none
      */
-    public function __construct(DocumentManager $dm, $cmd, $documentName = null)
+    public function __construct(DocumentManager $dm, $documentName = null)
     {
         $this->dm = $dm;
-        $this->expr = new Expr($dm, $cmd);
-        $this->cmd = $cmd;
+        $this->expr = new Expr($dm);
         if ($documentName !== null) {
             $this->setDocumentName($documentName);
         }
@@ -104,18 +110,41 @@ class Builder extends \Doctrine\MongoDB\Query\Builder
     }
 
     /**
-     * Use a primer to load the current fields referenced data efficiently.
+     * Set the current field to operate on.
      *
-     *     $qb->field('user')->prime(true);
-     *     $qb->field('user')->prime(function(DocumentManager $dm) {
-     *         // do something that will prime all the associated users in one query
-     *     });
+     * @param string $field
+     * @return self
+     */
+    public function field($field)
+    {
+        $this->currentField = $field;
+        return parent::field($field);
+    }
+
+    /**
+     * Use a primer to eagerly load all references in the current field.
      *
-     * @param \Closure|boolean $primer
+     * If $primer is true or a callable is provided, referenced documents for
+     * this field will loaded into UnitOfWork immediately after the query is
+     * executed. This will avoid multiple queries due to lazy initialization of
+     * Proxy objects.
+     *
+     * If $primer is false, no priming will take place. That is also the default
+     * behavior.
+     *
+     * If a custom callable is used, its signature should conform to the default
+     * Closure defined in {@link ReferencePrimer::__construct()}.
+     *
+     * @param boolean|callable $primer
      * @return Builder
+     * @throws \InvalidArgumentException If $primer is not boolean or callable
      */
     public function prime($primer = true)
     {
+        if ( ! is_bool($primer) && ! is_callable($primer)) {
+            throw new \InvalidArgumentException('$primer is not a boolean or callable');
+        }
+
         $this->primers[$this->currentField] = $primer;
         return $this;
     }
@@ -249,14 +278,18 @@ class Builder extends \Doctrine\MongoDB\Query\Builder
         $query = $this->query;
 
         $query['query'] = $this->expr->getQuery();
-        $query['query'] = $documentPersister->addFilterToPreparedQuery($query['query']);
         $query['query'] = $documentPersister->addDiscriminatorToPreparedQuery($query['query']);
+        $query['query'] = $documentPersister->addFilterToPreparedQuery($query['query']);
 
         $query['newObj'] = $this->expr->getNewObj();
 
-        $query['select'] = $documentPersister->prepareSortOrProjection($query['select']);
+        if (isset($query['select'])) {
+            $query['select'] = $documentPersister->prepareSortOrProjection($query['select']);
+        }
 
-        $query['sort'] = $documentPersister->prepareSortOrProjection($query['sort']);
+        if (isset($query['sort'])) {
+            $query['sort'] = $documentPersister->prepareSortOrProjection($query['sort']);
+        }
 
         if ($this->class->slaveOkay) {
             $query['slaveOkay'] = $this->class->slaveOkay;
@@ -265,11 +298,9 @@ class Builder extends \Doctrine\MongoDB\Query\Builder
         return new Query(
             $this->dm,
             $this->class,
-            $this->database,
             $this->collection,
             $query,
             $options,
-            $this->cmd,
             $this->hydrate,
             $this->refresh,
             $this->primers,
@@ -284,7 +315,7 @@ class Builder extends \Doctrine\MongoDB\Query\Builder
      */
     public function expr()
     {
-        $expr = new Expr($this->dm, $this->cmd);
+        $expr = new Expr($this->dm);
         $expr->setClassMetadata($this->class);
 
         return $expr;
@@ -299,14 +330,13 @@ class Builder extends \Doctrine\MongoDB\Query\Builder
             $documentNames = $documentName;
             $documentName = $documentNames[0];
 
-            $discriminatorField = $this->dm->getClassMetadata($documentName)->discriminatorField['name'];
+            $discriminatorField = $this->dm->getClassMetadata($documentName)->discriminatorField;
             $discriminatorValues = $this->getDiscriminatorValues($documentNames);
             $this->field($discriminatorField)->in($discriminatorValues);
         }
 
         if ($documentName !== null) {
             $this->collection = $this->dm->getDocumentCollection($documentName);
-            $this->database = $this->collection->getDatabase();
             $this->class = $this->dm->getClassMetadata($documentName);
 
             // Expr also needs to know

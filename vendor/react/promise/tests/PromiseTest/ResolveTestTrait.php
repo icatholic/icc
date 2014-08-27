@@ -6,12 +6,15 @@ use React\Promise;
 
 trait ResolveTestTrait
 {
+    /**
+     * @return \React\Promise\PromiseAdapter\PromiseAdapterInterface
+     */
     abstract public function getPromiseTestAdapter();
 
     /** @test */
     public function resolveShouldResolve()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -19,16 +22,16 @@ trait ResolveTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(1));
 
-        $promise()
+        $adapter->promise()
             ->then($mock);
 
-        $resolve(1);
+        $adapter->resolve(1);
     }
 
     /** @test */
     public function resolveShouldResolveWithPromisedValue()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -36,16 +39,16 @@ trait ResolveTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(1));
 
-        $promise()
+        $adapter->promise()
             ->then($mock);
 
-        $resolve(Promise\resolve(1));
+        $adapter->resolve(Promise\resolve(1));
     }
 
     /** @test */
     public function resolveShouldRejectWhenResolvedWithRejectedPromise()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -53,33 +56,16 @@ trait ResolveTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(1));
 
-        $promise()
+        $adapter->promise()
             ->then($this->expectCallableNever(), $mock);
 
-        $resolve(Promise\reject(1));
-    }
-
-    /** @test */
-    public function resolveShouldInvokeNewlyAddedCallbackWhenAlreadyResolved()
-    {
-        extract($this->getPromiseTestAdapter());
-
-        $resolve(1);
-
-        $mock = $this->createCallableMock();
-        $mock
-            ->expects($this->once())
-            ->method('__invoke')
-            ->with($this->identicalTo(1));
-
-        $promise()
-            ->then($mock, $this->expectCallableNever());
+        $adapter->resolve(Promise\reject(1));
     }
 
     /** @test */
     public function resolveShouldForwardValueWhenCallbackIsNull()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -87,7 +73,7 @@ trait ResolveTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(1));
 
-        $promise()
+        $adapter->promise()
             ->then(
                 null,
                 $this->expectCallableNever()
@@ -97,13 +83,13 @@ trait ResolveTestTrait
                 $this->expectCallableNever()
             );
 
-        $resolve(1);
+        $adapter->resolve(1);
     }
 
     /** @test */
     public function resolveShouldMakePromiseImmutable()
     {
-        extract($this->getPromiseTestAdapter());
+        $adapter = $this->getPromiseTestAdapter();
 
         $mock = $this->createCallableMock();
         $mock
@@ -111,14 +97,13 @@ trait ResolveTestTrait
             ->method('__invoke')
             ->with($this->identicalTo(1));
 
-        $resolve(1);
-        $resolve(2);
-
-        $promise()
+        $adapter->promise()
             ->then(
                 $mock,
                 $this->expectCallableNever()
             );
-    }
 
+        $adapter->resolve(1);
+        $adapter->resolve(2);
+    }
 }

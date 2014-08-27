@@ -39,6 +39,11 @@ class PersistentCollection implements BaseCollection
      */
     private $snapshot = array();
 
+    /**
+     * Collection's owning entity
+     *
+     * @var object
+     */
     private $owner;
 
     /**
@@ -83,13 +88,6 @@ class PersistentCollection implements BaseCollection
     private $uow;
 
     /**
-     * Mongo command prefix
-     *
-     * @var string
-     */
-    private $cmd;
-
-    /**
      * The raw mongo data that will be used to initialize this collection.
      *
      * @var array
@@ -107,14 +105,12 @@ class PersistentCollection implements BaseCollection
      * @param BaseCollection $coll
      * @param DocumentManager $dm
      * @param UnitOfWork $uow
-     * @param string $cmd
      */
-    public function __construct(BaseCollection $coll, DocumentManager $dm, UnitOfWork $uow, $cmd)
+    public function __construct(BaseCollection $coll, DocumentManager $dm, UnitOfWork $uow)
     {
         $this->coll = $coll;
         $this->dm = $dm;
         $this->uow = $uow;
-        $this->cmd = $cmd;
     }
 
     /**
@@ -380,7 +376,7 @@ class PersistentCollection implements BaseCollection
         $removed = $this->coll->remove($key);
         if ($removed) {
             $this->changed();
-            if ($this->mapping !== null && isset($this->mapping['embedded'])) {
+            if ($this->isOrphanRemovalEnabled()) {
                 $this->uow->scheduleOrphanRemoval($removed);
             }
         }
@@ -397,7 +393,7 @@ class PersistentCollection implements BaseCollection
         $removed = $this->coll->removeElement($element);
         if ($removed) {
             $this->changed();
-            if ($this->mapping !== null && isset($this->mapping['embedded'])) {
+            if ($this->isOrphanRemovalEnabled()) {
                 $this->uow->scheduleOrphanRemoval($element);
             }
         }
@@ -472,10 +468,16 @@ class PersistentCollection implements BaseCollection
      */
     public function count()
     {
-        if ($this->mapping['isInverseSide']) {
-            $this->initialize();
+        if ($this->mapping['isInverseSide'] && ! $this->initialized) {
+            $documentPersister = $this->uow->getDocumentPersister(get_class($this->owner));
+            $count = empty($this->mapping['repositoryMethod'])
+                ? $documentPersister->createReferenceManyInverseSideQuery($this)->count()
+                : $documentPersister->createReferenceManyWithRepositoryMethodCursor($this)->count();
+        } else {
+            $count = $this->coll->count();
         }
-        return count($this->mongoData) + $this->coll->count();
+
+        return count($this->mongoData) + $count;
     }
 
     /**
@@ -567,11 +569,13 @@ class PersistentCollection implements BaseCollection
         if ($this->initialized && $this->isEmpty()) {
             return;
         }
-        if ($this->mapping !== null && isset($this->mapping['embedded'])) {
+
+        if ($this->isOrphanRemovalEnabled()) {
             foreach ($this->coll as $element) {
                 $this->uow->scheduleOrphanRemoval($element);
             }
         }
+
         $this->mongoData = array();
         $this->coll->clear();
         if ($this->mapping['isOwningSide']) {
@@ -692,5 +696,30 @@ class PersistentCollection implements BaseCollection
         $this->snapshot = array();
 
         $this->changed();
+    }
+
+    /**
+     * Returns whether or not this collection has orphan removal enabled.
+     *
+     * Embedded documents are automatically considered as "orphan removal enabled" because they might have references
+     * that require to trigger cascade remove operations.
+     *
+     * @return boolean
+     */
+    private function isOrphanRemovalEnabled()
+    {
+        if ($this->mapping === null) {
+            return false;
+        }
+
+        if (isset($this->mapping['embedded'])) {
+            return true;
+        }
+
+        if (isset($this->mapping['reference']) && $this->mapping['isOwningSide'] && $this->mapping['orphanRemoval']) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -25,6 +25,13 @@ use Aws\S3\Sync\KeyConverter;
  */
 class DownloadSyncTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    public function setUp()
+    {
+        if (!\can_mock_internal_classes()) {
+            $this->markTestSkipped('Cannot mock internal classes');
+        }
+    }
+
     protected function getSplFile($filename)
     {
         $file = $this->getMockBuilder('SplFileInfo')

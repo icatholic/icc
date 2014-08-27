@@ -178,13 +178,13 @@ class Code128 extends AbstractObject
     protected static function _isDigit($string, $pos, $length = 2)
     {
         if ($pos + $length > strlen($string)) {
-           return false;
+            return false;
         }
 
         for ($i = $pos; $i < $pos + $length; $i++) {
-              if (!is_numeric($string[$i])) {
-                  return false;
-              }
+            if (!is_numeric($string[$i])) {
+                return false;
+            }
         }
         return true;
     }
@@ -211,7 +211,6 @@ class Code128 extends AbstractObject
         $strlen = strlen($string);
         for ($pos = 0; $pos < $strlen; $pos++) {
             $char = $string[$pos];
-            $code = null;
 
             if (static::_isDigit($string, $pos, 4) && $currentCharset != 'C'
              || static::_isDigit($string, $pos, 2) && $currentCharset == 'C') {
@@ -248,7 +247,7 @@ class Code128 extends AbstractObject
                 if ($pos == 0) {
                     $code = array_search("START A", $this->charSets['A']);
                 } else {
-                    $code =array_search("Code A", $this->charSets[$currentCharset]);
+                    $code = array_search("Code A", $this->charSets[$currentCharset]);
                 }
                 $result[] = $code;
                 $currentCharset = 'A';

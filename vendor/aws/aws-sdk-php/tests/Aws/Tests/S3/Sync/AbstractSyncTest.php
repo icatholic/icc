@@ -23,6 +23,13 @@ use Aws\S3\Sync\AbstractSync;
  */
 class AbstractSyncTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    public function setUp()
+    {
+        if (!\can_mock_internal_classes()) {
+            $this->markTestSkipped('Cannot mock internal classes');
+        }
+    }
+
     /**
      * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      */

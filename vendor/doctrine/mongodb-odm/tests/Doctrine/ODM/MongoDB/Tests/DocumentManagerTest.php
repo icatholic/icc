@@ -2,10 +2,8 @@
 
 namespace Doctrine\ODM\MongoDB\Tests;
 
-use Doctrine\ODM\MongoDB\DocumentManager;
-use Doctrine\ODM\MongoDB\Configuration;
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver;
+use Doctrine\ODM\MongoDB\Mapping\ClassMetadataInfo;
+use Doctrine\ODM\MongoDB\Tests\Mocks\DocumentManagerMock;
 
 /**
  * @author Bulat Shakirzyanov <mallluhuct@gmail.com>
@@ -14,8 +12,17 @@ class DocumentManagerTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
 {
     public function testCustomRepository()
     {
-        $dm = $this->getDocumentManager();
-        $this->assertInstanceOf('Documents\CustomRepository\Repository', $dm->getRepository('Documents\CustomRepository\Document'));
+        $this->assertInstanceOf('Documents\CustomRepository\Repository', $this->dm->getRepository('Documents\CustomRepository\Document'));
+    }
+
+    public function testCustomRepositoryMappedsuperclass()
+    {
+        $this->assertInstanceOf('Documents\BaseCategoryRepository', $this->dm->getRepository('Documents\BaseCategory'));
+    }
+
+    public function testCustomRepositoryMappedsuperclassChild()
+    {
+        $this->assertInstanceOf('Documents\BaseCategoryRepository', $this->dm->getRepository('Documents\Category'));
     }
 
     public function testGetConnection()
@@ -65,13 +72,21 @@ class DocumentManagerTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
     
     public function testGetPartialReference()
     {
-        $user = $this->dm->getPartialReference('Documents\CmsUser', 42);
+        $id = new \MongoId();
+        $user = $this->dm->getPartialReference('Documents\CmsUser', $id);
         $this->assertTrue($this->dm->contains($user));
-        $this->assertEquals(42, $user->id);
+        $this->assertEquals($id, $user->id);
         $this->assertNull($user->getName());
     }
 
-    static public function dataMethodsAffectedByNoObjectArguments()
+    public function testDocumentManagerIsClosedAccessor()
+    {
+        $this->assertTrue($this->dm->isOpen());
+        $this->dm->close();
+        $this->assertFalse($this->dm->isOpen());
+    }
+
+    public function dataMethodsAffectedByNoObjectArguments()
     {
         return array(
             array('persist'),
@@ -87,11 +102,12 @@ class DocumentManagerTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
      * @expectedException \InvalidArgumentException
      * @param string $methodName
      */
-    public function testThrowsExceptionOnNonObjectValues($methodName) {
+    public function testThrowsExceptionOnNonObjectValues($methodName)
+    {
         $this->dm->$methodName(null);
     }
 
-    static public function dataAffectedByErrorIfClosedException()
+    public function dataAffectedByErrorIfClosedException()
     {
         return array(
             array('flush'),
@@ -118,32 +134,68 @@ class DocumentManagerTest extends \Doctrine\ODM\MongoDB\Tests\BaseTest
         }
     }
 
-    protected function getDocumentManager()
+    public function testGetDocumentCollectionAppliesClassMetadataSlaveOkay()
     {
-        $config = new Configuration();
+        $cm1 = new ClassMetadataInfo('a');
+        $cm1->collection = 'a';
 
-        $config->setProxyDir(__DIR__ . '/../../../../Proxies');
-        $config->setProxyNamespace('Proxies');
+        $cm2 = new ClassMetadataInfo('b');
+        $cm2->collection = 'b';
+        $cm2->slaveOkay = true;
 
-        $config->setHydratorDir(__DIR__ . '/../../../../Hydrators');
-        $config->setHydratorNamespace('Hydrators');
+        $cm3 = new ClassMetadataInfo('c');
+        $cm3->collection = 'c';
+        $cm3->slaveOkay = false;
 
-        $config->setDefaultDB('doctrine_odm_tests');
+        $map = array(
+            array('a', $cm1),
+            array('b', $cm2),
+            array('c', $cm3),
+        );
 
-        /*
-        $config->setLoggerCallable(function(array $log) {
-            print_r($log);
-        });
-        $config->setMetadataCacheImpl(new ApcCache());
-        */
+        $metadataFactory = $this->getMockClassMetadataFactory();
+        $metadataFactory->expects($this->any())
+            ->method('getMetadataFor')
+            ->will($this->returnValueMap($map));
 
-        $reader = new AnnotationReader();
-        $config->setMetadataDriverImpl(new AnnotationDriver($reader, __DIR__ . '/Documents'));
-        return DocumentManager::create($this->getConnection(), $config);
+        $coll1 = $this->getMockCollection();
+        $coll1->expects($this->never())
+            ->method('setSlaveOkay');
+
+        $coll2 = $this->getMockCollection();
+        $coll2->expects($this->once())
+            ->method('setSlaveOkay')
+            ->with(true);
+
+        $coll3 = $this->getMockCollection();
+        $coll3->expects($this->once())
+            ->method('setSlaveOkay')
+            ->with(false);
+
+        $dm = new DocumentManagerMock();
+        $dm->metadataFactory = $metadataFactory;
+        $dm->documentCollections = array(
+            'a' => $coll1,
+            'b' => $coll2,
+            'c' => $coll3,
+        );
+
+        $dm->getDocumentCollection('a');
+        $dm->getDocumentCollection('b');
+        $dm->getDocumentCollection('c');
     }
 
-    protected function getConnection()
+    private function getMockClassMetadataFactory()
     {
-        return $this->getMock('Doctrine\MongoDB\Connection');
+        return $this->getMockBuilder('Doctrine\ODM\MongoDB\Mapping\ClassMetadataFactory')
+            ->disableOriginalConstructor()
+            ->getMock();
+    }
+
+    private function getMockCollection()
+    {
+        return $this->getMockBuilder('Doctrine\MongoDB\Collection')
+            ->disableOriginalConstructor()
+            ->getMock();
     }
 }

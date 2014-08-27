@@ -13,6 +13,41 @@ the older and newer versions, respectively.
 To generate a changelog summary since the last version, run
 `git log --no-merges --oneline XXX...1.0.x`
 
+1.0.9 (2014-04-29)
+------------------
+
+ * 74cc098 Respect $options when $server is null in Connection constructor
+ * f8a382d Add driver 1.4.5 and 1.5.1 to test matrix
+ * 251ae2b Add PHP 5.6 and no longer allow failures for 5.5 builds
+ * 30aa713 Collection::ensureIndex() should convert write options (fixes #168)
+ * f781f2b Update issues/releases links in README
+
+1.0.8 (2014-03-28)
+------------------
+
+ * 8d697ad Fix Query construction in EagerCursor preparation test
+ * ac1ca70 Use current() in EagerCursor::getSingleResult()
+
+1.0.7 (2014-03-28)
+------------------
+
+ * 91429c0 Revert "Allow string or array Cursor::hint() argument"
+ * 3bddf57 Fix getMockCursor doc blocks in EagerCursor and Query tests
+
+1.0.6 (2014-03-27)
+------------------
+
+ * acf548c Allow string or array Cursor::hint() argument
+ * 5b85faf EagerCursor::getSingleResult() should return null for no results
+ * 204b326 EagerCursor::getSingleResult() should always return first element
+ * 0253ded Split EagerCursorTest into unit and functional tests
+ * 4f06d4c Fixed pre and post CreateCollection dispatching
+
+1.0.5 (2014-01-09)
+------------------
+
+ * 4a8822b: Cursor::getSingleResult() should not use keys in toArray()
+
 1.0.4 (2013-11-26)
 ------------------
 

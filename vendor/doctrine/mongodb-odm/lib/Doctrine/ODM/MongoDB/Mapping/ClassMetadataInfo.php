@@ -84,6 +84,13 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      */
     const GENERATOR_TYPE_NONE = 6;
 
+    /**
+     * Default discriminator field name.
+     *
+     * This is used for associations value for associations where a that do not define a "targetDocument" or
+     * "discriminatorField" option in their mapping.
+     */
+    const DEFAULT_DISCRIMINATOR_FIELD = '_doctrine_class_name';
 
     const REFERENCE_ONE = 1;
     const REFERENCE_MANY = 2;
@@ -179,7 +186,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * READ-ONLY: Whether or not reads for this class are okay to read from a slave.
      */
-    public $slaveOkay = false;
+    public $slaveOkay;
 
     /**
      * READ-ONLY: The array of indexes for the document collection.
@@ -238,7 +245,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * The ReflectionProperty instances of the mapped class.
      *
-     * @var array
+     * @var \ReflectionProperty[]
      */
     public $reflFields = array();
 
@@ -410,24 +417,19 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Gets the ReflectionClass instance of the mapped class.
-     *
-     * @return \ReflectionClass
+     * {@inheritDoc}
      */
     public function getReflectionClass()
     {
         if ( ! $this->reflClass) {
             $this->reflClass = new \ReflectionClass($this->name);
         }
+
         return $this->reflClass;
     }
 
     /**
-     * Checks whether a field is part of the identifier/primary key field(s).
-     *
-     * @param string $fieldName  The field name
-     * @return boolean  TRUE if the field is part of the table identifier/primary key field(s),
-     *                  FALSE otherwise.
+     * {@inheritDoc}
      */
     public function isIdentifier($fieldName)
     {
@@ -446,22 +448,21 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Gets the mapped identifier field of this class.
+     * {@inheritDoc}
      *
-     * @return string $identifier
+     * Since MongoDB only allows exactly one identifier field
+     * this will always return an array with only one value
      */
     public function getIdentifier()
     {
-        return $this->identifier;
+        return array($this->identifier);
     }
 
     /**
-     * Get identifier field names of this class.
+     * {@inheritDoc}
      *
-     * Since MongoDB only allows exactly one identifier field this is a proxy
-     * to {@see getIdentifier()} and returns an array.
-     *
-     * @return array
+     * Since MongoDB only allows exactly one identifier field
+     * this will always return an array with only one value
      */
     public function getIdentifierFieldNames()
     {
@@ -469,9 +470,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Checks whether the class has a (mapped) field with a certain name.
-     *
-     * @return boolean
+     * {@inheritDoc}
      */
     public function hasField($fieldName)
     {
@@ -491,6 +490,8 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * Checks whether a mapped field is inherited from an entity superclass.
      *
+     * @param  string $fieldName
+     *
      * @return boolean TRUE if the field is inherited, FALSE otherwise.
      */
     public function isInheritedField($fieldName)
@@ -501,24 +502,34 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * Registers a custom repository class for the document class.
      *
-     * @param string $mapperClassName  The class name of the custom mapper.
+     * @param string $repositoryClassName The class name of the custom repository.
      */
     public function setCustomRepositoryClass($repositoryClassName)
     {
+        if ($repositoryClassName && strpos($repositoryClassName, '\\') === false && strlen($this->namespace)) {
+            $repositoryClassName = $this->namespace . '\\' . $repositoryClassName;
+        }
+
         $this->customRepositoryClassName = $repositoryClassName;
     }
 
     /**
-     * Dispatches the lifecycle event of the given document to the registered
-     * lifecycle callbacks and lifecycle listeners.
+     * Dispatches the lifecycle event of the given document by invoking all
+     * registered callbacks.
      *
-     * @param string $lifecycleEvent
-     * @param object $document The Document on which the event occurred.
-     * @param array $arguments
+     * @param string $event     Lifecycle event
+     * @param object $document  Document on which the event occurred
+     * @param array  $arguments Arguments to pass to all callbacks
+     * @throws \InvalidArgumentException if document class is not this class or
+     *                                   a Proxy of this class
      */
-    public function invokeLifecycleCallbacks($lifecycleEvent, $document, array $arguments = null)
+    public function invokeLifecycleCallbacks($event, $document, array $arguments = null)
     {
-        foreach ($this->lifecycleCallbacks[$lifecycleEvent] as $callback) {
+        if (!$document instanceof $this->name) {
+            throw new \InvalidArgumentException(sprintf('Expected document class "%s"; found: "%s"', $this->name, get_class($document)));
+        }
+
+        foreach ($this->lifecycleCallbacks[$event] as $callback) {
             if ($arguments !== null) {
                 call_user_func_array(array($document, $callback), $arguments);
             } else {
@@ -528,14 +539,15 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Whether the class has any attached lifecycle listeners or callbacks for a lifecycle event.
+     * Checks whether the class has callbacks registered for a lifecycle event.
      *
-     * @param string $lifecycleEvent
+     * @param string $event Lifecycle event
+     *
      * @return boolean
      */
-    public function hasLifecycleCallbacks($lifecycleEvent)
+    public function hasLifecycleCallbacks($event)
     {
-        return isset($this->lifecycleCallbacks[$lifecycleEvent]);
+        return ! empty($this->lifecycleCallbacks[$event]);
     }
 
     /**
@@ -552,19 +564,23 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * Adds a lifecycle callback for documents of this class.
      *
-     * Note: If the same callback is registered more than once, the old one
-     * will be overridden.
+     * If the callback is already registered, this is a NOOP.
      *
      * @param string $callback
      * @param string $event
      */
     public function addLifecycleCallback($callback, $event)
     {
+        if (isset($this->lifecycleCallbacks[$event]) && in_array($callback, $this->lifecycleCallbacks[$event])) {
+            return;
+        }
+
         $this->lifecycleCallbacks[$event][] = $callback;
     }
 
     /**
      * Sets the lifecycle callbacks for documents of this class.
+     *
      * Any previously registered callbacks are overwritten.
      *
      * @param array $callbacks
@@ -575,20 +591,66 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Sets the discriminator field name.
+     * Registers a method for loading document data before field hydration.
+     *
+     * Note: A method may be registered multiple times for different fields.
+     * it will be invoked only once for the first field found.
+     *
+     * @param string       $method Method name
+     * @param array|string $fields Database field name(s)
+     */
+    public function registerAlsoLoadMethod($method, $fields)
+    {
+        $this->alsoLoadMethods[$method] = is_array($fields) ? $fields : array($fields);
+    }
+
+    /**
+     * Sets the AlsoLoad methods for documents of this class.
+     *
+     * Any previously registered methods are overwritten.
+     *
+     * @param array $methods
+     */
+    public function setAlsoLoadMethods(array $methods)
+    {
+        $this->alsoLoadMethods = $methods;
+    }
+
+    /**
+     * Sets the discriminator field.
+     *
+     * The field name is the the unmapped database field. Discriminator values
+     * are only used to discern the hydration class and are not mapped to class
+     * properties.
      *
      * @param string $discriminatorField
-     * @throws MappingException
-     * @see getDiscriminatorField()
+     *
+     * @throws MappingException If the discriminator field conflicts with the
+     *                          "name" attribute of a mapped field.
      */
     public function setDiscriminatorField($discriminatorField)
     {
-        if ( ! isset($discriminatorField['name']) && isset($discriminatorField['fieldName'])) {
-            $discriminatorField['name'] = $discriminatorField['fieldName'];
+        if ($discriminatorField === null) {
+            $this->discriminatorField = null;
+
+            return;
         }
-        if (isset($this->fieldMappings[$discriminatorField['name']])) {
-            throw MappingException::duplicateFieldMapping($this->name, $discriminatorField['name']);
+
+        // Handle array argument with name/fieldName keys for BC
+        if (is_array($discriminatorField)) {
+            if (isset($discriminatorField['name'])) {
+                $discriminatorField = $discriminatorField['name'];
+            } elseif (isset($discriminatorField['fieldName'])) {
+                $discriminatorField = $discriminatorField['fieldName'];
+            }
         }
+
+        foreach ($this->fieldMappings as $fieldMapping) {
+            if ($discriminatorField == $fieldMapping['name']) {
+                throw MappingException::discriminatorFieldConflict($this->name, $discriminatorField);
+            }
+        }
+
         $this->discriminatorField = $discriminatorField;
     }
 
@@ -597,6 +659,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Used for JOINED and SINGLE_TABLE inheritance mapping strategies.
      *
      * @param array $map
+     *
      * @throws MappingException
      */
     public function setDiscriminatorMap(array $map)
@@ -633,13 +696,13 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Sets whether or not reads for this class are okay to read from a slave.
+     * Sets the slaveOkay option applied to collections for this class.
      *
-     * @param bool $slaveOkay
+     * @param boolean|null $slaveOkay
      */
     public function setSlaveOkay($slaveOkay)
     {
-        $this->slaveOkay = $slaveOkay;
+        $this->slaveOkay = $slaveOkay === null ? null : (boolean) $slaveOkay;
     }
 
     /**
@@ -753,6 +816,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Gets a ReflectionProperty for a specific field of the mapped class.
      *
      * @param string $name
+     *
      * @return \ReflectionProperty
      */
     public function getReflectionProperty($name)
@@ -761,9 +825,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * The name of this Document class.
-     *
-     * @return string $name The Document class name.
+     * {@inheritDoc}
      */
     public function getName()
     {
@@ -814,6 +876,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Sets the collection this Document is mapped to.
      *
      * @param array|string $name
+     *
      * @throws \InvalidArgumentException
      */
     public function setCollection($name)
@@ -955,8 +1018,10 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Map a field.
      *
      * @param array $mapping The mapping information.
-     * @throws MappingException
+     *
      * @return array
+     *
+     * @throws MappingException
      */
     public function mapField(array $mapping)
     {
@@ -972,8 +1037,8 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
         if (isset($this->fieldMappings[$mapping['fieldName']])) {
             //throw MappingException::duplicateFieldMapping($this->name, $mapping['fieldName']);
         }
-        if ($this->discriminatorField['name'] === $mapping['fieldName']) {
-            throw MappingException::duplicateFieldMapping($this->name, $mapping['fieldName']);
+        if ($this->discriminatorField !== null && $this->discriminatorField == $mapping['name']) {
+            throw MappingException::discriminatorFieldConflict($this->name, $this->discriminatorField);
         }
         if (isset($mapping['targetDocument']) && strpos($mapping['targetDocument'], '\\') === false && strlen($this->namespace)) {
             $mapping['targetDocument'] = $this->namespace . '\\' . $mapping['targetDocument'];
@@ -987,27 +1052,29 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
             }
         }
 
-        if (isset($mapping['cascade']) && is_string($mapping['cascade'])) {
-            $mapping['cascade'] = array($mapping['cascade']);
+        if (isset($mapping['cascade']) && isset($mapping['embedded'])) {
+            throw MappingException::cascadeOnEmbeddedNotAllowed($this->name, $mapping['fieldName']);
         }
-        if (isset($mapping['cascade']) && in_array('all', (array) $mapping['cascade'])) {
+
+        $cascades = isset($mapping['cascade']) ? array_map('strtolower', (array) $mapping['cascade']) : array();
+
+        if (in_array('all', $cascades) || isset($mapping['embedded'])) {
+            $cascades = array('remove', 'persist', 'refresh', 'merge', 'detach', 'callbacks');
+        }
+
+        if (isset($mapping['embedded'])) {
             unset($mapping['cascade']);
-            $default = true;
-        } else {
-            $default = false;
+        } elseif (isset($mapping['cascade'])) {
+            $mapping['cascade'] = $cascades;
         }
-        $mapping['isCascadeRemove'] = $default;
-        $mapping['isCascadePersist'] = $default;
-        $mapping['isCascadeRefresh'] = $default;
-        $mapping['isCascadeMerge'] = $default;
-        $mapping['isCascadeDetach'] = $default;
-        $mapping['isCascadeCallbacks'] = $default;
-        if (isset($mapping['cascade']) && is_array($mapping['cascade'])) {
-            foreach ($mapping['cascade'] as $cascade) {
-                $mapping['isCascade' . ucfirst($cascade)] = true;
-            }
-        }
-        unset($mapping['cascade']);
+
+        $mapping['isCascadeRemove'] = in_array('remove', $cascades);
+        $mapping['isCascadePersist'] = in_array('persist', $cascades);
+        $mapping['isCascadeRefresh'] = in_array('refresh', $cascades);
+        $mapping['isCascadeMerge'] = in_array('merge', $cascades);
+        $mapping['isCascadeDetach'] = in_array('detach', $cascades);
+        $mapping['isCascadeCallbacks'] = in_array('callbacks', $cascades);
+        
         if (isset($mapping['type']) && $mapping['type'] === 'file') {
             $mapping['file'] = true;
         }
@@ -1057,6 +1124,10 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
             $mapping['association'] = self::EMBED_MANY;
         }
 
+        if (isset($mapping['association']) && ! isset($mapping['targetDocument']) && ! isset($mapping['discriminatorField'])) {
+            $mapping['discriminatorField'] = self::DEFAULT_DISCRIMINATOR_FIELD;
+        }
+
         /*
         if (isset($mapping['type']) && ($mapping['type'] === 'one' || $mapping['type'] === 'many')) {
             $mapping['type'] = $mapping['type'] === 'one' ? self::ONE : self::MANY;
@@ -1080,6 +1151,9 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
             if (isset($mapping['mappedBy']) && $mapping['mappedBy']) {
                 $mapping['isInverseSide'] = true;
                 $mapping['isOwningSide'] = false;
+            }
+            if (!isset($mapping['orphanRemoval'])) {
+                $mapping['orphanRemoval'] = false;
             }
         }
 
@@ -1156,7 +1230,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Adds a field mapping without completing/validating it.
      * This is mainly used to add inherited field mappings to derived classes.
      *
-     * @param array $mapping
+     * @param array $fieldMapping
      */
     public function addInheritedFieldMapping(array $fieldMapping)
     {
@@ -1186,10 +1260,9 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Checks whether the class has a mapped association (embed or reference) with the given field name.
+     * {@inheritDoc}
      *
-     * @param string $fieldName
-     * @return boolean
+     * Checks whether the class has a mapped association (embed or reference) with the given field name.
      */
     public function hasAssociation($fieldName)
     {
@@ -1197,11 +1270,10 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Checks whether the class has a mapped reference or embed for the specified field and
      * is a single valued association.
-     *
-     * @param string $fieldName
-     * @return boolean TRUE if the association exists and is single-valued, FALSE otherwise.
      */
     public function isSingleValuedAssociation($fieldName)
     {
@@ -1209,11 +1281,10 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Checks whether the class has a mapped reference or embed for the specified field and
      * is a collection valued association.
-     *
-     * @param string $fieldName
-     * @return boolean TRUE if the association exists and is collection-valued, FALSE otherwise.
      */
     public function isCollectionValuedAssociation($fieldName)
     {
@@ -1309,6 +1380,8 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * Sets the document identifier of a document.
      *
+     * The value will be converted to a PHP type before being set.
+     *
      * @param object $document
      * @param mixed $id
      */
@@ -1319,45 +1392,38 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Gets the document identifier.
+     * Gets the document identifier as a PHP type.
      *
      * @param object $document
-     * @return string $id
+     * @return mixed $id
      */
     public function getIdentifierValue($document)
     {
-        if ($document instanceof Proxy && ! $document->__isInitialized()) {
-            return $document->__identifier__;
-        }
         return $this->reflFields[$this->identifier]->getValue($document);
     }
 
     /**
-     * Get identifier values of this document.
+     * {@inheritDoc}
      *
      * Since MongoDB only allows exactly one identifier field this is a proxy
      * to {@see getIdentifierValue()} and returns an array with the identifier
      * field as a key.
-     *
-     * @param object $document
-     * @return array
      */
-    public function getIdentifierValues($document)
+    public function getIdentifierValues($object)
     {
-        return array($this->identifier => $this->getIdentifierValue($document));
+        return array($this->identifier => $this->getIdentifierValue($object));
     }
 
     /**
-     * Get the document identifier object.
+     * Get the document identifier object as a database type.
      *
-     * @param string $document
-     * @return \MongoId $id  The MongoID object.
+     * @param object $document
+     *
+     * @return \MongoId $id The MongoID object.
      */
     public function getIdentifierObject($document)
     {
-        if ($id = $this->getIdentifierValue($document)) {
-            return $this->getDatabaseIdentifierValue($id);
-        }
+        return $this->getDatabaseIdentifierValue($this->getIdentifierValue($document));
     }
 
     /**
@@ -1369,6 +1435,12 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      */
     public function setFieldValue($document, $field, $value)
     {
+        if ($document instanceof Proxy && ! $document->__isInitialized()) {
+            //property changes to an uninitialized proxy will not be tracked or persisted,
+            //so the proxy needs to be loaded first.
+            $document->__load();
+        }
+        
         $this->reflFields[$field]->setValue($document, $value);
     }
 
@@ -1377,12 +1449,15 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      *
      * @param object $document
      * @param string $field
+     *
+     * @return mixed
      */
     public function getFieldValue($document, $field)
     {
-        if ($document instanceof Proxy && $field === $this->identifier && ! $document->__isInitialized()) {
-            return $document->__identifier__;
+        if ($document instanceof Proxy && $field !== $this->identifier && ! $document->__isInitialized()) {
+            $document->__load();
         }
+        
         return $this->reflFields[$field]->getValue($document);
     }
 
@@ -1390,8 +1465,12 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Gets the mapping of a field.
      *
      * @param string $fieldName  The field name.
-     * @throws MappingException if the $fieldName is not found in the fieldMappings array
+     *
      * @return array  The field mapping.
+     *
+     * @throws MappingException if the $fieldName is not found in the fieldMappings array
+     *
+     * @throws MappingException
      */
     public function getFieldMapping($fieldName)
     {
@@ -1405,6 +1484,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Check if the field is not null.
      *
      * @param string $fieldName  The field name
+     *
      * @return boolean  TRUE if the field is not null, FALSE otherwise.
      */
     public function isNullable($fieldName)
@@ -1423,7 +1503,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      */
     public function hasDiscriminator()
     {
-        return isset($this->discriminatorField) && isset($this->discriminatorValue) ? true : false;
+        return isset($this->discriminatorField, $this->discriminatorValue);
     }
 
     /**
@@ -1453,8 +1533,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * Checks whether the mapped class uses the SINGLE_COLLECTION inheritance mapping strategy.
      *
-     * @return boolean TRUE if the class participates in a SINGLE_COLLECTION inheritance mapping,
-     *                 FALSE otherwise.
+     * @return boolean
      */
     public function isInheritanceTypeSingleCollection()
     {
@@ -1464,8 +1543,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * Checks whether the mapped class uses the COLLECTION_PER_CLASS inheritance mapping strategy.
      *
-     * @return boolean TRUE if the class participates in a COLLECTION_PER_CLASS inheritance mapping,
-     *                 FALSE otherwise.
+     * @return boolean
      */
     public function isInheritanceTypeCollectionPerClass()
     {
@@ -1475,7 +1553,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     /**
      * Sets the mapped subclasses of this class.
      *
-     * @param array $subclasses The names of all mapped subclasses.
+     * @param string[] $subclasses The names of all mapped subclasses.
      */
     public function setSubclasses(array $subclasses)
     {
@@ -1492,10 +1570,13 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * Sets the parent class names.
      * Assumes that the class names in the passed array are in the order:
      * directParent -> directParentParent -> directParentParentParent ... -> root.
+     *
+     * @param string[] $classNames
      */
     public function setParentClasses(array $classNames)
     {
         $this->parentClasses = $classNames;
+
         if (count($classNames) > 0) {
             $this->rootDocumentName = array_pop($classNames);
         }
@@ -1546,14 +1627,16 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * value to use depending on the column type.
      *
      * @param array $mapping   The version field mapping array
-     * @throws \Doctrine\ODM\MongoDB\LockException
+     * 
+     * @throws LockException
      */
     public function setVersionMapping(array &$mapping)
     {
         if ($mapping['type'] !== 'int' && $mapping['type'] !== 'date') {
             throw LockException::invalidVersionFieldType($mapping['type']);
         }
-        $this->isVersioned = true;
+
+        $this->isVersioned  = true;
         $this->versionField = $mapping['fieldName'];
     }
 
@@ -1583,12 +1666,15 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
      * value to use depending on the column type.
      *
      * @param array $mapping   The version field mapping array
+     *
+     * @throws \Doctrine\ODM\MongoDB\LockException
      */
     public function setLockMapping(array &$mapping)
     {
         if ($mapping['type'] !== 'int') {
             throw LockException::invalidLockFieldType($mapping['type']);
         }
+
         $this->isLockable = true;
         $this->lockField = $mapping['fieldName'];
     }
@@ -1615,11 +1701,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * A numerically indexed list of field names of this persistent class.
-     *
-     * This array includes identifier fields if present on this class.
-     *
-     * @return array
+     * {@inheritDoc}
      */
     public function getFieldNames()
     {
@@ -1627,11 +1709,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * A numerically indexed list of association names of this persistent class.
-     *
-     * This array includes identifier associations if present on this class.
-     *
-     * @return array
+     * {@inheritDoc}
      */
     public function getAssociationNames()
     {
@@ -1639,10 +1717,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Gets the type of a field.
-     *
-     * @param string $fieldName
-     * @return Types\Type
+     * {@inheritDoc}
      */
     public function getTypeOfField($fieldName)
     {
@@ -1651,11 +1726,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * Returns the target class name of the given association.
-     *
-     * @param string $assocName
-     * @throws \InvalidArgumentException
-     * @return string
+     * {@inheritDoc}
      */
     public function getAssociationTargetClass($assocName)
     {
@@ -1667,9 +1738,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * @param string $fieldName
-     * @throws \BadMethodCallException Always throws exception.
-     * @return bool
+     * {@inheritDoc}
      */
     public function isAssociationInverseSide($fieldName)
     {
@@ -1677,9 +1746,7 @@ class ClassMetadataInfo implements \Doctrine\Common\Persistence\Mapping\ClassMet
     }
 
     /**
-     * @param string $fieldName
-     * @throws \BadMethodCallException Always throws exception.
-     * @return string
+     * {@inheritDoc}
      */
     public function getAssociationMappedByTargetField($fieldName)
     {

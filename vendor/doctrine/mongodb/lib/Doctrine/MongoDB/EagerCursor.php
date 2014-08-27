@@ -23,24 +23,28 @@ namespace Doctrine\MongoDB;
  * EagerCursor wraps a Cursor instance and fetches all of its results upon
  * initialization.
  *
- * @license     http://www.opensource.org/licenses/mit-license.php MIT
- * @link        www.doctrine-project.org
- * @since       1.0
- * @author      Jonathan H. Wage <jonwage@gmail.com>
+ * @since  1.0
+ * @author Jonathan H. Wage <jonwage@gmail.com>
  */
 class EagerCursor implements Iterator
 {
     /**
+     * The Cursor instance being wrapped.
+     *
      * @var Cursor
      */
     protected $cursor;
 
     /**
+     * The Cursor results.
+     *
      * @var array
      */
     protected $data = array();
 
     /**
+     * Whether the internal data has been initialized.
+     *
      * @var boolean
      */
     protected $initialized = false;
@@ -48,7 +52,7 @@ class EagerCursor implements Iterator
     /**
      * Constructor.
      *
-     * @param Cursor $cursor Cursor to wrap
+     * @param Cursor $cursor
      */
     public function __construct(Cursor $cursor)
     {
@@ -56,13 +60,56 @@ class EagerCursor implements Iterator
     }
 
     /**
-     * Return the wrapped cursor.
+     * @see http://php.net/manual/en/countable.count.php
+     */
+    public function count()
+    {
+        $this->initialize();
+        return count($this->data);
+    }
+
+    /**
+     * @see http://php.net/manual/en/iterator.current.php
+     */
+    public function current()
+    {
+        $this->initialize();
+        return current($this->data);
+    }
+
+    /**
+     * Return the wrapped Cursor.
      *
      * @return Cursor
      */
     public function getCursor()
     {
         return $this->cursor;
+    }
+
+    /**
+     * @see Iterator::getSingleResult()
+     */
+    public function getSingleResult()
+    {
+        $this->rewind();
+
+        if ($this->valid()) {
+            return $this->current();
+        }
+
+        return null;
+    }
+
+    /**
+     * Initialize the internal data by converting the Cursor to an array.
+     */
+    public function initialize()
+    {
+        if ($this->initialized === false) {
+            $this->data = $this->cursor->toArray();
+        }
+        $this->initialized = true;
     }
 
     /**
@@ -76,36 +123,7 @@ class EagerCursor implements Iterator
     }
 
     /**
-     * Initialize the internal data by converting the cursor to an array.
-     */
-    public function initialize()
-    {
-        if ($this->initialized === false) {
-            $this->data = $this->cursor->toArray();
-        }
-        $this->initialized = true;
-    }
-
-    /**
-     * @see \Iterator::rewind()
-     */
-    public function rewind()
-    {
-        $this->initialize();
-        reset($this->data);
-    }
-
-    /**
-     * @see \Iterator::current()
-     */
-    public function current()
-    {
-        $this->initialize();
-        return current($this->data);
-    }
-
-    /**
-     * @see \Iterator::key()
+     * @see http://php.net/manual/en/iterator.key.php
      */
     public function key()
     {
@@ -114,7 +132,7 @@ class EagerCursor implements Iterator
     }
 
     /**
-     * @see \Iterator::next()
+     * @see http://php.net/manual/en/iterator.next.php
      */
     public function next()
     {
@@ -123,21 +141,12 @@ class EagerCursor implements Iterator
     }
 
     /**
-     * @see \Iterator::valid()
+     * @see http://php.net/manual/en/iterator.rewind.php
      */
-    public function valid()
+    public function rewind()
     {
         $this->initialize();
-        return key($this->data) !== null;
-    }
-
-    /**
-     * @see \Countable::count()
-     */
-    public function count()
-    {
-        $this->initialize();
-        return count($this->data);
+        reset($this->data);
     }
 
     /**
@@ -150,11 +159,11 @@ class EagerCursor implements Iterator
     }
 
     /**
-     * @see Iterator::getSingleResult()
+     * @see http://php.net/manual/en/iterator.valid.php
      */
-    public function getSingleResult()
+    public function valid()
     {
         $this->initialize();
-        return $this->current();
+        return key($this->data) !== null;
     }
 }
