@@ -191,6 +191,11 @@ class StructureController extends Action
             return $this->msg(false, '只有当输入类型为“文件类型”时，才需要设定文件资源域名');
         }
         
+        //强制在列表页不现实富文本内容
+        if($datas['type']=='ueditor'||$datas['type']=='htmleditor') {
+            $datas['main'] = false;
+        }
+        
         if ($datas['field'] == null) {
             return $this->msg(false, '请填写字段名称');
         }
@@ -316,6 +321,11 @@ class StructureController extends Action
             return $this->msg(false, '请填写字段名称');
         }
         
+        //强制在列表页不现实富文本内容
+        if($datas['type']=='ueditor'||$datas['type']=='htmleditor') {
+            $datas['main'] = false;
+        }
+        
         if (! $this->checkFieldName($datas['field'])) {
             return $this->msg(false, '字段名必须为以英文字母开始的“字母、数字、下划线”的组合,“点”标注子属性时，子属性必须以字母开始');
         }
@@ -436,6 +446,11 @@ class StructureController extends Action
         foreach ($updateInfos as $row) {
             $_id = $row['_id'];
             unset($row['_id']);
+            
+            //强制在列表页不现实富文本内容
+            if($row['type']=='ueditor'||$row['type']=='htmleditor') {
+                $row['main'] = false;
+            }
             
             if ($row['field'] == null) {
                 return $this->msg(false, '请填写字段名称');
