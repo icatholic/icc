@@ -130,13 +130,6 @@ class MongoCollection extends \MongoCollection
     private $_noAppendQuery = false;
 
     /**
-     * 超时时间
-     *
-     * @var int
-     */
-    const timeout = 6000000;
-
-    /**
      * 强制同步写入操作
      *
      * @var boolean
