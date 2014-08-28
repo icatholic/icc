@@ -156,7 +156,6 @@ class UserAgentTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @medium
      * @dataProvider userAgentData
      */
     public function testUserAgents($userAgent, $isMobile, $isTablet, $version, $model, $vendor)

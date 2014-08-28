@@ -1,15 +1,17 @@
 # Événement
 
-Événement is a very simple event dispatching library for PHP.
+Événement is a very simple event dispatching library for PHP 5.3.
 
 It has the same design goals as [Silex](http://silex-project.org) and
 [Pimple](http://pimple-project.org), to empower the user while staying concise
 and simple.
 
 It is very strongly inspired by the EventEmitter API found in
-[node.js](http://nodejs.org).
+[node.js](http://nodejs.org). It includes an implementation of
+[EventEmitter2](https://github.com/hij1nx/EventEmitter2), that extends
+the original EventEmitter.
 
-[![Build Status](https://secure.travis-ci.org/igorw/evenement.png?branch=master)](http://travis-ci.org/igorw/evenement)
+[![Build Status](https://secure.travis-ci.org/igorw/evenement.png)](http://travis-ci.org/igorw/evenement)
 
 ## Fetch
 
@@ -20,18 +22,7 @@ Just create a composer.json file for your project:
 ```JSON
 {
     "require": {
-        "evenement/evenement": "2.0.*"
-    }
-}
-```
-
-**Note:** The `2.0.*` version of Événement requires PHP 5.4. If you are
-using PHP 5.3, please use the `1.0.*` version:
-
-```JSON
-{
-    "require": {
-        "evenement/evenement": "1.0.*"
+        "evenement/evenement": "dev-master"
     }
 }
 ```
@@ -61,7 +52,7 @@ $emitter = new Evenement\EventEmitter();
 
 ```php
 <?php
-$emitter->on('user.created', function (User $user) use ($logger) {
+$emitter->on('user.create', function (User $user) use ($logger) {
     $logger->log(sprintf("User '%s' was created.", $user->getLogin()));
 });
 ```
@@ -70,7 +61,7 @@ $emitter->on('user.created', function (User $user) use ($logger) {
 
 ```php
 <?php
-$emitter->emit('user.created', array($user));
+$emitter->emit('user.create', array($user));
 ```
 
 Tests
