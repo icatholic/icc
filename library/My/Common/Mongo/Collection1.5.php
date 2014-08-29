@@ -445,22 +445,22 @@ class MongoCollection extends \MongoCollection
     /**
      * Execute an aggregation pipeline command and retrieve results through a cursor
      *
-     * @param array $command            
+     * @param array $pipeline            
      * @param array $options            
      */
-    public function aggregateCursor(array $command, array $options)
+    public function aggregateCursor(array $pipeline, array $options = NULL)
     {
         if (! $this->_noAppendQuery) {
             if (isset($pipeline[0]['$geoNear'])) {
-                $first = array_shift($command);
-                array_unshift($command, array(
+                $first = array_shift($pipeline);
+                array_unshift($pipeline, array(
                     '$match' => array(
                         '__REMOVED__' => false
                     )
                 ));
-                array_unshift($command, $first);
+                array_unshift($pipeline, $first);
             } else {
-                array_unshift($command, array(
+                array_unshift($pipeline, array(
                     '$match' => array(
                         '__REMOVED__' => false
                     )
@@ -468,7 +468,7 @@ class MongoCollection extends \MongoCollection
             }
         }
         
-        return parent::aggregateCursor($command, $options);
+        return parent::aggregateCursor($pipeline, $options);
     }
 
     /**
