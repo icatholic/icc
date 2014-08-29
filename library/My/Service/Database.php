@@ -567,6 +567,36 @@ class Database
     }
 
     /**
+     * group操作
+     *
+     * @param string $keys            
+     * @param string $initial            
+     * @param string $reduce            
+     * @param string $options            
+     * @return string
+     */
+    public function group($keys, $initial, $reduce, $options)
+    {
+        $initial = $this->toArray($initial);
+        $reduce = $this->toArray($reduce);
+        $options = $this->toArray($options);
+        
+        $param_arr = array(
+            'keys' => $keys,
+            'initial' => $initial,
+            'reduce' => $reduce,
+            'options' => $options
+        );
+        
+        $rst = call_user_func_array(array(
+            $this->_model,
+            'group'
+        ), $param_arr);
+        
+        return $this->result($rst);
+    }
+
+    /**
      * 存储小文件文件到集群（2M以内的文件）
      *
      * @param string $fileBytes            
@@ -611,7 +641,6 @@ class Database
         }
         return $this->result($rst);
     }
-
 
     /**
      * 规范返回数据的格式为数组
