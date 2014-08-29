@@ -21,6 +21,14 @@ class Collection extends Mongo
             'project_id' => 1,
             'alias' => 1
         ));
+        
+        $this->ensureIndex(array(
+            'project_id' => 1
+        ));
+        
+        $this->ensureIndex(array(
+            'plugin_id' => 1
+        ));
     }
 
     /**
