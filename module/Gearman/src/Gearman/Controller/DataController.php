@@ -257,14 +257,14 @@ class DataController extends Action
             }
             fclose($handle);
             
-            //进行编码转换,强制转化为UTF-8
-            $iconvCmd = $iconvBin.'iconv -t UTF-8 ' . $tempNoIconv . ' -o ' . $temp;
-            $fp = popen($iconvCmd,'r');
+            // 进行编码转换,强制转化为UTF-8
+            $iconvCmd = $iconvBin . 'iconv -t UTF-8 ' . $tempNoIconv . ' -o ' . $temp;
+            $fp = popen($iconvCmd, 'r');
             pclose($fp);
             unlink($tempNoIconv);
             
             // 执行导入脚本
-            $importCmd = $mongoBin . "mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv";
+            echo $importCmd = $mongoBin . "mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv";
             $fp = popen($importCmd, 'r');
             pclose($fp);
             unlink($temp);
