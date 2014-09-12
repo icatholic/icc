@@ -18,21 +18,4 @@ class PluginIndex extends Mongo
             fb($e, 'LOG');
         }
     }
-    
-    public function addIndexesToPlugin($plugin_id,$alias,$index) {
-        $datas = array();
-        $datas['plugin_id'] = $plugin_id;
-        $datas['project_collection_id'] = 
-        $this->insert($datas);
-    }
-    
-    public function getIndexesByPluginAlias($plugin_id,$alias) {
-        $this->findOne();
-    }
-    
-    public function syncIndexes() {
-        $this->
-    }
-    
-    
 }

@@ -142,10 +142,10 @@ class IndexController extends Action
         $scaner->addDirectory(ROOT_PATH . '/module/Application/src/Application/Controller/');
         $scaner->addDirectory(ROOT_PATH . '/module/Idatabase/src/Idatabase/Controller/');
         foreach ($scaner->getClasses(true) as $classScanner) {
-            $className = $classScanner->getName();
+            echo $className = $classScanner->getName();
             foreach ($classScanner->getMethods(true) as $method) {
                 if ($this->endsWith($method->getName(), 'Action')) {
-                    $actionName = $method->getName();
+                    echo $actionName = $method->getName();
                     $docComment = $method->getDocComment();
                     $docBlockScanner = new DocBlockScanner($docComment);
                     $docAtName = $this->getDocNameValue($docBlockScanner->getTags());
