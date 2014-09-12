@@ -459,7 +459,7 @@ class CollectionController extends Action
     /**
      * 删除集合
      *
-     * @author young
+     * @author youngl
      * @name 删除集合
      * @version 2013.11.14 young
      * @return JsonModel

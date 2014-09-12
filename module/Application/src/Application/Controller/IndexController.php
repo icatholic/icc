@@ -139,13 +139,17 @@ class IndexController extends Action
     {
         $this->_resource->remove(array());
         $scaner = new DirectoryScanner();
-        $scaner->addDirectory(ROOT_PATH . '/module/Application/src/Application/Controller/');
+        //$scaner->addDirectory(ROOT_PATH . '/module/Application/src/Application/Controller/');
         $scaner->addDirectory(ROOT_PATH . '/module/Idatabase/src/Idatabase/Controller/');
         foreach ($scaner->getClasses(true) as $classScanner) {
             echo $className = $classScanner->getName();
+            echo "<br />";
             foreach ($classScanner->getMethods(true) as $method) {
+                echo $method->getName();
+                echo "<br />";
                 if ($this->endsWith($method->getName(), 'Action')) {
                     echo $actionName = $method->getName();
+                    echo "<br />";
                     $docComment = $method->getDocComment();
                     $docBlockScanner = new DocBlockScanner($docComment);
                     $docAtName = $this->getDocNameValue($docBlockScanner->getTags());
