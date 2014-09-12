@@ -291,6 +291,124 @@ class DataController extends Action
     }
 
     /**
+     * 导入数据任务
+     */
+    public function importJavaAction()
+    {
+        ini_set("auto_detect_line_endings", true);
+        ini_set('memory_limit', '4096M');
+        $cache = $this->cache();
+        $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
+        {
+            $iconvBin = '/usr/bin/';
+            $mongoBin = '/usr/local/jdk1.8.0_20/bin/java mongomtimport ';
+            $host = '10.0.0.31';
+            $port = '57017';
+            $dbName = 'ICCv1';
+            $backupDbName = 'backup';
+            $out = sys_get_temp_dir() . '/';
+            
+            $job->handle();
+            $workload = $job->workload();
+            $params = unserialize($workload);
+            $key = $params['key'];
+            $collection_id = $params['collection_id'];
+            $physicalDrop = $params['physicalDrop'];
+            $this->_data->setCollection(iCollectionName($collection_id));
+            
+            if ($physicalDrop) {
+                // 导出数据为bson
+                $exportCmd = $mongoBin . "mongodump --host {$host} --port {$port} -d $dbName -c idatabase_collection_{$collection_id} -o {$out}";
+                $fp = popen($exportCmd, 'r');
+                pclose($fp);
+                
+                // echo "\n";
+                
+                // 将bson导入到备份数据库
+                $bson = $out . $dbName . '/idatabase_collection_' . $collection_id . '.bson';
+                $backupCollection = 'bak_' . date("YmdHis") . '_' . $collection_id;
+                $restoreCmd = $mongoBin . "mongorestore --host {$host} --port {$port} -d {$backupDbName} -c {$backupCollection} {$bson}";
+                $fp = popen($restoreCmd, 'r');
+                pclose($fp);
+                
+                // 删除导出的bson文件
+                unlink($bson);
+                
+                // drop集合数据库
+                $this->_data->physicalDrop();
+            }
+            
+            // 加载csv数据
+            $csv = $this->_file->getFileFromGridFS($key);
+            $this->_file->removeFileFromGridFS($key);
+            
+            if (empty($csv)) {
+                echo '$csv is empty';
+                $job->sendFail();
+                return false;
+            }
+            
+            // 获取导入字段
+            $arr = $this->csv2arr($csv);
+            if (empty($arr)) {
+                echo '$arr is empty';
+                $job->sendFail();
+                return false;
+            }
+            
+            $title = array_shift($arr);
+            array_walk($title, function (&$items)
+            {
+                $items = mb_convert_encoding(trim($items), "UTF-8");
+                if (strpos($items, ':') === false) {
+                    $items .= ":str";
+                }
+            });
+            $fields = join(',', $title);
+            
+            // 创建临时文件用于导入csv使用
+            $tempNoIconv = tempnam(sys_get_temp_dir(), 'csv_import_');
+            $temp = tempnam(sys_get_temp_dir(), 'csv_import_');
+            $handle = fopen($tempNoIconv, 'w');
+            foreach ($arr as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+            
+            // 进行编码转换,强制转化为UTF-8
+            $iconvCmd = $iconvBin . 'iconv -t UTF-8 ' . $tempNoIconv . ' -o ' . $temp;
+            $fp = popen($iconvCmd, 'r');
+            pclose($fp);
+            unlink($tempNoIconv);
+            
+            // 执行导入脚本
+            echo $importCmd = $mongoBin . " --host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} --fields {$fields} --type csv --threads 1  {$temp}";
+            $fp = popen($importCmd, 'r');
+            pclose($fp);
+            unlink($temp);
+            
+            // 增加一些系统默认参数
+            $now = new \MongoDate();
+            $this->_data->physicalUpdate(array(), array(
+                '$set' => array(
+                    '__REMOVED__' => false,
+                    '__CREATE_TIME__' => $now,
+                    '__MODIFY_TIME__' => $now
+                )
+            ));
+            $job->sendComplete('complete');
+            return true;
+        });
+        
+        while ($this->_worker->work()) {
+            if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
+                echo "return_code: " . $this->_worker->returnCode() . "\n";
+            }
+        }
+        return $this->response;
+    }
+
+    /**
      * 根据集合的名称获取集合的_id
      *
      * @param string $alias            
