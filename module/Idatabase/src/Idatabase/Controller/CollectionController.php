@@ -40,7 +40,7 @@ class CollectionController extends Action
     private $_plugin_id = '';
 
     private $_sync;
-    
+
     private $_gmClient;
 
     public function init()
@@ -84,47 +84,56 @@ class CollectionController extends Action
         );
         
         $query = array();
-        $query['$and'][] = array(
-            'project_id' => $this->_project_id
-        );
+        $query['project_id'] = $this->_project_id;
+        // $query['$and'][] = array(
+        // 'project_id' => $this->_project_id
+        // );
         if ($action !== 'all') {
-            $query['$and'][] = array(
-                'plugin_id' => $plugin_id
-            );
+            $query['plugin_id'] = $plugin_id;
+            // $query['$and'][] = array(
+            // 'plugin_id' => $plugin_id
+            // );
         }
         
         if ($search != '') {
             $search = myMongoRegex($search);
-            $query['$and'][] = array(
-                '$or' => array(
-                    array(
-                        'name' => $search
-                    ),
-                    array(
-                        'alias' => $search
-                    )
-                )
-            );
+            $query['name'] = $search;
+            // $query['$and'][] = array(
+            // '$or' => array(
+            // array(
+            // 'name' => $search
+            // ),
+            // array(
+            // 'alias' => $search
+            // )
+            // )
+            // );
         }
         
         $isProfessional = isset($_SESSION['account']['isProfessional']) ? $_SESSION['account']['isProfessional'] : false;
         if ($isProfessional === false) {
-            $query['$and'][] = array(
-                'isProfessional' => false
-            );
+            $query['isProfessional'] = false;
+            // $query['$and'][] = array(
+            // 'isProfessional' => false
+            // );
         }
         
         if (! $_SESSION['acl']['admin']) {
-            $query['$and'][] = array(
-                '_id' => array(
-                    '$in' => myMongoId($_SESSION['acl']['collection'])
-                )
+            $query['_id'] = array(
+                '$in' => myMongoId($_SESSION['acl']['collection'])
             );
+//             $query['$and'][] = array(
+//                 '_id' => array(
+//                     '$in' => myMongoId($_SESSION['acl']['collection'])
+//                 )
+//             );
         }
         
         $datas = array();
         $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
         $cursor = $this->_collection->find($query);
+        fb($query, 'LOG');
+        fb($cursor->explain(), 'LOG');
         $cursor->sort($sort);
         while ($cursor->hasNext()) {
             $row = $cursor->getNext();
@@ -195,7 +204,7 @@ class CollectionController extends Action
             $key = md5(serialize($params));
             if ($this->cache($key) !== null) {
                 return $this->msg(false, '同步进行中……');
-            } elseif (!empty($wait)) {
+            } elseif (! empty($wait)) {
                 return $this->msg(true, '同步成功');
             } else {
                 $jobHandle = $this->_gmClient->doBackground('pluginCollectionSync', serialize($params), $key);
@@ -203,7 +212,7 @@ class CollectionController extends Action
                 if (isset($stat[0]) && $stat[0]) {
                     $this->cache()->save(true, $key, 60);
                 }
-                return $this->msg(false, '请求受理'); 
+                return $this->msg(false, '请求受理');
             }
         } else {
             return $this->msg(false, '插件编号为空');
