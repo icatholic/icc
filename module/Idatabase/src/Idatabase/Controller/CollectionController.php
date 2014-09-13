@@ -123,6 +123,7 @@ class CollectionController extends Action
         }
         
         $datas = array();
+        $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
         $cursor = $this->_collection->find($query);
         $cursor->sort($sort);
         while ($cursor->hasNext()) {
