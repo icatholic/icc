@@ -31,6 +31,8 @@ class CollectionController extends Action
 
     private $_plugin_data;
 
+    private $_plugin_index;
+
     private $_lock;
 
     private $_mapping;
@@ -61,6 +63,7 @@ class CollectionController extends Action
         $this->_plugin_data = $this->model('Idatabase\Model\PluginData');
         $this->_lock = $this->model('Idatabase\Model\Lock');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
+        $this->_plugin_index = $this->model('Idatabase\Model\PluginIndex');
         
         $this->_gmClient = $this->gearman()->client();
     }
@@ -85,55 +88,34 @@ class CollectionController extends Action
         
         $query = array();
         $query['project_id'] = $this->_project_id;
-        // $query['$and'][] = array(
-        // 'project_id' => $this->_project_id
-        // );
         if ($action !== 'all') {
             $query['plugin_id'] = $plugin_id;
-            // $query['$and'][] = array(
-            // 'plugin_id' => $plugin_id
-            // );
+            
+            // 如果加载插件，则自动检测是否添加索引
+            $this->_plugin_index->autoCreateIndexes($this->_project_id, $plugin_id);
         }
         
         if ($search != '') {
             $search = myMongoRegex($search);
             $query['name'] = $search;
-            // $query['$and'][] = array(
-            // '$or' => array(
-            // array(
-            // 'name' => $search
-            // ),
-            // array(
-            // 'alias' => $search
-            // )
-            // )
-            // );
         }
         
         $isProfessional = isset($_SESSION['account']['isProfessional']) ? $_SESSION['account']['isProfessional'] : false;
         if ($isProfessional === false) {
             $query['isProfessional'] = false;
-            // $query['$and'][] = array(
-            // 'isProfessional' => false
-            // );
         }
         
         if (! $_SESSION['acl']['admin']) {
             $query['_id'] = array(
                 '$in' => myMongoId($_SESSION['acl']['collection'])
             );
-//             $query['$and'][] = array(
-//                 '_id' => array(
-//                     '$in' => myMongoId($_SESSION['acl']['collection'])
-//                 )
-//             );
         }
         
         $datas = array();
         $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
         $cursor = $this->_collection->find($query);
-        fb($query, 'LOG');
-        fb($cursor->explain(), 'LOG');
+        // fb($query, 'LOG');
+        //fb($cursor->explain(), 'LOG');
         $cursor->sort($sort);
         while ($cursor->hasNext()) {
             $row = $cursor->getNext();
