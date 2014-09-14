@@ -43,10 +43,13 @@ Ext.define('icc.view.idatabase.Collection.Grid', {
 			'__PROJECT_ID__' : me.__PROJECT_ID__,
 			'__PLUGIN_ID__' : me.__PLUGIN_ID__
 		};
-		store.load();
+		if (me.__PLUGIN_ID__ == '') {
+			store.load();
+		}
 
 		Ext.apply(me, {
 			__PROJECT_ID__ : me.__PROJECT_ID__,
+			__PLUGIN_ID__ : me.__PLUGIN_ID__,
 			store : store,
 			bbar : {
 				xtype : 'paging',
@@ -131,12 +134,12 @@ Ext.define('icc.view.idatabase.Collection.Grid', {
 							text : 'CSV导入',
 							iconCls : 'dbimport',
 							action : 'csvimport'
-						} , {
+						}, {
 							xtype : 'button',
 							text : '同步插件',
 							iconCls : 'sync',
 							action : 'sync'
-						}  , {
+						}, {
 							xtype : 'button',
 							text : '触发动作',
 							iconCls : 'sync',
