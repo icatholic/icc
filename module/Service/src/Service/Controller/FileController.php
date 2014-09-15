@@ -96,7 +96,8 @@ class FileController extends Action
                 $this->_file->output($gridFsFile, true, $download == null ? false : true);
             }
             
-            $this->response->getHeaders()->removeHeader($this->getHeaders()->get('Set-Cookie'));
+            //setcookie(session_name(), '', 0, '/');
+            // $this->response->getHeaders()->removeHeader($this->getHeaders()->get('Set-Cookie'));
             return $this->response;
         } else {
             header("HTTP/1.1 404 Not Found");
