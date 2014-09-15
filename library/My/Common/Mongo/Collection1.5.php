@@ -130,13 +130,6 @@ class MongoCollection extends \MongoCollection
     private $_noAppendQuery = false;
 
     /**
-     * 超时时间
-     *
-     * @var int
-     */
-    const timeout = 6000000;
-
-    /**
      * 强制同步写入操作
      *
      * @var boolean
@@ -437,6 +430,9 @@ class MongoCollection extends \MongoCollection
                     )
                 ));
                 array_unshift($pipeline, $first);
+            } elseif (isset($pipeline[0]['$match'])) {
+                // 解决率先执行$match:{__REMOVED__:false}导致的性能问题
+                $pipeline[0]['$match'] = $this->appendQuery($pipeline[0]['$match']);
             } else {
                 array_unshift($pipeline, array(
                     '$match' => array(
@@ -447,6 +443,38 @@ class MongoCollection extends \MongoCollection
         }
         
         return parent::aggregate($pipeline);
+    }
+
+    /**
+     * Execute an aggregation pipeline command and retrieve results through a cursor
+     *
+     * @param array $pipeline            
+     * @param array $options            
+     */
+    public function aggregateCursor(array $pipeline, array $options = NULL)
+    {
+        if (! $this->_noAppendQuery) {
+            if (isset($pipeline[0]['$geoNear'])) {
+                $first = array_shift($pipeline);
+                array_unshift($pipeline, array(
+                    '$match' => array(
+                        '__REMOVED__' => false
+                    )
+                ));
+                array_unshift($pipeline, $first);
+            } elseif (isset($pipeline[0]['$match'])) {
+                // 解决率先执行$match:{__REMOVED__:false}导致的性能问题
+                $pipeline[0]['$match'] = $this->appendQuery($pipeline[0]['$match']);
+            } else {
+                array_unshift($pipeline, array(
+                    '$match' => array(
+                        '__REMOVED__' => false
+                    )
+                ));
+            }
+        }
+        
+        return parent::aggregateCursor($pipeline, $options);
     }
 
     /**
@@ -490,7 +518,7 @@ class MongoCollection extends \MongoCollection
     /**
      * 直接禁止drop操作,注意备份表中只包含当前集合中的有效数据，__REMOVED__为true的不在此列
      * 本操作仅适用于小数据量的集合，对于大数据量集合将会耗时很长，尤其是在集群分片的环境下
-     * 
+     *
      * @see MongoCollection::drop()
      */
     function drop()
@@ -637,6 +665,7 @@ class MongoCollection extends \MongoCollection
         
         if (! empty($sort))
             $cursor->sort($sort);
+        
         if (! empty($skip))
             $cursor->skip($skip);
         

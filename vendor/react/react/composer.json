@@ -8,13 +8,10 @@
         "irc": "irc://irc.freenode.org/reactphp"
     },
     "require": {
-        "php": ">=5.4.0",
-        "evenement/evenement": "~2.0",
+        "php": ">=5.3.3",
+        "evenement/evenement": "1.0.*",
         "guzzle/parser": "~3.0",
-        "react/promise": "~2.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "3.7.*"
+        "react/promise": "~1.0"
     },
     "replace": {
         "react/event-loop": "self.version",
@@ -27,18 +24,15 @@
         "react/dns": "self.version"
     },
     "suggest": {
-        "ext-libevent": "Allows for use of a more performant event-loop implementation.",
-        "ext-libev": "Allows for use of a more performant event-loop implementation.",
-        "ext-event": "Allows for use of a more performant event-loop implementation."
+        "ext-libevent": "*",
+        "ext-libev": "*"
     },
     "autoload": {
-        "psr-4": {
-            "React\\": "src"
-        }
+        "psr-0": { "React": "src" }
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.5-dev"
+            "dev-master": "0.3-dev"
         }
     }
 }

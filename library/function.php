@@ -1302,7 +1302,7 @@ function logError($msg)
     
     $msg = join("\t", array(
         date("Y-m-d H:i:s"),
-        $_SERVER["SERVER_ADDR"],
+        isset($_SERVER["SERVER_ADDR"]) ? $_SERVER["SERVER_ADDR"] : 'cli',
         $msg,
         PHP_EOL
     ));

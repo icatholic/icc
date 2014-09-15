@@ -211,7 +211,17 @@ Ext.define('icc.controller.idatabase.Project', {
 										title: item.get('name'),
 										__PROJECT_ID__: id,
 										plugin: true,
-										__PLUGIN_ID__: item.get('plugin_id')
+										__PLUGIN_ID__: item.get('plugin_id'),
+										isStoreLoaded : false,
+										listeners : {
+											expand : function( p, eOpts ){
+												if(!p.isStoreLoaded) {
+													p.store.load(function(records, operation, success){
+														p.isStoreLoaded = true;
+													});
+												}
+											}
+										} 
 									});
 								});
 

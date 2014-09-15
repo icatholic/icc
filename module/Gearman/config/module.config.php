@@ -84,6 +84,15 @@ return array(
                         )
                     )
                 ),
+                'data_import_java_worker' => array(
+                    'options' => array(
+                        'route' => 'data import java worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Data',
+                            'action' => 'importJava'
+                        )
+                    )
+                ),
                 'common_worker' => array(
                     'options' => array(
                         'route' => 'common worker',

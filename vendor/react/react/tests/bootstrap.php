@@ -1,5 +1,4 @@
 <?php
 
-$loader = require __DIR__ . '/../vendor/autoload.php';
-$loader->addPsr4('React\\Tests\\', __DIR__);
-
+$loader = require __DIR__.'/../vendor/autoload.php';
+$loader->add('React\Tests', __DIR__);

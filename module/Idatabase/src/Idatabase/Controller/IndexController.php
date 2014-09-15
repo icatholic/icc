@@ -52,7 +52,7 @@ class IndexController extends Action
 
     /**
      * 索引类型
-     * 
+     *
      * @var array
      */
     private $_indexType = array(
@@ -62,11 +62,6 @@ class IndexController extends Action
         'hashed'
     );
 
-    /**
-     * init
-     * 
-     * @see \My\Common\Controller\Action::init()
-     */
     public function init()
     {
         try {

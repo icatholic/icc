@@ -11,7 +11,7 @@ namespace Idatabase\Controller;
 
 use My\Common\Controller\Action;
 
-class IndexController extends Action
+class FileController extends Action
 {
 
     private $_file;
@@ -21,8 +21,8 @@ class IndexController extends Action
         $this->_file = $this->model('Idatabase\Model\File');
     }
 
-    public function index()
+    public function indexAction()
     {
-
+        return false;
     }
 }

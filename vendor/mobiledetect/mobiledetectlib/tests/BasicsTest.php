@@ -280,6 +280,9 @@ class BasicTest extends PHPUnit_Framework_TestCase
                 'HTTP_X_OPERAMINI_PHONE_UA' => ''
             )),
             array(array(
+                'HTTP_X_NOKIA_IPADDRESS' => ''
+            )),
+            array(array(
                 'HTTP_X_NOKIA_GATEWAY_ID' => ''
             )),
             array(array(
@@ -314,40 +317,6 @@ class BasicTest extends PHPUnit_Framework_TestCase
     {
         $md = new Mobile_Detect($headers);
         $this->assertTrue($md->checkHttpHeadersForMobile());
-    }
-
-    // Headers that are not mobile.
-    public function quickNonMobileHeadersData()
-    {
-
-        return array(
-            array(array(
-                'HTTP_UA_CPU' => 'AMD64'
-                )),
-            array(array(
-                'HTTP_UA_CPU' => 'X86'
-                )),
-            array(array(
-                'HTTP_ACCEPT' => 'text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01'
-                )),
-            array(array(
-                'HTTP_REQUEST_METHOD' => 'DELETE'
-                )),
-            array(array(
-                'HTTP_VIA' => '1.1 ws-proxy.stuff.co.il C0A800FA'
-                )),
-        );
-
-    }
-
-    /**
-     * @dataProvider quickNonMobileHeadersData
-     * @covers Mobile_Detect::checkHttpHeadersForMobile
-     */
-    public function testNonMobileQuickHeaders($headers)
-    {
-        $md = new Mobile_Detect($headers);
-        $this->assertFalse($md->checkHttpHeadersForMobile());
     }
 
     /**
@@ -461,10 +430,10 @@ class BasicTest extends PHPUnit_Framework_TestCase
     public function testScriptVersion()
     {
         $v = Mobile_Detect::getScriptVersion();
-        $formatCheck = (bool)preg_match('/^[0-9]+\.[0-9]+\.[0-9](-[a-zA-Z0-9])?$/', $v);
-
-        $this->assertTrue($formatCheck, "Fails the semantic version test. The version " . var_export($v, true)
+        if (!preg_match('/^[0-9]+\.[0-9]+\.[0-9](-[a-zA-Z0-9])?$/', $v)) {
+            $this->fail("Fails the semantic version test. The version " . var_export($v, true)
                 . ' does not match X.Y.Z pattern');
+        }
     }
 
     public function crazyVersionNumbers()

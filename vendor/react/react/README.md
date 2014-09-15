@@ -11,7 +11,7 @@ The recommended way to install react is [through composer](http://getcomposer.or
 ```JSON
 {
     "require": {
-        "react/react": "0.4.*"
+        "react/react": "0.3.*"
     }
 }
 ```
@@ -84,7 +84,7 @@ $loop->run();
 ## Documentation
 
 Superficial documentation can be found in the README files of the individual
-components. See `src/*/README.md`.
+components. See `src/React/*/README.md`.
 
 ## Community
 

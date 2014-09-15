@@ -437,6 +437,9 @@ class MongoCollection extends \MongoCollection
                     )
                 ));
                 array_unshift($pipeline, $first);
+            } elseif (isset($pipeline[0]['$match'])) {
+                // 解决率先执行$match:{__REMOVED__:false}导致的性能问题
+                $pipeline[0]['$match'] = $this->appendQuery($pipeline[0]['$match']);
             } else {
                 array_unshift($pipeline, array(
                     '$match' => array(

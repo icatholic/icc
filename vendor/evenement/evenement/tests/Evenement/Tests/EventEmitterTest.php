@@ -3,10 +3,25 @@
 /*
  * This file is part of Evenement.
  *
- * (c) Igor Wiedler <igor@wiedler.ch>
+ * Copyright (c) 2011 Igor Wiedler
  *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is furnished
+ * to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 
 namespace Evenement\Tests;
@@ -30,21 +45,20 @@ class EventEmitterTest extends \PHPUnit_Framework_TestCase
     public function testAddListenerWithMethod()
     {
         $listener = new Listener();
-        $this->emitter->on('foo', [$listener, 'onFoo']);
+        $this->emitter->on('foo', array($listener, 'onFoo'));
     }
 
     public function testAddListenerWithStaticMethod()
     {
-        $this->emitter->on('bar', ['Evenement\Tests\Listener', 'onBar']);
+        $this->emitter->on('bar', array('Evenement\Tests\Listener', 'onBar'));
     }
 
+    /**
+     * @expectedException InvalidArgumentException
+     */
     public function testAddListenerWithInvalidListener()
     {
-        try {
-            $this->emitter->on('foo', 'not a callable');
-            $this->fail();
-        } catch (\Exception $e) {
-        }
+        $this->emitter->on('foo', 'not a callable');
     }
 
     public function testOnce()
@@ -64,19 +78,6 @@ class EventEmitterTest extends \PHPUnit_Framework_TestCase
         $this->emitter->emit('foo');
 
         $this->assertSame(1, $listenerCalled);
-    }
-
-    public function testOnceWithArguments()
-    {
-        $capturedArgs = [];
-
-        $this->emitter->once('foo', function ($a, $b) use (&$capturedArgs) {
-            $capturedArgs = array($a, $b);
-        });
-
-        $this->emitter->emit('foo', array('a', 'b'));
-
-        $this->assertSame(array('a', 'b'), $capturedArgs);
     }
 
     public function testEmitWithoutArguments()
@@ -105,7 +106,7 @@ class EventEmitterTest extends \PHPUnit_Framework_TestCase
         });
 
         $this->assertSame(false, $listenerCalled);
-        $this->emitter->emit('foo', ['bar']);
+        $this->emitter->emit('foo', array('bar'));
         $this->assertSame(true, $listenerCalled);
     }
 
@@ -123,15 +124,15 @@ class EventEmitterTest extends \PHPUnit_Framework_TestCase
         });
 
         $this->assertSame(false, $listenerCalled);
-        $this->emitter->emit('foo', ['bar', 'baz']);
+        $this->emitter->emit('foo', array('bar', 'baz'));
         $this->assertSame(true, $listenerCalled);
     }
 
     public function testEmitWithNoListeners()
     {
         $this->emitter->emit('foo');
-        $this->emitter->emit('foo', ['bar']);
-        $this->emitter->emit('foo', ['bar', 'baz']);
+        $this->emitter->emit('foo', array('bar'));
+        $this->emitter->emit('foo', array('bar', 'baz'));
     }
 
     public function testEmitWithTwoListeners()

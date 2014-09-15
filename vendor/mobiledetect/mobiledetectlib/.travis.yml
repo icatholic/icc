@@ -7,7 +7,7 @@ branches:
     - devel
 
 script:
-  - phpunit --configuration tests/phpunit.xml
+  - phpunit --configuration tests/phpunit.xml --coverage-text
 
 notifications:
   email: false
