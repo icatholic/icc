@@ -96,7 +96,7 @@ class FileController extends Action
                 $this->_file->output($gridFsFile, true, $download == null ? false : true);
             }
             
-            //setcookie(session_name(), '', 0, '/');
+            // setcookie(session_name(), '', 0, '/');
             // $this->response->getHeaders()->removeHeader($this->getHeaders()->get('Set-Cookie'));
             return $this->response;
         } else {
