@@ -27,6 +27,10 @@ class IndexController extends Action
         $this->_account = $this->collection(SYSTEM_ACCOUNT);
         $this->_resource = $this->collection(SYSTEM_RESOURCE);
         $this->_setting = $this->collection(SYSTEM_SETTING);
+        
+        $this->_account->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_resource->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_setting->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

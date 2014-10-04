@@ -23,6 +23,7 @@ class PluginController extends Action
     {
         $this->_worker = $this->gearman()->worker();
         $this->_plugin_collection = $this->model('Idatabase\Model\PluginCollection');
+        $this->_plugin_collection->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

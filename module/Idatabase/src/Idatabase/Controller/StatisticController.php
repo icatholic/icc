@@ -43,6 +43,7 @@ class StatisticController extends Action
             throw new \Exception('$this->_collection_id值未设定');
         
         $this->_statistic = $this->model('Idatabase\Model\Statistic');
+        $this->_statistic->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

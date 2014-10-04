@@ -32,6 +32,7 @@ class MappingController extends Action
             throw new \Exception('$this->_collection_id值未设定');
         
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
+        $this->_mapping->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

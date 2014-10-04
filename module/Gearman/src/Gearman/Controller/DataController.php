@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Gearman方式同步data数据处理插件
  *
@@ -25,11 +26,18 @@ class DataController extends Action
 
     public function init()
     {
+        resetTimeMemLimit(0);
+        ini_set("auto_detect_line_endings", true);
+        
         $this->_worker = $this->gearman()->worker();
         $this->_data = $this->model('Idatabase\Model\Data');
         $this->_collection = $this->model('Idatabase\Model\Collection');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_file = $this->model('Idatabase\Model\File');
+        
+        $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_mapping->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_file->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**
@@ -63,7 +71,7 @@ class DataController extends Action
                     $this->_data->setCollection(iCollectionName($collection_id));
                 }
                 
-                $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
+                $this->_data->setReadPreference(\MongoClient::RP_SECONDARY);
                 $cursor = $this->_data->find($query, $fields);
                 $excelDatas = array();
                 // 保持拥有全部的字段名，不存在错乱的想象
@@ -152,12 +160,15 @@ class DataController extends Action
                 
                 if (count($excel['result']) > 5000) {
                     arrayToCVS($excel, null, $temp);
+                    $outType = 'csv';
                 } else {
                     arrayToExcel($excel, $exportKey, $temp);
+                    $outType = 'xlsx';
                 }
                 
-                $cache->save(file_get_contents($temp), $exportKey, 60);
-                unlink($temp);
+                $fileInfo = $this->_data->storeBytesToGridFS(file_get_contents($temp), $temp);
+                $fileInfo['outType'] = $outType;
+                $cache->save($fileInfo, $exportKey, 60);
                 $cache->remove($exportGearmanKey);
                 $job->sendComplete('complete');
             });
@@ -180,8 +191,6 @@ class DataController extends Action
      */
     public function importAction()
     {
-        ini_set("auto_detect_line_endings", true);
-        ini_set('memory_limit', '4096M');
         $cache = $this->cache();
         $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
         {
@@ -221,6 +230,16 @@ class DataController extends Action
                 
                 // drop集合数据库
                 $this->_data->physicalDrop();
+            }
+            
+            // 找到集合中的最后一条
+            $cursor = $this->_data->find(array());
+            $cursor->sort(array(
+                '_id' => - 1
+            ));
+            $cursor->limit(1);
+            if ($cursor->count() != 0) {
+                $lastRow = $cursor->getNext();
             }
             
             // 加载csv数据
@@ -271,7 +290,16 @@ class DataController extends Action
             
             // 增加一些系统默认参数
             $now = new \MongoDate();
-            $this->_data->physicalUpdate(array(), array(
+            if (isset($lastRow) && $lastRow['_id'] instanceof \MongoId) {
+                $update = array(
+                    '_id' => array(
+                        '$gt' => $lastRow['_id']
+                    )
+                );
+            } else {
+                $update = array();
+            }
+            $this->_data->physicalUpdate($update, array(
                 '$set' => array(
                     '__REMOVED__' => false,
                     '__CREATE_TIME__' => $now,
@@ -295,10 +323,8 @@ class DataController extends Action
      */
     public function importJavaAction()
     {
-        ini_set("auto_detect_line_endings", true);
-        ini_set('memory_limit', '4096M');
         $cache = $this->cache();
-        $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
+        $this->_worker->addFunction("dataJavaImport", function (\GearmanJob $job) use($cache)
         {
             $iconvBin = '/usr/bin/';
             $mongoBin = '/usr/local/jdk1.8.0_20/bin/java mongomtimport ';
@@ -336,6 +362,16 @@ class DataController extends Action
                 
                 // drop集合数据库
                 $this->_data->physicalDrop();
+            }
+            
+            // 找到集合中的最后一条
+            $cursor = $this->_data->find(array());
+            $cursor->sort(array(
+                '_id' => - 1
+            ));
+            $cursor->limit(1);
+            if ($cursor->count() != 0) {
+                $lastRow = $cursor->getNext();
             }
             
             // 加载csv数据
@@ -389,7 +425,16 @@ class DataController extends Action
             
             // 增加一些系统默认参数
             $now = new \MongoDate();
-            $this->_data->physicalUpdate(array(), array(
+            if (isset($lastRow) && $lastRow['_id'] instanceof \MongoId) {
+                $update = array(
+                    '_id' => array(
+                        '$gt' => $lastRow['_id']
+                    )
+                );
+            } else {
+                $update = array();
+            }
+            $this->_data->physicalUpdate($update, array(
                 '$set' => array(
                     '__REMOVED__' => false,
                     '__CREATE_TIME__' => $now,

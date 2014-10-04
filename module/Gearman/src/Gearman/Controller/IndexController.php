@@ -37,7 +37,7 @@ class IndexController extends Action
                 $params = unserialize($job->workload());
                 $out = $params['out'];
                 $this->_data->setCollection($params['dataCollection']);
-                $this->_data->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
+                $this->_data->setReadPreference(\MongoClient::RP_SECONDARY);
                 $dataModel = $this->_data;
                 $statisticInfo = $params['statisticInfo'];
                 $query = $params['query'];

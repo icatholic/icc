@@ -23,6 +23,10 @@ class ProjectController extends Action
     {
         $this->_project = $this->model('Idatabase\Model\Project');
         $this->_acl = $this->collection(SYSTEM_ACCOUNT_PROJECT_ACL);
+        
+        $this->_project->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_acl->setReadPreference(\MongoClient::RP_SECONDARY);
+        
         $this->getAcl();
     }
 

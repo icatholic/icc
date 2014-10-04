@@ -20,6 +20,9 @@ class NotifyController extends Action
     {
         $this->_keys = $this->model('Idatabase\Model\Key');
         $this->_project = $this->model('Idatabase\Model\Project');
+        
+        $this->_keys->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_project->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     public function keysAction()

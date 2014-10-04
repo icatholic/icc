@@ -32,6 +32,7 @@ class LockController extends Action
             throw new \Exception('$this->_collection_id值未设定');
         
         $this->_lock = $this->model('Idatabase\Model\Lock');
+        $this->_lock->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

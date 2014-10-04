@@ -65,6 +65,15 @@ class CollectionController extends Action
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_plugin_index = $this->model('Idatabase\Model\PluginIndex');
         
+        $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_structure->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_project_plugin->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_plugin_collection->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_plugin_structure->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_lock->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_mapping->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_plugin_index->setReadPreference(\MongoClient::RP_SECONDARY);
+        
         $this->_gmClient = $this->gearman()->client();
     }
 
@@ -80,6 +89,8 @@ class CollectionController extends Action
     {
         $search = trim($this->params()->fromQuery('query', ''));
         $action = trim($this->params()->fromQuery('action', ''));
+        $start = intval($this->params()->fromQuery('start', 0));
+        $limit = intval($this->params()->fromQuery('limit', 10));
         $plugin_id = $this->_plugin_id;
         $sort = array(
             'orderBy' => 1,
@@ -112,11 +123,11 @@ class CollectionController extends Action
         }
         
         $datas = array();
-        $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);
         $cursor = $this->_collection->find($query);
         // fb($query, 'LOG');
         //fb($cursor->explain(), 'LOG');
         $cursor->sort($sort);
+        $cursor->skip($start)->limit($limit);
         while ($cursor->hasNext()) {
             $row = $cursor->getNext();
             $row['locked'] = false;

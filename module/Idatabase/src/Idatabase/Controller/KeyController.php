@@ -36,6 +36,8 @@ class KeyController extends Action
         }
         
         $this->_keys = $this->model('Idatabase\Model\Key');
+        $this->_project->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_keys->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

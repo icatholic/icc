@@ -27,6 +27,8 @@ class PluginController extends Action
         $this->_plugin = $this->model('Idatabase\Model\Plugin');
         $this->_project_plugin = $this->model('Idatabase\Model\ProjectPlugin');
         
+        $this->_plugin->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_project_plugin->setReadPreference(\MongoClient::RP_SECONDARY);
         // 注意这里应该增加检查，该项目id是否符合用户操作的权限范围
     }
 
@@ -150,7 +152,37 @@ class PluginController extends Action
      */
     public function readPluginAction()
     {
-        return $this->findAll(IDATABASE_PLUGINS);
+        $query = array();
+        $search = $this->params()->fromQuery('query', null);
+        $start = intval($this->params()->fromQuery('start', 0));
+        $limit = intval($this->params()->fromQuery('limit', 10));
+        
+        if ($search != null) {
+            $search = myMongoRegex($search);
+            $searchQuery = array(
+                '$or' => array(
+                    array(
+                        'name' => $search
+                    ),
+                    array(
+                        'desc' => $search
+                    ),
+                    array(
+                        'xtype' => $search
+                    )
+                )
+            );
+            $query['$and'][] = $searchQuery;
+        }
+        
+        $cursor = $this->_plugin->find($query);
+        $total = $cursor->count();
+        $cursor->sort(array(
+            '_id' => - 1
+        ));
+        $cursor->skip($start);
+        $cursor->limit($limit);
+        return $this->rst(iterator_to_array($cursor, false), $total, true);
     }
 
     /**

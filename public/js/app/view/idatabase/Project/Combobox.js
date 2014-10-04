@@ -7,7 +7,7 @@ Ext.define('icc.view.idatabase.Project.Combobox', {
 	valueField : '_id',
 	displayField : 'name',
 	queryMode : 'remote',
-	pageSize : 0,
-	editable : false,
+	pageSize : 20,
+	editable : true,
 	typeAhead : false
 });

@@ -171,7 +171,7 @@ class DataController extends Action
 
     /**
      * 保留字段
-     * 
+     *
      * @var array
      */
     private $_filter = array(
@@ -251,6 +251,7 @@ class DataController extends Action
         } else {
             $this->_data = $this->collection($this->_collection_name);
         }
+        $this->_data->setReadPreference(\MongoClient::RP_SECONDARY);
         
         // 自动化为集合创建索引
         $this->_index->autoCreateIndexes(isset($mapCollection['collection']) ? $mapCollection['collection'] : $this->_collection_id);
@@ -281,7 +282,7 @@ class DataController extends Action
         
         if ($action == 'search' || $action == 'excel') {
             $query = $this->searchCondition();
-            fb($query,'LOG');
+            fb($query, 'LOG');
         }
         
         if ($search != null) {
@@ -382,12 +383,22 @@ class DataController extends Action
                 $workload = serialize($params);
                 $exportKey = md5($workload);
                 
-                $binary = $this->cache($exportKey);
-                header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.xlsx"');
-                header('Cache-Control: max-age=0');
-                echo $binary;
-                exit();
+                $file = $this->cache($exportKey);
+                if ($file['outType'] == 'csv') {
+                    header('Content-Type: application/zip');
+                    header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.zip"');
+                    header('Cache-Control: max-age=0');
+                    $gridFSFile = $this->_data->getGridFsFileById($file['_id']);
+                    echo fileToZipStream($exportGearmanKey . '.csv', $gridFSFile->getBytes());
+                    exit();
+                } else {
+                    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                    header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.xlsx"');
+                    header('Cache-Control: max-age=0');
+                    $gridFSFile = $this->_data->getGridFsFileById($file['_id']);
+                    echo $gridFSFile->getBytes();
+                    exit();
+                }
             } else {
                 $params = array();
                 $params['collection_id'] = $this->_collection_id;
@@ -1015,9 +1026,9 @@ class DataController extends Action
         
         try {
             $datas = $this->dealData($datas);
-            //修正更新数据时候出现mods错误的问题
-            foreach($datas as $key=>$value) {
-                if(strpos($key, '.')!==false) {
+            // 修正更新数据时候出现mods错误的问题
+            foreach ($datas as $key => $value) {
+                if (strpos($key, '.') !== false) {
                     unset($datas[$key]);
                 }
             }
@@ -1085,9 +1096,9 @@ class DataController extends Action
                     if (! empty($datas)) {
                         try {
                             $datas = $this->dealData($datas);
-                            //修正更新数据时候出现mods错误的问题
-                            foreach($datas as $key=>$value) {
-                                if(strpos($key, '.')!==false) {
+                            // 修正更新数据时候出现mods错误的问题
+                            foreach ($datas as $key => $value) {
+                                if (strpos($key, '.') !== false) {
                                     unset($datas[$key]);
                                 }
                             }

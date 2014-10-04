@@ -23,6 +23,10 @@ class AuthController extends Action
         $this->_account = $this->collection(SYSTEM_ACCOUNT);
         $this->_role = $this->collection(SYSTEM_ROLE);
         $this->_resource = $this->collection(SYSTEM_RESOURCE);
+        
+        $this->_account->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_role->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_resource->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

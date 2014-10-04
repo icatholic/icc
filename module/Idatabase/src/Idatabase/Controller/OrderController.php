@@ -38,6 +38,7 @@ class OrderController extends Action
         }
         
         $this->_order = $this->model('Idatabase\Model\Order');
+        $this->_order->setReadPreference(\MongoClient::RP_SECONDARY);
 
     }
 

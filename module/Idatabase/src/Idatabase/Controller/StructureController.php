@@ -74,6 +74,11 @@ class StructureController extends Action
         $this->_plugin_structure = $this->model('Idatabase\Model\PluginStructure');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_model = $this->_structure;
+        
+        $this->_structure->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_plugin_structure->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_mapping->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**

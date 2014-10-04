@@ -1210,6 +1210,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
             return rst;
         }";
     
+    $dataModel->setReadPreference(\MongoClient::RP_SECONDARY);
     return $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
 }
 
@@ -1310,4 +1311,27 @@ function logError($msg)
     fwrite($fp, $msg);
     fclose($fp);
     return true;
+}
+
+/**
+ * 将文件转化为zip
+ * 
+ * @param string $filename            
+ * @param string $content            
+ * @return string boolean
+ */
+function fileToZipStream($filename, $content)
+{
+    $tmp = tempnam(sys_get_temp_dir(), 'zip_');
+    $zip = new ZipArchive();
+    $res = $zip->open($tmp, ZipArchive::CREATE);
+    if ($res === true) {
+        $zip->addFromString($filename, $content);
+        $zip->close();
+        $rst = file_get_contents($tmp);
+        unlink($tmp);
+        return $rst;
+    } else {
+        return false;
+    }
 }

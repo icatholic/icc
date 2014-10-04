@@ -1181,6 +1181,8 @@ class MongoCollection extends \MongoCollection
                         'reduce'
                     ), true) ? true : false
                 );
+                
+                $this->db->setReadPreference(\MongoClient::RP_SECONDARY);
                 $rst = $this->command($command);
                 $releaseLock($out, $rst);
                 

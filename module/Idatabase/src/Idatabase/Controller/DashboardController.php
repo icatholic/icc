@@ -39,6 +39,12 @@ class DashboardController extends Action
         $this->_statistic = $this->model('Idatabase\Model\Statistic');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_structure = $this->model('Idatabase\Model\Structure');
+        
+        $this->_dashboard->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_statistic->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_mapping->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_structure->setReadPreference(\MongoClient::RP_SECONDARY);
     }
 
     /**
@@ -82,22 +88,56 @@ class DashboardController extends Action
      */
     public function runAction()
     {
+        resetTimeMemLimit(0);
         $logError = function ($statisticInfo, $rst)
         {
             $this->_statistic->update(array(
                 '_id' => $statisticInfo['_id']
             ), array(
                 '$set' => array(
+                    'error_time' => new \MongoDate(),
                     'dashboardOut' => '',
                     'dashboardError' => is_string($rst) ? $rst : Json::encode($rst)
+                ),
+                '$inc' => array(
+                    'errors' => 1
                 )
             ));
         };
         
+        // 检查不包含error字段的数据，如果不包含，则更新数据的默认值为0
+        $this->_statistic->update(array(
+            'errors' => array(
+                '$exists' => false
+            )
+        ), array(
+            '$set' => array(
+                'errors' => 0
+            )
+        ));
+        
+        // 如果错误的时间超过1小时候，清空错误时间和记录，可以进行重新统计
+        $this->_statistic->update(array(
+            'errors' => array(
+                '$gte' => 5
+            ),
+            'error_time' => array(
+                '$gte' => new \MongoDate(time() - 7200)
+            )
+        ), array(
+            '$set' => array(
+                'errors' => 0
+            )
+        ));
+        
+        // 执行累计错误次数小于5的统计
         $statistics = $this->_statistic->findAll(array(
             'isDashboard' => true,
             'resultExpireTime' => array(
                 '$lte' => new \MongoDate()
+            ),
+            'errors' => array(
+                '$lt' => 5
             )
         ));
         
