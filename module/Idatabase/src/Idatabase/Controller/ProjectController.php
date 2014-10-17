@@ -237,9 +237,14 @@ class ProjectController extends Action
         $project_id = isset($_REQUEST['__PROJECT_ID__']) ? trim($_REQUEST['__PROJECT_ID__']) : '';
         $wait = $this->params()->fromQuery('wait', null);
         $cacheKey = 'bson_export_' . $project_id;
-        if ($this->cache($cacheKey) !== null) {
+        if ($wait) {
+            if ($this->cache($cacheKey) !== null) {
+                return $this->msg(true, '处理完成');
+            } else {
+                return $this->msg(false, '请求处理中……');
+            }
+        } elseif ($this->cache($cacheKey) !== null) {
             $zip = $this->cache($cacheKey);
-            fb($zip, 'LOG');
             header('Content-Type: application/zip');
             header('Content-Disposition: attachment;filename="bson_' . date('YmdHis') . '.zip"');
             header('Cache-Control: max-age=0');
@@ -248,12 +253,6 @@ class ProjectController extends Action
             $this->cache()->remove($cacheKey);
             $this->_file->removeFileFromGridFS($zip);
             exit();
-        } elseif ($wait) {
-            if ($this->cache($cacheKey) !== null) {
-                return $this->msg(true, '处理完成');
-            } else {
-                return $this->msg(false, '请求处理中……');
-            }
         } else {
             // 任务交给后台worker执行
             $params = array(

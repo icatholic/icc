@@ -188,7 +188,7 @@ class DataController extends Action
         '__plugin_id__',
         '__plugin_collection_id__'
     );
-    
+
     private $_file;
 
     /**
@@ -627,7 +627,13 @@ class DataController extends Action
         $collection_id = isset($_REQUEST['__COLLECTION_ID__']) ? trim($_REQUEST['__COLLECTION_ID__']) : '';
         $wait = $this->params()->fromQuery('wait', null);
         $cacheKey = 'collection_bson_export_' . $collection_id;
-        if ($this->cache($cacheKey) !== null) {
+        if ($wait) {
+            if ($this->cache($cacheKey) !== null) {
+                return $this->msg(true, '处理完成');
+            } else {
+                return $this->msg(false, '请求处理中……');
+            }
+        } elseif ($this->cache($cacheKey) !== null) {
             $zip = $this->cache($cacheKey);
             header('Content-Type: application/zip');
             header('Content-Disposition: attachment;filename="bson_' . $collection_id . '_' . date('YmdHis') . '.zip"');
@@ -637,13 +643,8 @@ class DataController extends Action
             $this->cache()->remove($cacheKey);
             $this->_file->removeFileFromGridFS($zip);
             exit();
-        } elseif ($wait) {
-            if($this->cache($cacheKey) !== null) {
-                return $this->msg(true, '处理完成');
-            } else {
-                return $this->msg(false, '请求处理中……');
-            }
-        } else {
+        } else
+        {
             // 任务交给后台worker执行
             $params = array(
                 'key' => $cacheKey,
