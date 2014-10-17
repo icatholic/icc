@@ -188,6 +188,8 @@ class DataController extends Action
         '__plugin_id__',
         '__plugin_collection_id__'
     );
+    
+    private $_file;
 
     /**
      * 初始化函数
@@ -215,6 +217,7 @@ class DataController extends Action
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_statistic = $this->model('Idatabase\Model\Statistic');
         $this->_index = $this->model('Idatabase\Model\Index');
+        $this->_file = $this->model('Idatabase\Model\File');
         
         // 检查必要的参数
         if (empty($this->_project_id)) {
@@ -635,7 +638,11 @@ class DataController extends Action
             $this->_file->removeFileFromGridFS($zip);
             exit();
         } elseif ($wait) {
-            return $this->msg(true, '请求处理中……');
+            if($this->cache($cacheKey) !== null) {
+                return $this->msg(true, '处理完成');
+            } else {
+                return $this->msg(false, '请求处理中……');
+            }
         } else {
             // 任务交给后台worker执行
             $params = array(
@@ -644,7 +651,7 @@ class DataController extends Action
             );
             fb($params, 'LOG');
             $jobHandle = $this->_gmClient->doBackground('collectionBsonExport', serialize($params), $cacheKey);
-            return $this->msg(true, '请求已被受理');
+            return $this->msg(false, '请求已被受理');
         }
     }
 

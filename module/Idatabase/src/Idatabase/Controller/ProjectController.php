@@ -22,9 +22,9 @@ class ProjectController extends Action
     private $_acl;
 
     private $_model;
-    
+
     private $_gmClient;
-    
+
     private $_file;
 
     public function init()
@@ -239,17 +239,21 @@ class ProjectController extends Action
         $cacheKey = 'bson_export_' . $project_id;
         if ($this->cache($cacheKey) !== null) {
             $zip = $this->cache($cacheKey);
-            fb($zip,'LOG');
+            fb($zip, 'LOG');
             header('Content-Type: application/zip');
             header('Content-Disposition: attachment;filename="bson_' . date('YmdHis') . '.zip"');
             header('Cache-Control: max-age=0');
             echo $this->_file->getFileFromGridFS($zip);
-            //执行清理工作
+            // 执行清理工作
             $this->cache()->remove($cacheKey);
             $this->_file->removeFileFromGridFS($zip);
             exit();
         } elseif ($wait) {
-        	return $this->msg(true, '请求处理中……');
+            if ($this->cache($cacheKey) !== null) {
+                return $this->msg(true, '处理完成');
+            } else {
+                return $this->msg(false, '请求处理中……');
+            }
         } else {
             // 任务交给后台worker执行
             $params = array(
@@ -258,7 +262,7 @@ class ProjectController extends Action
             );
             fb($params, 'LOG');
             $jobHandle = $this->_gmClient->doBackground('bsonExport', serialize($params), $cacheKey);
-            return $this->msg(true, '请求已被受理');
+            return $this->msg(false, '请求已被受理');
         }
         
         // $tmp = tempnam(sys_get_temp_dir(), 'zip_');
