@@ -227,6 +227,7 @@ class ProjectController extends Action
      */
     public function exportBsonAction()
     {
+        resetTimeMemLimit(30);
         $_id = isset($_REQUEST['_id']) ? trim($_REQUEST['_id']) : '';
         
         $tmp = tempnam(sys_get_temp_dir(), 'zip_');
@@ -275,6 +276,14 @@ class ProjectController extends Action
                 )
             ));
             $zip->addFile($filename, IDATABASE_MAPPING . '.bson');
+            
+            // 导出集合数据信息
+            if (! empty($collection_ids)) {
+                foreach ($collection_ids as $collection_id) {
+                    $filename = $this->collection2bson(iCollectionName($collection_id), array());
+                    $zip->addFile($filename, iCollectionName($collection_id) . '.bson');
+                }
+            }
         }
         $zip->close();
         
