@@ -17,14 +17,20 @@ class ProjectController extends Action
 
     private $_project;
 
+    private $_collection;
+
     private $_acl;
+
+    private $_model;
 
     public function init()
     {
         $this->_project = $this->model('Idatabase\Model\Project');
+        $this->_collection = $this->model('Idatabase\Model\Collection');
         $this->_acl = $this->collection(SYSTEM_ACCOUNT_PROJECT_ACL);
         
         $this->_project->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
         $this->_acl->setReadPreference(\MongoClient::RP_SECONDARY);
         
         $this->getAcl();
@@ -221,21 +227,86 @@ class ProjectController extends Action
      */
     public function exportBsonAction()
     {
-        $_id = $this->params()->fromPost('_id', null);
-        // $projectInfo = $this->_project->findAll(array(
-        // '_id' => myMongoId($_id)
-        // ));
+        $_id = isset($_REQUEST['_id']) ? trim($_REQUEST['_id']) : '';
         
-        $bson = '';
-        $projectInfo = $this->_project->findAll(array());
-        foreach($projectInfo as $project) {
-            $bson .= bson_encode($project);
+        $tmp = tempnam(sys_get_temp_dir(), 'zip_');
+        $zip = new \ZipArchive();
+        $res = $zip->open($tmp, \ZipArchive::CREATE);
+        if ($res === true) {
+            // 添加项目数据
+            $filename = $this->collection2bson(IDATABASE_PROJECTS, array(
+                '_id' => myMongoId($_id)
+            ));
+            $zip->addFile($filename, IDATABASE_PROJECTS . '.bson');
+            
+            // 获取密钥信息
+            $filename = $this->collection2bson(IDATABASE_KEYS, array(
+                'project_id' => $_id
+            ));
+            $zip->addFile($filename, IDATABASE_KEYS . '.bson');
+            
+            // 添加集合数据
+            $filename = $this->collection2bson(IDATABASE_COLLECTIONS, array(
+                'project_id' => $_id
+            ));
+            $zip->addFile($filename, IDATABASE_COLLECTIONS . '.bson');
+            
+            // 添加结构数据
+            $collection_ids = array();
+            $cursor = $this->_collection->find(array(
+                'project_id' => $_id
+            ));
+            while ($cursor->hasNext()) {
+                $row = $cursor->getNext();
+                $collection_ids[] = $row['_id']->__toString();
+            }
+            
+            $filename = $this->collection2bson(IDATABASE_STRUCTURES, array(
+                'collection_id' => array(
+                    '$in' => $collection_ids
+                )
+            ));
+            $zip->addFile($filename, IDATABASE_STRUCTURES . '.bson');
+            
+            // 获取映射信息
+            $filename = $this->collection2bson(IDATABASE_MAPPING, array(
+                'collection_id' => array(
+                    '$in' => $collection_ids
+                )
+            ));
+            $zip->addFile($filename, IDATABASE_MAPPING . '.bson');
         }
+        $zip->close();
+        
         header('Content-Type: application/zip');
-        header('Content-Disposition: attachment;filename="' . IDATABASE_PROJECTS . '.zip"');
+        header('Content-Disposition: attachment;filename="bson.zip"');
         header('Cache-Control: max-age=0');
-        echo fileToZipStream(IDATABASE_PROJECTS . '.bson', $bson);
+        echo file_get_contents($tmp);
         exit();
+    }
+
+    /**
+     * 将指定集合内的数据转化成bson文件
+     *
+     * @param string $collectionName            
+     * @param array $query            
+     * @return string
+     */
+    private function collection2bson($collectionName, $query = array(), $out = 'file')
+    {
+        $dataModel = $this->collection($collectionName);
+        $rst = $dataModel->findAll($query);
+        $bson = '';
+        foreach ($rst as $row) {
+            $bson .= bson_encode($row);
+        }
+        
+        if ($out == 'file') {
+            $tmp = tempnam(sys_get_temp_dir(), 'bson_');
+            $bson = file_put_contents($tmp, $bson);
+            return $tmp;
+        }
+        return $bson;
     }
 
     /**

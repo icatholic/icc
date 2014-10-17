@@ -129,6 +129,10 @@ class ImportController extends Action
             return $this->msg(false, '上传文件或者集合编号不能为空');
         }
         
+        if (strpos($upload['name'], '.csv') === false) {
+            return $this->msg(false, '请上传csv格式的文件');
+        }
+        
         $bytes = file_get_contents($upload['tmp_name']);
         if (! detectUTF8($bytes)) {
             return $this->msg(false, '请使用文本编辑器将文件转化为UTF-8格式');
