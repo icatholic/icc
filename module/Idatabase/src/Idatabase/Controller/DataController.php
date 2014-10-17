@@ -572,7 +572,7 @@ class DataController extends Action
                     );
                 }
                 
-                $datas = $rst->findAll(array(), $sort);
+                $datas = $rst->findAll(array(), $sort, 0, 1000);
                 
                 $datas = $this->replaceRshData($datas, $map);
                 
@@ -643,8 +643,7 @@ class DataController extends Action
             $this->cache()->remove($cacheKey);
             $this->_file->removeFileFromGridFS($zip);
             exit();
-        } else
-        {
+        } else {
             // 任务交给后台worker执行
             $params = array(
                 'key' => $cacheKey,

@@ -332,18 +332,24 @@ class ProjectController extends Action
     private function collection2bson($collectionName, $query = array(), $out = 'file')
     {
         $dataModel = $this->collection($collectionName);
-        $rst = $dataModel->findAll($query);
-        $bson = '';
-        foreach ($rst as $row) {
-            $bson .= bson_encode($row);
-        }
-        
+        $cursor = $dataModel->find($query);
         if ($out == 'file') {
             $tmp = tempnam(sys_get_temp_dir(), 'bson_');
-            $bson = file_put_contents($tmp, $bson);
+            $fp = fopen($tmp, 'w');
+            while ($cursor->hasNext()) {
+                $row = $cursor->getNext();
+                fwrite($fp, bson_encode($row));
+            }
+            fclose($fp);
             return $tmp;
+        } else {
+            $bson = '';
+            while ($cursor->hasNext()) {
+                $row = $cursor->getNext();
+                $bson .= bson_encode($row);
+            }
+            return $bson;
         }
-        return $bson;
     }
 
     /**

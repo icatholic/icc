@@ -32,7 +32,7 @@ class DataController extends Action
 
     public function init()
     {
-        resetTimeMemLimit(0);
+        resetTimeMemLimit(0,"8096M");
         ini_set("auto_detect_line_endings", true);
         
         $this->_worker = $this->gearman()->worker();
@@ -385,7 +385,7 @@ class DataController extends Action
             }
             $zip->close();
             
-            //存入mongodb中用于中间读取
+            // 存入mongodb中用于中间读取
             $fileInfo = $this->_file->storeBytesToGridFS(file_get_contents($tmp), 'bson.zip');
             var_dump($fileInfo);
             $file_id = $fileInfo['_id']->__toString();
@@ -402,13 +402,13 @@ class DataController extends Action
         }
         return $this->response;
     }
-    
+
     /**
      * 导出整个项目为相应的bson文件并制成压缩包提供下载
      *
      * @return boolean false
      */
-
+    
     /**
      * 导出某个集合为bson文件
      *
@@ -422,10 +422,10 @@ class DataController extends Action
             $job->handle();
             $workload = $job->workload();
             $params = unserialize($workload);
-    
+            
             $key = $params['key'];
             $collection_id = $params['collection_id'];
-    
+            
             $tmp = tempnam(sys_get_temp_dir(), 'zip_');
             $zip = new \ZipArchive();
             $res = $zip->open($tmp, \ZipArchive::CREATE);
@@ -433,19 +433,18 @@ class DataController extends Action
                 // 添加项目数据
                 $filename = $this->collection2bson(iCollectionName($collection_id), array());
                 $zip->addFile($filename, iCollectionName($collection_id) . '.bson');
-                
             }
             $zip->close();
-    
-            //存入mongodb中用于中间读取
+            
+            // 存入mongodb中用于中间读取
             $fileInfo = $this->_file->storeBytesToGridFS(file_get_contents($tmp), 'bson.zip');
             $file_id = $fileInfo['_id']->__toString();
-    
+            
             $cache->save($file_id, $key, 60);
             $job->sendComplete('complete');
             return true;
         });
-    
+        
         while ($this->_worker->work()) {
             if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
                 echo "return_code: " . $this->_worker->returnCode() . "\n";
@@ -453,29 +452,35 @@ class DataController extends Action
         }
         return $this->response;
     }
-    
+
     /**
      * 将指定集合内的数据转化成bson文件
      *
-     * @param string $collectionName
-     * @param array $query
+     * @param string $collectionName            
+     * @param array $query            
      * @return string
      */
     private function collection2bson($collectionName, $query = array(), $out = 'file')
     {
         $dataModel = $this->collection($collectionName);
-        $rst = $dataModel->findAll($query);
-        $bson = '';
-        foreach ($rst as $row) {
-            $bson .= bson_encode($row);
-        }
-    
+        $cursor = $dataModel->find($query);
         if ($out == 'file') {
             $tmp = tempnam(sys_get_temp_dir(), 'bson_');
-            $bson = file_put_contents($tmp, $bson);
+            $fp = fopen($tmp, 'w');
+            while ($cursor->hasNext()) {
+                $row = $cursor->getNext();
+                fwrite($fp, bson_encode($row));
+            }
+            fclose($fp);
             return $tmp;
+        } else {
+            $bson = '';
+            while ($cursor->hasNext()) {
+                $row = $cursor->getNext();
+                $bson .= bson_encode($row);
+            }
+            return $bson;
         }
-        return $bson;
     }
 
     /**
