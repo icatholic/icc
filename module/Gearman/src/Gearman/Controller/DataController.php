@@ -192,7 +192,7 @@ class DataController extends Action
             return false;
         }
     }
-    
+
     /**
      * 采用bson文件格式的方式导入
      */
@@ -223,7 +223,7 @@ class DataController extends Action
                 $exportCmd = $mongoBin . "mongodump --host {$host} --port {$port} -d $dbName -c idatabase_collection_{$collection_id} -o {$out}";
                 $fp = popen($exportCmd, 'r');
                 pclose($fp);
-
+                
                 // 将bson导入到备份数据库
                 $bson = $out . $dbName . '/idatabase_collection_' . $collection_id . '.bson';
                 $backupCollection = 'bak_' . date("YmdHis") . '_' . $collection_id;
@@ -247,9 +247,9 @@ class DataController extends Action
                 $job->sendFail();
                 return false;
             }
-
+            
             $arr = $this->csv2arr($csv);
-            unset($csv);//释放内存
+            unset($csv); // 释放内存
             
             if (empty($arr)) {
                 echo '$arr is empty';
@@ -309,6 +309,173 @@ class DataController extends Action
             }
         }
         return $this->response;
+    }
+
+    /**
+     * 导出整个项目为相应的bson文件并制成压缩包提供下载
+     *
+     * @return boolean false
+     */
+    public function exportBsonAction()
+    {
+        $cache = $this->cache();
+        $this->_worker->addFunction("bsonExport", function (\GearmanJob $job) use($cache)
+        {
+            $job->handle();
+            $workload = $job->workload();
+            $params = unserialize($workload);
+            
+            $key = $params['key'];
+            $_id = $params['_id'];
+            
+            $tmp = tempnam(sys_get_temp_dir(), 'zip_');
+            $zip = new \ZipArchive();
+            $res = $zip->open($tmp, \ZipArchive::CREATE);
+            if ($res === true) {
+                // 添加项目数据
+                $filename = $this->collection2bson(IDATABASE_PROJECTS, array(
+                    '_id' => myMongoId($_id)
+                ));
+                $zip->addFile($filename, IDATABASE_PROJECTS . '.bson');
+                
+                // 获取密钥信息
+                $filename = $this->collection2bson(IDATABASE_KEYS, array(
+                    'project_id' => $_id
+                ));
+                $zip->addFile($filename, IDATABASE_KEYS . '.bson');
+                
+                // 添加集合数据
+                $filename = $this->collection2bson(IDATABASE_COLLECTIONS, array(
+                    'project_id' => $_id
+                ));
+                $zip->addFile($filename, IDATABASE_COLLECTIONS . '.bson');
+                
+                // 添加结构数据
+                $collection_ids = array();
+                $cursor = $this->_collection->find(array(
+                    'project_id' => $_id
+                ));
+                while ($cursor->hasNext()) {
+                    $row = $cursor->getNext();
+                    $collection_ids[] = $row['_id']->__toString();
+                }
+                
+                $filename = $this->collection2bson(IDATABASE_STRUCTURES, array(
+                    'collection_id' => array(
+                        '$in' => $collection_ids
+                    )
+                ));
+                $zip->addFile($filename, IDATABASE_STRUCTURES . '.bson');
+                
+                // 获取映射信息
+                $filename = $this->collection2bson(IDATABASE_MAPPING, array(
+                    'collection_id' => array(
+                        '$in' => $collection_ids
+                    )
+                ));
+                $zip->addFile($filename, IDATABASE_MAPPING . '.bson');
+                
+                // 导出集合数据信息
+                if (! empty($collection_ids)) {
+                    foreach ($collection_ids as $collection_id) {
+                        $filename = $this->collection2bson(iCollectionName($collection_id), array());
+                        $zip->addFile($filename, iCollectionName($collection_id) . '.bson');
+                    }
+                }
+            }
+            $zip->close();
+            
+            //存入mongodb中用于中间读取
+            $fileInfo = $this->_file->storeBytesToGridFS(file_get_contents($tmp), 'bson.zip');
+            var_dump($fileInfo);
+            $file_id = $fileInfo['_id']->__toString();
+            
+            $cache->save($file_id, $key, 60);
+            $job->sendComplete('complete');
+            return true;
+        });
+        
+        while ($this->_worker->work()) {
+            if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
+                echo "return_code: " . $this->_worker->returnCode() . "\n";
+            }
+        }
+        return $this->response;
+    }
+    
+    /**
+     * 导出整个项目为相应的bson文件并制成压缩包提供下载
+     *
+     * @return boolean false
+     */
+
+    /**
+     * 导出某个集合为bson文件
+     *
+     * @return boolean false
+     */
+    public function exportCollectionBsonAction()
+    {
+        $cache = $this->cache();
+        $this->_worker->addFunction("collectionBsonExport", function (\GearmanJob $job) use($cache)
+        {
+            $job->handle();
+            $workload = $job->workload();
+            $params = unserialize($workload);
+    
+            $key = $params['key'];
+            $collection_id = $params['collection_id'];
+    
+            $tmp = tempnam(sys_get_temp_dir(), 'zip_');
+            $zip = new \ZipArchive();
+            $res = $zip->open($tmp, \ZipArchive::CREATE);
+            if ($res === true) {
+                // 添加项目数据
+                $filename = $this->collection2bson(iCollectionName($collection_id), array());
+                $zip->addFile($filename, iCollectionName($collection_id) . '.bson');
+                
+            }
+            $zip->close();
+    
+            //存入mongodb中用于中间读取
+            $fileInfo = $this->_file->storeBytesToGridFS(file_get_contents($tmp), 'bson.zip');
+            $file_id = $fileInfo['_id']->__toString();
+    
+            $cache->save($file_id, $key, 60);
+            $job->sendComplete('complete');
+            return true;
+        });
+    
+        while ($this->_worker->work()) {
+            if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
+                echo "return_code: " . $this->_worker->returnCode() . "\n";
+            }
+        }
+        return $this->response;
+    }
+    
+    /**
+     * 将指定集合内的数据转化成bson文件
+     *
+     * @param string $collectionName
+     * @param array $query
+     * @return string
+     */
+    private function collection2bson($collectionName, $query = array(), $out = 'file')
+    {
+        $dataModel = $this->collection($collectionName);
+        $rst = $dataModel->findAll($query);
+        $bson = '';
+        foreach ($rst as $row) {
+            $bson .= bson_encode($row);
+        }
+    
+        if ($out == 'file') {
+            $tmp = tempnam(sys_get_temp_dir(), 'bson_');
+            $bson = file_put_contents($tmp, $bson);
+            return $tmp;
+        }
+        return $bson;
     }
 
     /**

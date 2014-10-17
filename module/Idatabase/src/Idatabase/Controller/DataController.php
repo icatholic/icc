@@ -180,7 +180,7 @@ class DataController extends Action
         'page',
         'limit',
         '__removed__',
-        //'__modify_time__',
+        // '__modify_time__',
         '__old_id__',
         '__old_data__',
         '__project_id__',
@@ -354,6 +354,7 @@ class DataController extends Action
                 return $this->msg(true, '请联系管理员，设定允许导出数据字段的权限');
             }
             $fields = $this->_schema['export'];
+            $fields['_id'] = true;
             $fields['__CREATE_TIME__'] = true;
             $fields['__MODIFY_TIME__'] = true;
         }
@@ -523,7 +524,7 @@ class DataController extends Action
                         'query' => $query,
                         'method' => 'replace'
                     );
-                    fb($params,'LOG');
+                    fb($params, 'LOG');
                     $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
                     $stat = $this->_gmClient->jobStatus($jobHandle);
                     if (isset($stat[0]) && $stat[0]) {
@@ -582,8 +583,13 @@ class DataController extends Action
             } else {
                 if ($statisticInfo['yAxisType'] == 'unique' || $statisticInfo['yAxisType'] == 'distinct') {
                     if ($statisticInfo['xAxisType'] == 'total') {
-                        fb($rst,'LOG');
-                        $datas = array(array('_id'=>'total','value'=>$rst->count(array())));
+                        fb($rst, 'LOG');
+                        $datas = array(
+                            array(
+                                '_id' => 'total',
+                                'value' => $rst->count(array())
+                            )
+                        );
                         return $this->rst($datas, 0, true);
                     }
                 }
@@ -606,6 +612,39 @@ class DataController extends Action
             }
         } catch (\Exception $e) {
             return $this->deny('程序异常：' . $e->getLine() . $e->getMessage());
+        }
+    }
+
+    /**
+     * 导出该集合的的bson文件
+     */
+    public function exportBsonAction()
+    {
+        resetTimeMemLimit();
+        $collection_id = isset($_REQUEST['__COLLECTION_ID__']) ? trim($_REQUEST['__COLLECTION_ID__']) : '';
+        $wait = $this->params()->fromQuery('wait', null);
+        $cacheKey = 'collection_bson_export_' . $collection_id;
+        if ($this->cache($cacheKey) !== null) {
+            $zip = $this->cache($cacheKey);
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment;filename="bson_' . $collection_id . '_' . date('YmdHis') . '.zip"');
+            header('Cache-Control: max-age=0');
+            echo $this->_file->getFileFromGridFS($zip);
+            // 执行清理工作
+            $this->cache()->remove($cacheKey);
+            $this->_file->removeFileFromGridFS($zip);
+            exit();
+        } elseif ($wait) {
+            return $this->msg(true, '请求处理中……');
+        } else {
+            // 任务交给后台worker执行
+            $params = array(
+                'key' => $cacheKey,
+                'collection_id' => $collection_id
+            );
+            fb($params, 'LOG');
+            $jobHandle = $this->_gmClient->doBackground('collectionBsonExport', serialize($params), $cacheKey);
+            return $this->msg(true, '请求已被受理');
         }
     }
 

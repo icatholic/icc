@@ -102,6 +102,24 @@ return array(
                         )
                     )
                 ),
+                'data_bson_export_worker' => array(
+                    'options' => array(
+                        'route' => 'data export bson worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Data',
+                            'action' => 'exportBson'
+                        )
+                    )
+                ),
+                'data_export_collection_bson_worker' => array(
+                    'options' => array(
+                        'route' => 'data export collection bson worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Data',
+                            'action' => 'exportCollectionBson'
+                        )
+                    )
+                ),
                 'common_worker' => array(
                     'options' => array(
                         'route' => 'common worker',

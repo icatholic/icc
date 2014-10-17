@@ -314,6 +314,72 @@ Ext.define('icc.controller.idatabase.Project', {
 				return true;
 			}
 		};
+		
+		listeners[controllerName + 'Grid button[action=export]'] = {
+				click: function(button) {
+					var grid = button.up('gridpanel');
+					var selections = grid.getSelectionModel().getSelection();
+
+					if (selections.length != 1) {
+						Ext.Msg.alert('提示信息', '请选择你要导出数据的项目');
+						return false;
+					}
+
+					var record = selections[0];
+					if (record) {
+						var id = record.get('_id');
+						var name = record.get('name');
+						
+						Ext.Msg.confirm('系统提示', '导出数据有可能需要较长的时间，请点击“Bson导出”按钮后，耐心等待！', function(btn) {
+							if (btn == 'yes') {
+								var mask = new Ext.LoadMask(Ext.getBody(), {
+									autoShow : true,
+									msg : "Bson数据后台创建中，请稍后...",
+									useMsg : true
+								});
+								
+								button.setDisabled(true);
+								var loop = 0;
+								var interval = setInterval(function () {
+									var params = {
+										'__PROJECT_ID__' : id
+									};
+									if(loop > 0) {
+										params.wait = true;
+									}
+									Ext.Ajax.request({
+										url: '/idatabase/project/export-bson',
+										params: params,
+										method : 'GET',
+										success: function(response) {
+											var text = Ext.JSON.decode(response.responseText, true);
+											if(loop==0) {
+												if(text.success) {
+													clearInterval(interval);
+													mask.hide();
+													Ext.Msg.alert('提示信息', text.msg);
+												}
+											}
+											if(text.success) {
+												clearInterval(interval);
+												mask.hide();
+												button.setDisabled(false);
+												delete params.wait;
+												window.location.href = '/idatabase/project/export-bson?' + Ext.Object.toQueryString(params);
+												return true;
+											}
+										}
+									});
+									loop += 1;
+								},5000);
+							}
+						});
+						
+						
+					}
+					return true;
+				}
+			};
 
 		me.control(listeners);
 	}

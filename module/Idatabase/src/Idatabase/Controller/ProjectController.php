@@ -22,17 +22,23 @@ class ProjectController extends Action
     private $_acl;
 
     private $_model;
+    
+    private $_gmClient;
+    
+    private $_file;
 
     public function init()
     {
         $this->_project = $this->model('Idatabase\Model\Project');
         $this->_collection = $this->model('Idatabase\Model\Collection');
         $this->_acl = $this->collection(SYSTEM_ACCOUNT_PROJECT_ACL);
+        $this->_file = $this->model('Idatabase\Model\File');
         
         $this->_project->setReadPreference(\MongoClient::RP_SECONDARY);
         $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
         $this->_acl->setReadPreference(\MongoClient::RP_SECONDARY);
         
+        $this->_gmClient = $this->gearman()->client();
         $this->getAcl();
     }
 
@@ -227,71 +233,90 @@ class ProjectController extends Action
      */
     public function exportBsonAction()
     {
-        resetTimeMemLimit(30);
-        $_id = isset($_REQUEST['_id']) ? trim($_REQUEST['_id']) : '';
-        
-        $tmp = tempnam(sys_get_temp_dir(), 'zip_');
-        $zip = new \ZipArchive();
-        $res = $zip->open($tmp, \ZipArchive::CREATE);
-        if ($res === true) {
-            // 添加项目数据
-            $filename = $this->collection2bson(IDATABASE_PROJECTS, array(
-                '_id' => myMongoId($_id)
-            ));
-            $zip->addFile($filename, IDATABASE_PROJECTS . '.bson');
-            
-            // 获取密钥信息
-            $filename = $this->collection2bson(IDATABASE_KEYS, array(
-                'project_id' => $_id
-            ));
-            $zip->addFile($filename, IDATABASE_KEYS . '.bson');
-            
-            // 添加集合数据
-            $filename = $this->collection2bson(IDATABASE_COLLECTIONS, array(
-                'project_id' => $_id
-            ));
-            $zip->addFile($filename, IDATABASE_COLLECTIONS . '.bson');
-            
-            // 添加结构数据
-            $collection_ids = array();
-            $cursor = $this->_collection->find(array(
-                'project_id' => $_id
-            ));
-            while ($cursor->hasNext()) {
-                $row = $cursor->getNext();
-                $collection_ids[] = $row['_id']->__toString();
-            }
-            
-            $filename = $this->collection2bson(IDATABASE_STRUCTURES, array(
-                'collection_id' => array(
-                    '$in' => $collection_ids
-                )
-            ));
-            $zip->addFile($filename, IDATABASE_STRUCTURES . '.bson');
-            
-            // 获取映射信息
-            $filename = $this->collection2bson(IDATABASE_MAPPING, array(
-                'collection_id' => array(
-                    '$in' => $collection_ids
-                )
-            ));
-            $zip->addFile($filename, IDATABASE_MAPPING . '.bson');
-            
-            // 导出集合数据信息
-            if (! empty($collection_ids)) {
-                foreach ($collection_ids as $collection_id) {
-                    $filename = $this->collection2bson(iCollectionName($collection_id), array());
-                    $zip->addFile($filename, iCollectionName($collection_id) . '.bson');
-                }
-            }
+        resetTimeMemLimit();
+        $project_id = isset($_REQUEST['__PROJECT_ID__']) ? trim($_REQUEST['__PROJECT_ID__']) : '';
+        $wait = $this->params()->fromQuery('wait', null);
+        $cacheKey = 'bson_export_' . $project_id;
+        if ($this->cache($cacheKey) !== null) {
+            $zip = $this->cache($cacheKey);
+            fb($zip,'LOG');
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment;filename="bson_' . date('YmdHis') . '.zip"');
+            header('Cache-Control: max-age=0');
+            echo $this->_file->getFileFromGridFS($zip);
+            //执行清理工作
+            $this->cache()->remove($cacheKey);
+            $this->_file->removeFileFromGridFS($zip);
+            exit();
+        } elseif ($wait) {
+        	return $this->msg(true, '请求处理中……');
+        } else {
+            // 任务交给后台worker执行
+            $params = array(
+                'key' => $cacheKey,
+                '_id' => $project_id
+            );
+            fb($params, 'LOG');
+            $jobHandle = $this->_gmClient->doBackground('bsonExport', serialize($params), $cacheKey);
+            return $this->msg(true, '请求已被受理');
         }
-        $zip->close();
         
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment;filename="bson.zip"');
-        header('Cache-Control: max-age=0');
-        echo file_get_contents($tmp);
-        exit();
+        // $tmp = tempnam(sys_get_temp_dir(), 'zip_');
+        // $zip = new \ZipArchive();
+        // $res = $zip->open($tmp, \ZipArchive::CREATE);
+        // if ($res === true) {
+        // // 添加项目数据
+        // $filename = $this->collection2bson(IDATABASE_PROJECTS, array(
+        // '_id' => myMongoId($_id)
+        // ));
+        // $zip->addFile($filename, IDATABASE_PROJECTS . '.bson');
+        
+        // // 获取密钥信息
+        // $filename = $this->collection2bson(IDATABASE_KEYS, array(
+        // 'project_id' => $_id
+        // ));
+        // $zip->addFile($filename, IDATABASE_KEYS . '.bson');
+        
+        // // 添加集合数据
+        // $filename = $this->collection2bson(IDATABASE_COLLECTIONS, array(
+        // 'project_id' => $_id
+        // ));
+        // $zip->addFile($filename, IDATABASE_COLLECTIONS . '.bson');
+        
+        // // 添加结构数据
+        // $collection_ids = array();
+        // $cursor = $this->_collection->find(array(
+        // 'project_id' => $_id
+        // ));
+        // while ($cursor->hasNext()) {
+        // $row = $cursor->getNext();
+        // $collection_ids[] = $row['_id']->__toString();
+        // }
+        
+        // $filename = $this->collection2bson(IDATABASE_STRUCTURES, array(
+        // 'collection_id' => array(
+        // '$in' => $collection_ids
+        // )
+        // ));
+        // $zip->addFile($filename, IDATABASE_STRUCTURES . '.bson');
+        
+        // // 获取映射信息
+        // $filename = $this->collection2bson(IDATABASE_MAPPING, array(
+        // 'collection_id' => array(
+        // '$in' => $collection_ids
+        // )
+        // ));
+        // $zip->addFile($filename, IDATABASE_MAPPING . '.bson');
+        
+        // // 导出集合数据信息
+        // if (! empty($collection_ids)) {
+        // foreach ($collection_ids as $collection_id) {
+        // $filename = $this->collection2bson(iCollectionName($collection_id), array());
+        // $zip->addFile($filename, iCollectionName($collection_id) . '.bson');
+        // }
+        // }
+        // }
+        // $zip->close();
     }
 
     /**

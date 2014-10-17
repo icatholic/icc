@@ -136,6 +136,11 @@ Ext.define('icc.view.idatabase.Collection.Grid', {
 							action : 'csvimport'
 						}, {
 							xtype : 'button',
+							text : 'Bson导出',
+							iconCls : 'export',
+							action : 'bsonexport'
+						}, {
+							xtype : 'button',
 							text : '同步插件',
 							iconCls : 'sync',
 							action : 'sync'

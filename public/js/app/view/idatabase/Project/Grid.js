@@ -93,6 +93,11 @@ Ext.define('icc.view.idatabase.Project.Grid', {
 							text: '插件管理',
 							iconCls: 'plugin',
 							action: 'plugin'
+						}, {
+							xtype: 'button',
+							text: 'BSON数据导出',
+							iconCls: 'export',
+							action: 'export'
 						}]
 					}
 				}, '-',

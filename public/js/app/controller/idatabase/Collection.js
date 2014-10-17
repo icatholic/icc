@@ -484,6 +484,68 @@ Ext.define('icc.controller.idatabase.Collection', {
 				}, me);
 			}
 		};
+		
+		listeners[controllerName + 'Grid button[action=bsonexport]'] = {
+				click: function(button) {
+					var grid = button.up('gridpanel');
+					var selections = grid.getSelectionModel().getSelection();
+					if (selections.length == 0) {
+						Ext.Msg.alert('提示信息', '请选择一项您要操作的集合');
+						return false;
+					}
+					var record = selections[0];
+					var id = record.get('_id');
+					
+					Ext.Msg.confirm('提示信息', '请确认你要导出当前集合的BSON数据?', function(btn) {
+						if (btn == 'yes') {
+							var grid = button.up('gridpanel');
+							var mask = new Ext.LoadMask(Ext.getBody(), {
+								autoShow : true,
+								msg : "BSON数据创建中，如果数据量较大可能需要等待较长时间，请耐心等待",
+								useMsg : true
+							});
+
+							button.setDisabled(true);
+							var loop = 0;
+							var interval = setInterval(function () {
+								var params = {
+									'__PROJECT_ID__': grid.__PROJECT_ID__,
+									'__COLLECTION_ID__' : id
+								};
+								if(loop > 0) {
+									params.wait = true;
+								}
+								Ext.Ajax.request({
+									url: '/idatabase/data/export-bson',
+									params: params,
+									method : 'GET',
+									success: function(response) {
+										var text = Ext.JSON.decode(response.responseText, true);
+										if(loop==0) {
+											if(text.success) {
+												clearInterval(interval);
+												mask.hide();
+												Ext.Msg.alert('提示信息', text.msg);
+											}
+										}
+										if(text.success) {
+											clearInterval(interval);
+											mask.hide();
+											button.setDisabled(false);
+											delete params.wait;
+											window.location.href = '/idatabase/data/export-bson?' + Ext.Object.toQueryString(params);
+											return true;
+										}
+									}
+								});
+								loop += 1;
+							},5000);
+						}
+					}, me);
+				}
+			};
+			
+		
 
 		listeners[controllerName + 'Grid button[action=hook]'] = {
 			click: function(button) {
