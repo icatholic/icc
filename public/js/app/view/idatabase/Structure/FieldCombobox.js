@@ -22,6 +22,13 @@ Ext.define('icc.view.idatabase.Structure.FieldCombobox', {
 				insertRecord['field'] = '__CREATE_TIME__';
 				store.insert(0, Ext.create(store.model, insertRecord));
 			}
+			var rec = store.findRecord('field', '__MODIFY_TIME__', 0, false, false, true);
+			if (rec == null) {
+				var insertRecord = {};
+				insertRecord['label'] = '修改时间';
+				insertRecord['field'] = '__MODIFY_TIME__';
+				store.insert(1, Ext.create(store.model, insertRecord));
+			}
 			return true;
 		});
 

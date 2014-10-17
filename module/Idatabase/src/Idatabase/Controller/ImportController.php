@@ -130,6 +130,9 @@ class ImportController extends Action
         }
         
         $bytes = file_get_contents($upload['tmp_name']);
+        if (! detectUTF8($bytes)) {
+            return $this->msg(false, '请使用文本编辑器将文件转化为UTF-8格式');
+        }
         $fileInfo = $this->_file->storeBytesToGridFS($bytes, 'import.csv');
         $key = $fileInfo['_id']->__toString();
         
@@ -137,7 +140,8 @@ class ImportController extends Action
         $workload['key'] = $key;
         $workload['collection_id'] = $collection_id;
         $workload['physicalDrop'] = $physicalDrop;
-        $jobHandle = $this->_gmClient->doBackground('dataImport', serialize($workload), $key);
+        // $jobHandle = $this->_gmClient->doBackground('dataImport', serialize($workload), $key);
+        $jobHandle = $this->_gmClient->doBackground('bsonImport', serialize($workload), $key);
         $stat = $this->_gmClient->jobStatus($jobHandle);
         if (isset($stat[0]) && $stat[0]) {
             return $this->msg(true, '数据导入任务已经被受理，请稍后片刻若干分钟，导入时间取决于数据量(1w/s)。');
@@ -224,6 +228,17 @@ class ImportController extends Action
                     $this->_data->insertByFindAndModify($insertData);
                     unset($insertData);
                 });
+                
+                // 用bson文件代替插入数据
+                // $bson = '';
+                // foreach ($sheetData as $rowNumber=>$row) {
+                // $insertData = array();
+                // foreach ($titles as $col => $colName) {
+                // $insertData[$colName] = formatData($row[$col], $this->_fields[$colName]);
+                // }
+                // $bson .= bson_encode($insertData);
+                // }
+                
                 unset($sheetData);
                 return $this->msg(true, '导入成功');
             } else {

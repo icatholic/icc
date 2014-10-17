@@ -662,64 +662,6 @@ function addrToGeo($address, $city = '')
 }
 
 /**
- * 分词处理，需要服务器安装scwc分词库作为支持
- *
- * @param string $str            
- * @return Array
- */
-function scws($str)
-{
-    if (! function_exists('scws_open'))
-        return false;
-    
-    $rst = array();
-    $str = preg_replace("/[\s\t\r\n]+/", '', $str);
-    if (! empty($str)) {
-        $sh = scws_open();
-        scws_set_charset($sh, 'utf8');
-        scws_set_ignore($sh, true);
-        scws_set_multi($sh, SCWS_MULTI_SHORT | SCWS_MULTI_DUALITY);
-        scws_set_duality($sh, true);
-        scws_send_text($sh, $str);
-        while ($row = scws_get_result($sh)) {
-            $rst = array_merge($rst, $row);
-        }
-        scws_close($sh);
-    }
-    return $rst;
-}
-
-/**
- * 分词处理，取出词频最高的词组，并可以指定词性进行查找
- *
- * @param string $str            
- * @param int $limit
- *            可选参数，返回的词的最大数量，缺省是 10
- * @param string $attr
- *            可选参数，是一系列词性组成的字符串，各词性之间以半角的逗号隔开， 这表示返回的词性必须在列表中，如果以~开头，则表示取反，词性必须不在列表中，缺省为NULL，返回全部词性，不过滤。
- * @return multitype:
- */
-function scwsTop($str, $limit = 10, $attr = null)
-{
-    if (! function_exists('scws_open'))
-        return false;
-    
-    $rst = array();
-    $str = preg_replace("/[\s\t\r\n]+/", '', $str);
-    if (! empty($str)) {
-        $sh = scws_open();
-        scws_set_charset($sh, 'utf8');
-        scws_set_ignore($sh, true);
-        scws_set_multi($sh, SCWS_MULTI_SHORT | SCWS_MULTI_DUALITY);
-        scws_set_duality($sh, true);
-        scws_send_text($sh, $str);
-        $rst = scws_get_tops($sh, $limit, $attr);
-        scws_close($sh);
-    }
-    return $rst;
-}
-
-/**
  * 对于fastcgi模式加快返回速度
  */
 if (! function_exists("fastcgi_finish_request")) {
@@ -998,6 +940,8 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
             var xAxisField = this.{$statisticInfo['xAxisField']};  
             var yAxisField = this.{$statisticInfo['yAxisField']};  
             var xAxisTitle = '{$statisticInfo['xAxisTitle']}'; 
+            var yAxisType = '{$statisticInfo['yAxisType']}';
+            
             var key = '';
             var rst = {
                total : isNumber(yAxisField) ? yAxisField : 0,
@@ -1006,6 +950,16 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                min : isNumber(yAxisField) ? yAxisField : Number.POSITIVE_INFINITY,
                val : [yAxisField]
             };
+            
+            if(yAxisType=='unique'||yAxisType=='distinct') {
+                if(xAxisType=='total') {
+                    return emit(yAxisField,rst);
+                }
+                
+                if(isString(yAxisField)) {
+                    yAxisField = parseInt(hex_md5(yAxisField),16).toString(36).substring(0,6);
+                }
+            }
 
             if(xAxisField==null ||yAxisField==null) {
                 key = '__OTHERS__';
@@ -1121,7 +1075,9 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                   } else if(yAxisType=='unique'||yAxisType=='distinct') {
                       if(values[idx].val instanceof Array) {
                           values[idx].val.forEach(function(v,i){
-                              rst.val.push(v);
+                              if(rst.val.indexOf(v)===-1) {
+                                  rst.val.push(v);
+                              }
                           });   
                       }
                   } else if(yAxisType=='avg') {
@@ -1315,7 +1271,7 @@ function logError($msg)
 
 /**
  * 将文件转化为zip
- * 
+ *
  * @param string $filename            
  * @param string $content            
  * @return string boolean
@@ -1334,4 +1290,22 @@ function fileToZipStream($filename, $content)
     } else {
         return false;
     }
+}
+
+/**
+ * 检测字符串是否为UTF-8
+ * @param string $string
+ * @return number
+ */
+function detectUTF8($string)
+{
+    return preg_match('%(?:
+        [\xC2-\xDF][\x80-\xBF]
+        |\xE0[\xA0-\xBF][\x80-\xBF]
+        |[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}
+        |\xED[\x80-\x9F][\x80-\xBF]    
+        |\xF0[\x90-\xBF][\x80-\xBF]{2}
+        |[\xF1-\xF3][\x80-\xBF]{3}
+        |\xF4[\x80-\x8F][\x80-\xBF]{2}
+        )+%xs', $string);
 }

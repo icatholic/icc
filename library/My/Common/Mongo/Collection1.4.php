@@ -1059,7 +1059,7 @@ class MongoCollection extends \MongoCollection
      *
      * @param array $command            
      */
-    public function mapReduce($out = null, $map, $reduce, $query = array(), $finalize = null, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
+    public function mapReduce($out = null, $map, $reduce, $query = array(), $finalize = null, $method = 'replace', $scope = null, $sort = array('_id'=>1), $limit = null)
     {
         if ($out == null) {
             $out = md5(serialize(func_get_args()));
@@ -1082,9 +1082,6 @@ class MongoCollection extends \MongoCollection
                     ));
                     return false;
                 } else {
-                    if (isset($check['isRunning']) && $check['isRunning']) {
-                        return true;
-                    }
                     if ($check['isRunning'] && isset($check['expire']) && $check['expire'] instanceof \MongoDate) {
                         if ($check['expire']->sec > time()) {
                             return true;
@@ -1093,6 +1090,10 @@ class MongoCollection extends \MongoCollection
                             return false;
                         }
                     }
+                    if (isset($check['isRunning']) && $check['isRunning']) {
+                    	return true;
+                    }
+                    
                     $locks->update(array(
                         'out' => $out
                     ), array(

@@ -24,6 +24,12 @@ class DataController extends Action
 
     private $_file;
 
+    private $_structure;
+
+    private $_schema = array();
+
+    private $_fields = array();
+
     public function init()
     {
         resetTimeMemLimit(0);
@@ -34,6 +40,7 @@ class DataController extends Action
         $this->_collection = $this->model('Idatabase\Model\Collection');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_file = $this->model('Idatabase\Model\File');
+        $this->_structure = $this->model('Idatabase\Model\Structure');
         
         $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
         $this->_mapping->setReadPreference(\MongoClient::RP_SECONDARY);
@@ -185,14 +192,14 @@ class DataController extends Action
             return false;
         }
     }
-
+    
     /**
-     * 导入数据任务
+     * 采用bson文件格式的方式导入
      */
-    public function importAction()
+    public function importBsonAction()
     {
         $cache = $this->cache();
-        $this->_worker->addFunction("dataImport", function (\GearmanJob $job) use($cache)
+        $this->_worker->addFunction("bsonImport", function (\GearmanJob $job) use($cache)
         {
             $iconvBin = '/usr/bin/';
             $mongoBin = '/home/mongodb/bin/';
@@ -208,6 +215,7 @@ class DataController extends Action
             $key = $params['key'];
             $collection_id = $params['collection_id'];
             $physicalDrop = $params['physicalDrop'];
+            $this->getSchema($collection_id); // 获取集合的数据结构
             $this->_data->setCollection(iCollectionName($collection_id));
             
             if ($physicalDrop) {
@@ -215,141 +223,7 @@ class DataController extends Action
                 $exportCmd = $mongoBin . "mongodump --host {$host} --port {$port} -d $dbName -c idatabase_collection_{$collection_id} -o {$out}";
                 $fp = popen($exportCmd, 'r');
                 pclose($fp);
-                
-                // echo "\n";
-                
-                // 将bson导入到备份数据库
-                $bson = $out . $dbName . '/idatabase_collection_' . $collection_id . '.bson';
-                $backupCollection = 'bak_' . date("YmdHis") . '_' . $collection_id;
-                $restoreCmd = $mongoBin . "mongorestore --host {$host} --port {$port} -d {$backupDbName} -c {$backupCollection} {$bson}";
-                $fp = popen($restoreCmd, 'r');
-                pclose($fp);
-                
-                // 删除导出的bson文件
-                unlink($bson);
-                
-                // drop集合数据库
-                $this->_data->physicalDrop();
-            }
-            
-            // 找到集合中的最后一条
-            $cursor = $this->_data->find(array());
-            $cursor->sort(array(
-                '_id' => - 1
-            ));
-            $cursor->limit(1);
-            if ($cursor->count() != 0) {
-                $lastRow = $cursor->getNext();
-            }
-            
-            // 加载csv数据
-            $csv = $this->_file->getFileFromGridFS($key);
-            $this->_file->removeFileFromGridFS($key);
-            
-            if (empty($csv)) {
-                echo '$csv is empty';
-                $job->sendFail();
-                return false;
-            }
-            
-            // 获取导入字段
-            $arr = $this->csv2arr($csv);
-            if (empty($arr)) {
-                echo '$arr is empty';
-                $job->sendFail();
-                return false;
-            }
-            
-            $title = array_shift($arr);
-            array_walk($title, function (&$items)
-            {
-                $items = trim($items);
-            });
-            $fields = join(',', $title);
-            
-            // 创建临时文件用于导入csv使用
-            $tempNoIconv = tempnam(sys_get_temp_dir(), 'csv_import_');
-            $temp = tempnam(sys_get_temp_dir(), 'csv_import_');
-            $handle = fopen($tempNoIconv, 'w');
-            foreach ($arr as $row) {
-                fputcsv($handle, $row);
-            }
-            fclose($handle);
-            
-            // 进行编码转换,强制转化为UTF-8
-            $iconvCmd = $iconvBin . 'iconv -t UTF-8 ' . $tempNoIconv . ' -o ' . $temp;
-            $fp = popen($iconvCmd, 'r');
-            pclose($fp);
-            unlink($tempNoIconv);
-            
-            // 执行导入脚本
-            echo $importCmd = $mongoBin . "mongoimport -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} -f {$fields} --ignoreBlanks --file {$temp} --type csv";
-            $fp = popen($importCmd, 'r');
-            pclose($fp);
-            unlink($temp);
-            
-            // 增加一些系统默认参数
-            $now = new \MongoDate();
-            if (isset($lastRow) && $lastRow['_id'] instanceof \MongoId) {
-                $update = array(
-                    '_id' => array(
-                        '$gt' => $lastRow['_id']
-                    )
-                );
-            } else {
-                $update = array();
-            }
-            $this->_data->physicalUpdate($update, array(
-                '$set' => array(
-                    '__REMOVED__' => false,
-                    '__CREATE_TIME__' => $now,
-                    '__MODIFY_TIME__' => $now
-                )
-            ));
-            $job->sendComplete('complete');
-            return true;
-        });
-        
-        while ($this->_worker->work()) {
-            if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
-                echo "return_code: " . $this->_worker->returnCode() . "\n";
-            }
-        }
-        return $this->response;
-    }
 
-    /**
-     * 导入数据任务
-     */
-    public function importJavaAction()
-    {
-        $cache = $this->cache();
-        $this->_worker->addFunction("dataJavaImport", function (\GearmanJob $job) use($cache)
-        {
-            $iconvBin = '/usr/bin/';
-            $mongoBin = '/usr/local/jdk1.8.0_20/bin/java mongomtimport ';
-            $host = '10.0.0.31';
-            $port = '57017';
-            $dbName = 'ICCv1';
-            $backupDbName = 'backup';
-            $out = sys_get_temp_dir() . '/';
-            
-            $job->handle();
-            $workload = $job->workload();
-            $params = unserialize($workload);
-            $key = $params['key'];
-            $collection_id = $params['collection_id'];
-            $physicalDrop = $params['physicalDrop'];
-            $this->_data->setCollection(iCollectionName($collection_id));
-            
-            if ($physicalDrop) {
-                // 导出数据为bson
-                $exportCmd = $mongoBin . "mongodump --host {$host} --port {$port} -d $dbName -c idatabase_collection_{$collection_id} -o {$out}";
-                $fp = popen($exportCmd, 'r');
-                pclose($fp);
-                
-                // echo "\n";
-                
                 // 将bson导入到备份数据库
                 $bson = $out . $dbName . '/idatabase_collection_' . $collection_id . '.bson';
                 $backupCollection = 'bak_' . date("YmdHis") . '_' . $collection_id;
@@ -364,16 +238,6 @@ class DataController extends Action
                 $this->_data->physicalDrop();
             }
             
-            // 找到集合中的最后一条
-            $cursor = $this->_data->find(array());
-            $cursor->sort(array(
-                '_id' => - 1
-            ));
-            $cursor->limit(1);
-            if ($cursor->count() != 0) {
-                $lastRow = $cursor->getNext();
-            }
-            
             // 加载csv数据
             $csv = $this->_file->getFileFromGridFS($key);
             $this->_file->removeFileFromGridFS($key);
@@ -383,64 +247,58 @@ class DataController extends Action
                 $job->sendFail();
                 return false;
             }
-            
-            // 获取导入字段
+
             $arr = $this->csv2arr($csv);
+            unset($csv);//释放内存
+            
             if (empty($arr)) {
                 echo '$arr is empty';
                 $job->sendFail();
                 return false;
             }
             
-            $title = array_shift($arr);
-            array_walk($title, function (&$items)
-            {
-                $items = mb_convert_encoding(trim($items), "UTF-8");
-                if (strpos($items, ':') === false) {
-                    $items .= ":str";
-                }
-            });
-            $fields = join(',', $title);
-            
-            // 创建临时文件用于导入csv使用
-            $tempNoIconv = tempnam(sys_get_temp_dir(), 'csv_import_');
-            $temp = tempnam(sys_get_temp_dir(), 'csv_import_');
-            $handle = fopen($tempNoIconv, 'w');
-            foreach ($arr as $row) {
-                fputcsv($handle, $row);
+            $firstRow = array_shift($arr);
+            $titles = array();
+            foreach ($firstRow as $col => $value) {
+                $value = trim($value);
+                if (in_array($value, array_keys($this->_schema), true)) {
+                    $titles[$col] = $this->_schema[$value];
+                } else 
+                    if (in_array($value, array_values($this->_schema), true)) {
+                        $titles[$col] = $value;
+                    }
             }
-            fclose($handle);
             
-            // 进行编码转换,强制转化为UTF-8
-            $iconvCmd = $iconvBin . 'iconv -t UTF-8 ' . $tempNoIconv . ' -o ' . $temp;
-            $fp = popen($iconvCmd, 'r');
-            pclose($fp);
-            unlink($tempNoIconv);
+            if (count($titles) == 0) {
+                echo '无匹配的标题或者标题字段，请检查导入数据的格式是否正确';
+                $job->sendFail();
+                return false;
+            }
+            
+            $bson = '';
+            $now = new \MongoDate();
+            $temp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'bson_' . uniqid() . '.bson';
+            $fp = fopen($temp, 'w');
+            foreach ($arr as $rowNumber => $row) {
+                $insertData = array();
+                foreach ($titles as $col => $colName) {
+                    $insertData[$colName] = formatData($row[$col], $this->_fields[$colName]);
+                }
+                $insertData['__REMOVED__'] = false;
+                $insertData['__CREATE_TIME__'] = $now;
+                $insertData['__MODIFY_TIME__'] = $now;
+                fwrite($fp, bson_encode($insertData));
+            }
+            fclose($fp);
             
             // 执行导入脚本
-            echo $importCmd = $mongoBin . " --host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} --fields {$fields} --type csv --threads 1  {$temp}";
+            echo $importCmd = $mongoBin . "mongorestore -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} $temp";
             $fp = popen($importCmd, 'r');
             pclose($fp);
             unlink($temp);
             
-            // 增加一些系统默认参数
-            $now = new \MongoDate();
-            if (isset($lastRow) && $lastRow['_id'] instanceof \MongoId) {
-                $update = array(
-                    '_id' => array(
-                        '$gt' => $lastRow['_id']
-                    )
-                );
-            } else {
-                $update = array();
-            }
-            $this->_data->physicalUpdate($update, array(
-                '$set' => array(
-                    '__REMOVED__' => false,
-                    '__CREATE_TIME__' => $now,
-                    '__MODIFY_TIME__' => $now
-                )
-            ));
+            echo "\ncomplete";
+            
             $job->sendComplete('complete');
             return true;
         });
@@ -484,11 +342,58 @@ class DataController extends Action
      * @param string $CsvString            
      * @return array
      */
-    private function csv2arr($CsvString)
+    private function csv2arr($csvString)
     {
-        $Data = str_getcsv($CsvString, "\n"); // parse the rows
-        foreach ($Data as &$Row)
-            $Row = str_getcsv($Row, ",");
-        return $Data;
+        $data = str_getcsv($csvString, "\n"); // parse the rows
+        foreach ($data as &$row)
+            $row = str_getcsv($row, ",");
+        return $data;
+    }
+
+    /**
+     * 获取集合的数据结构
+     *
+     * @param string $collection_id
+     *            获取集合的数据结构
+     * @return array
+     */
+    private function getSchema($collection_id)
+    {
+        $this->_schema = array();
+        $this->_fields = array();
+        $cursor = $this->_structure->find(array(
+            'collection_id' => $collection_id
+        ));
+        while ($cursor->hasNext()) {
+            $row = $cursor->getNext();
+            $this->_schema[$row['label']] = $row['field'];
+            $this->_fields[$row['field']] = $row['type'];
+        }
+        return true;
+    }
+
+    /**
+     * 根据集合的名称获取集合的_id
+     *
+     * @param string $name            
+     * @throws \Exception or string
+     */
+    private function getCollectionIdByName($name)
+    {
+        try {
+            new \MongoId($name);
+            return $name;
+        } catch (\MongoException $ex) {}
+        
+        $collectionInfo = $this->_collection->findOne(array(
+            'project_id' => $this->_project_id,
+            'name' => $name
+        ));
+        
+        if ($collectionInfo == null) {
+            throw new \Exception('集合名称不存在于指定项目');
+        }
+        
+        return $collectionInfo['_id']->__toString();
     }
 }

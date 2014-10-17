@@ -39,9 +39,19 @@ abstract class Mongo
         }
         
         // 如果需要特殊配置，指定MongoClient的$options参数，默认已经满足大多数需求
-        $options = array(
-            'connect' => false
-        );
+        if (php_sapi_name() == 'cli') {
+            $options = array(
+                'connect' => false,
+                'readPreference' => \MongoClient::RP_SECONDARY,
+                'connectTimeoutMS' => 3600000,
+                'socketTimeoutMS' => 3600000,
+                'wTimeout' => 3600000
+            );
+        } else {
+            $options = array(
+                'connect' => false
+            );
+        }
         
         if (isset($cfg['options']) && ! empty($cfg['options'])) {
             $options = array_merge($options, $cfg['options']);
@@ -58,8 +68,9 @@ abstract class Mongo
                 $dnsString = 'mongodb://' . join(',', $clusterInfo['servers']);
                 if (class_exists('\MongoClient')) {
                     $connect = new \MongoClient($dnsString, $options);
-                    $connect->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED); // 读取数据主优先
-                                                                                     // $connect->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);//读取数据从优先
+                    $connect->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED); 
+                    // 读取数据主优先
+                    // $connect->setReadPreference(\MongoClient::RP_SECONDARY_PREFERRED);//读取数据从优先
                     $cluster[$clusterName]['connect'] = $connect;
                 } else {
                     throw new \Exception('请安装PHP的Mongo1.4+版本的扩展');

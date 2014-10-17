@@ -109,6 +109,10 @@ class StatisticController extends Action
         $priority = intval($this->params()->fromPost('priority', 0)); // 优先级
         $interval = intval($this->params()->fromPost('interval', 3600)); // 统计执行间隔
         
+        if ($statisticPeriod == 0) {
+            $statisticPeriod = 3600;
+        }
+        
         if ($name == null) {
             return $this->msg(false, '请填写统计名称');
         }
@@ -239,6 +243,10 @@ class StatisticController extends Action
         $colspan = intval($this->params()->fromPost('colspan', 1)); // 行显示是否合并
         $priority = intval($this->params()->fromPost('priority', 0)); // 优先级
         $interval = intval($this->params()->fromPost('interval', 3600)); // 统计执行间隔
+        
+        if ($statisticPeriod == 0) {
+            $statisticPeriod = 3600;
+        }
         
         if ($name == null) {
             return $this->msg(false, '请填写统计名称');

@@ -180,7 +180,7 @@ class DataController extends Action
         'page',
         'limit',
         '__removed__',
-        '__modify_time__',
+        //'__modify_time__',
         '__old_id__',
         '__old_data__',
         '__project_id__',
@@ -523,6 +523,7 @@ class DataController extends Action
                         'query' => $query,
                         'method' => 'replace'
                     );
+                    fb($params,'LOG');
                     $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
                     $stat = $this->_gmClient->jobStatus($jobHandle);
                     if (isset($stat[0]) && $stat[0]) {
@@ -579,6 +580,14 @@ class DataController extends Action
                 $excel['result'] = $datas;
                 arrayToExcel($excel);
             } else {
+                if ($statisticInfo['yAxisType'] == 'unique' || $statisticInfo['yAxisType'] == 'distinct') {
+                    if ($statisticInfo['xAxisType'] == 'total') {
+                        fb($rst,'LOG');
+                        $datas = array(array('_id'=>'total','value'=>$rst->count(array())));
+                        return $this->rst($datas, 0, true);
+                    }
+                }
+                
                 if ($statisticInfo['seriesType'] != 'line') {
                     $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 20;
                     $datas = $rst->findAll(array(), array(

@@ -217,6 +217,28 @@ class ProjectController extends Action
     }
 
     /**
+     * 导出该站点的bson文件
+     */
+    public function exportBsonAction()
+    {
+        $_id = $this->params()->fromPost('_id', null);
+        // $projectInfo = $this->_project->findAll(array(
+        // '_id' => myMongoId($_id)
+        // ));
+        
+        $bson = '';
+        $projectInfo = $this->_project->findAll(array());
+        foreach($projectInfo as $project) {
+            $bson .= bson_encode($project);
+        }
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment;filename="' . IDATABASE_PROJECTS . '.zip"');
+        header('Cache-Control: max-age=0');
+        echo fileToZipStream(IDATABASE_PROJECTS . '.bson', $bson);
+        exit();
+    }
+
+    /**
      * 检测一个项目是否存在，根据名称和编号
      *
      * @param string $info            

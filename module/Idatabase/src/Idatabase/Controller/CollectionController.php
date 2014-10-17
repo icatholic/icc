@@ -87,6 +87,7 @@ class CollectionController extends Action
      */
     public function indexAction()
     {
+        $startTime = microtime(true);
         $search = trim($this->params()->fromQuery('query', ''));
         $action = trim($this->params()->fromQuery('action', ''));
         $start = intval($this->params()->fromQuery('start', 0));
@@ -149,6 +150,7 @@ class CollectionController extends Action
             
             $datas[] = $row;
         }
+        //fb(microtime(true) - $startTime, 'LOG');
         return $this->rst($datas, $cursor->count(), true);
     }
 

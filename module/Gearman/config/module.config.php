@@ -93,6 +93,15 @@ return array(
                         )
                     )
                 ),
+                'data_bson_import_worker' => array(
+                    'options' => array(
+                        'route' => 'data import bson worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Data',
+                            'action' => 'importBson'
+                        )
+                    )
+                ),
                 'common_worker' => array(
                     'options' => array(
                         'route' => 'common worker',

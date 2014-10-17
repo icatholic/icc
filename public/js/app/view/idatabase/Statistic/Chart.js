@@ -15,6 +15,7 @@ Ext.define('icc.view.idatabase.Statistic.Chart', {
 			max : '最大值',
 			min : '最小值',
 			unique : '唯一值',
+			distinct : '唯一值',
 			median : '中位数',
 			variance : '方差',
 			standard : '标准差'
