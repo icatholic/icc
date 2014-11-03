@@ -1109,7 +1109,7 @@ class MongoCollection extends \MongoCollection
                     }
                     
                     if (isset($check['isRunning']) && $check['isRunning']) {
-                    	return true;
+                        return true;
                     }
                     
                     $locks->update(array(
@@ -1154,7 +1154,9 @@ class MongoCollection extends \MongoCollection
                 $command['mapreduce'] = $this->_collection;
                 $command['map'] = ($map instanceof \MongoCode) ? $map : new \MongoCode($map);
                 $command['reduce'] = ($reduce instanceof \MongoCode) ? $reduce : new \MongoCode($reduce);
-                $command['query'] = $this->appendQuery($query);
+                $query = $this->appendQuery($query);
+                if (! empty($query))
+                    $command['query'] = $query;
                 
                 if (! empty($finalize))
                     $command['finalize'] = ($finalize instanceof \MongoCode) ? $finalize : new \MongoCode($finalize);

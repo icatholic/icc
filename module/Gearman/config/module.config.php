@@ -57,6 +57,15 @@ return array(
                         )
                     )
                 ),
+                'mapreduce_test_worker' => array(
+                    'options' => array(
+                        'route' => 'mapreduce test worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Index',
+                            'action' => 'mrTest'
+                        )
+                    )
+                ),
                 'plugin_sync_worker' => array(
                     'options' => array(
                         'route' => 'plugin sync worker',

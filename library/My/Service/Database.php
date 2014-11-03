@@ -8,6 +8,7 @@ namespace My\Service;
 
 use My\Common\MongoCollection;
 use Zend\Config\Config;
+use Zend\Validator\IsInstanceOf;
 
 class Database
 {
@@ -654,7 +655,11 @@ class Database
             array_walk_recursive($rst, function (&$item, $key)
             {
                 if (in_array($key, array_keys($this->_fileField), true) && $this->_fileField[$key]['type'] === 'filefield') {
-                    $item = (empty($this->_fileField[$key]['cdnUrl']) ? DOMAIN : $this->_fileField[$key]['cdnUrl']) . '/file/' . $item;
+                    if (! empty($item)) {
+                        if (empty($this->_fileField[$key]['displayFileId'])) {
+                            $item = (empty($this->_fileField[$key]['cdnUrl']) ? DOMAIN : $this->_fileField[$key]['cdnUrl']) . '/file/' . $item;
+                        }
+                    }
                 }
             });
         }
@@ -711,13 +716,16 @@ class Database
             if (empty($rst)) {
                 return array();
             }
-            array_walk_recursive($rst, function (&$value, $key)
-            {
-                if ($key === '_id') {
-                    if (! ($value instanceof \MongoId) && strlen($value) === 24)
-                        $value = new \MongoId($value);
-                }
-            });
+            
+            if (is_array($rst)) {
+                array_walk_recursive($rst, function (&$value, $key)
+                {
+                    if ($key === '_id') {
+                        if (! ($value instanceof \MongoId) && strlen($value) === 24)
+                            $value = new \MongoId($value);
+                    }
+                });
+            }
             return $rst;
         }
         throw new \SoapFault(500, '参数格式错误:无法进行有效的反序列化');

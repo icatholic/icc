@@ -284,8 +284,13 @@ class DataController extends Action
         $start = $start > 0 ? $start : 0;
         
         if ($action == 'search' || $action == 'excel') {
-            $query = $this->searchCondition();
-            fb($query, 'LOG');
+            try {
+                $query = $this->searchCondition();
+            }
+            catch(\Exception $e) {
+                fb($query, 'LOG');
+                return $this->msg(false, '无效的检索条件，请检查你的输入');
+            }
         }
         
         if ($search != null) {
@@ -395,8 +400,19 @@ class DataController extends Action
                     $gridFSFile = $this->_data->getGridFsFileById($file['_id']);
                     echo fileToZipStream($exportGearmanKey . '.csv', $gridFSFile->getBytes());
                     exit();
+                } elseif ($file['outType'] == 'table') {
+                    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=UTF-8');
+                    header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.xlsx"');
+                    header('Cache-Control: max-age=0');
+                    $gridFSFile = $this->_data->getGridFsFileById($file['_id']);
+                    $stream = $gridFSFile->getResource();
+                    while (! feof($stream)) {
+                        echo fread($stream, 8192);
+                        ob_flush();
+                    }
+                    exit();
                 } else {
-                    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=UTF-8');
                     header('Content-Disposition: attachment;filename="' . $exportGearmanKey . '.xlsx"');
                     header('Cache-Control: max-age=0');
                     $gridFSFile = $this->_data->getGridFsFileById($file['_id']);
@@ -503,18 +519,26 @@ class DataController extends Action
             // 增加默认统计条件结束
             
             // 采用数据导出结果
+            $rstCollectionName = $statistic_id;
+            if (in_array($statisticInfo['yAxisType'], array(
+            		'unique',
+            		'distinct'
+            ))) {
+            	$rstCollectionName .= '_unique';
+            }
+            
             if ($export) {
                 if ($this->cache($statistic_id) !== null) {
                     return $this->msg(true, '重新统计中');
                 } else {
-                    $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                    $rst = $this->collection()->secondary($rstCollectionName, DB_MAPREDUCE, DEFAULT_CLUSTER);
                     $rst->setNoAppendQuery(true);
                 }
             } else {
                 if ($this->cache($statistic_id) !== null) {
                     return $this->msg(true, '统计进行中……');
                 } elseif ($wait) {
-                    $rst = $this->collection()->secondary($statistic_id, DB_MAPREDUCE, DEFAULT_CLUSTER);
+                    $rst = $this->collection()->secondary($rstCollectionName, DB_MAPREDUCE, DEFAULT_CLUSTER);
                     if ($rst instanceof MongoCollection) {
                         $rst->setNoAppendQuery(true);
                     }
@@ -528,7 +552,7 @@ class DataController extends Action
                         'method' => 'replace'
                     );
                     fb($params, 'LOG');
-                    $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
+                    $jobHandle = $this->_gmClient->doBackground('mapreduce_test', serialize($params), $statistic_id);
                     $stat = $this->_gmClient->jobStatus($jobHandle);
                     if (isset($stat[0]) && $stat[0]) {
                         $this->cache()->save(true, $statistic_id, 60);
@@ -536,8 +560,7 @@ class DataController extends Action
                     return $this->msg(true, '统计请求被受理');
                 }
             }
-            // $rst = mapReduce($statistic_id, $this->_data, $statisticInfo, $query);
-            
+
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {
                     case 500:
@@ -584,19 +607,6 @@ class DataController extends Action
                 $excel['result'] = $datas;
                 arrayToExcel($excel);
             } else {
-                if ($statisticInfo['yAxisType'] == 'unique' || $statisticInfo['yAxisType'] == 'distinct') {
-                    if ($statisticInfo['xAxisType'] == 'total') {
-                        fb($rst, 'LOG');
-                        $datas = array(
-                            array(
-                                '_id' => 'total',
-                                'value' => $rst->count(array())
-                            )
-                        );
-                        return $this->rst($datas, 0, true);
-                    }
-                }
-                
                 if ($statisticInfo['seriesType'] != 'line') {
                     $limit = intval($statisticInfo['maxShowNumber']) > 0 ? intval($statisticInfo['maxShowNumber']) : 20;
                     $datas = $rst->findAll(array(), array(

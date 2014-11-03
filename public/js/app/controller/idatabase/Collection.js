@@ -954,7 +954,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 							}
 							else {
 								if (record.get('showImage') != undefined && record.get('showImage') == true) {
-									column.tpl = '<a href="' + cdnUrl + '/file/{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '/file/{' + recordfield + '}/w/100/h/100" border="0" /></a>';
+									column.tpl = '<a href="' + cdnUrl + '/file/{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '/file/{' + recordField + '}/w/64/h/64" border="0" /></a>';
 								}
 							}
 							break;

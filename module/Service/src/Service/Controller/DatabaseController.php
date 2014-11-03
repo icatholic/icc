@@ -18,7 +18,7 @@ class DatabaseController extends Action
 
     /**
      * 提供数据集合的操作服务
-     * 
+     *
      * @see \Zend\Mvc\Controller\AbstractActionController::indexAction()
      */
     public function indexAction()
@@ -65,7 +65,7 @@ class DatabaseController extends Action
 
     /**
      * 用于服务器端调试的方法
-     * 
+     *
      * @return \Zend\Stdlib\ResponseInterface
      */
     public function testAction()
@@ -74,7 +74,8 @@ class DatabaseController extends Action
         $obj = new Database($config);
         $obj->authenticate('52dce281489619e902452b46', '687797961627269ff11a3f2f41ae90b014589fde', 'e3d47b82de94098cfc16966cbea8d917', '53059145489619c06a3dc01f');
         $obj->setCollection('test_data_type');
-        var_dump($obj->findAll(serialize(array()), serialize(array()), serialize(array())));
+        // var_dump($obj->findAll(serialize(array()), serialize(array()), serialize(array())));
+        var_dump($obj->getGridFsFileById(serialize('542a4dd0499619c8548b45bc')));
         return $this->response;
     }
 }

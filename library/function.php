@@ -102,6 +102,48 @@ function arrayToCVS($datas, $name = null, $output = null)
 }
 
 /**
+ * 将数组数据导出为table文件用于直接输出excel表格
+ *
+ * @param array $datas            
+ * @param string $name            
+ * @param string $output            
+ */
+function arrayToTable($datas, $name = null, $output = null)
+{
+    resetTimeMemLimit();
+    if (empty($name)) {
+        $name = 'export_' . date("Y_m_d_H_i_s");
+    }
+    
+    $result = array_merge(array(
+        $datas['title']
+    ), $datas['result']);
+    
+    if (empty($output)) {
+        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+        header('Content-Disposition: attachment;filename="' . $name . '.xls"');
+        header('Cache-Control: max-age=0');
+        echo "<table>";
+        foreach ($result as $row) {
+            echo '<tr><td>' . join("</td><td>", $row) . '</td></tr>';
+            ob_flush();
+        }
+        echo "</table>";
+        exit();
+    } else {
+        $fp = fopen($output, 'w');
+        fwrite($fp, "<table>");
+        foreach ($result as $row) {
+            $line = '<tr><td>' . join("</td><td>", $row) . '</td></tr>';
+            fwrite($fp, $line);
+        }
+        fwrite($fp, "</table>");
+        fclose($fp);
+        return true;
+    }
+}
+
+/**
  * 计算cell所在的位置
  */
 function excelTitle($i)
@@ -935,6 +977,7 @@ function iCollectionName($_id)
  */
 function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $query, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
 {
+    //
     $map = "function(){
             var xAxisType = '{$statisticInfo['xAxisType']}';
             var xAxisField = this.{$statisticInfo['xAxisField']};  
@@ -950,7 +993,7 @@ function mapReduce($out = null, MongoCollection $dataModel, $statisticInfo, $que
                min : isNumber(yAxisField) ? yAxisField : Number.POSITIVE_INFINITY,
                val : [yAxisField]
             };
-            
+
             if(yAxisType=='unique'||yAxisType=='distinct') {
                 if(xAxisType=='total') {
                     return emit(yAxisField,rst);
@@ -1294,7 +1337,8 @@ function fileToZipStream($filename, $content)
 
 /**
  * 检测字符串是否为UTF-8
- * @param string $string
+ *
+ * @param string $string            
  * @return number
  */
 function detectUTF8($string)
@@ -1308,4 +1352,271 @@ function detectUTF8($string)
         |[\xF1-\xF3][\x80-\xBF]{3}
         |\xF4[\x80-\x8F][\x80-\xBF]{2}
         )+%xs', $string);
+}
+
+/**
+ * 增加新的map reduce统计工具，增加了对于mongodb的唯一数据进行处理
+ *
+ * @param string $out            
+ * @param MongoCollection $dataModel            
+ * @param array $statisticInfo            
+ * @param unknown $query            
+ * @param string $method            
+ * @param string $scope            
+ * @param unknown $sort            
+ * @param string $limit            
+ * @return Ambigous <boolean, multitype:number unknown Ambigous <string, mixed> , \My\Common\MongoCollection, multitype:number unknown string >|\My\Common\MongoCollection|Ambigous <boolean, \My\Common\MongoCollection, multitype:number unknown string , multitype:number unknown Ambigous <string, mixed> >
+ */
+function mapReduce1($out = null, MongoCollection $dataModel, $statisticInfo, $query, $method = 'replace', $scope = null, $sort = array('$natural'=>1), $limit = null)
+{
+    $map = "function(){
+	        var xAxisType = '{$statisticInfo['xAxisType']}';
+			var xAxisField = this.{$statisticInfo['xAxisField']};
+			var yAxisField = this.{$statisticInfo['yAxisField']};
+			var xAxisTitle = '{$statisticInfo['xAxisTitle']}';
+			var yAxisType = '{$statisticInfo['yAxisType']}';
+			var yAxisFieldValue = yAxisField;
+
+			var key = '';
+			var rst = {
+					total : isNumber(yAxisField) ? yAxisField : 0,
+					count : yAxisField!==null ? 1 : 0,
+					max : isNumber(yAxisField) ? yAxisField : Number.NEGATIVE_INFINITY,
+					min : isNumber(yAxisField) ? yAxisField : Number.POSITIVE_INFINITY,
+					val : [yAxisField]
+            };
+
+            if(xAxisField==null ||yAxisField==null) {
+                key = '__OTHERS__';
+                return emit(key,rst);
+            }
+            
+            if(xAxisType=='hour' || xAxisType=='day' || xAxisType=='month' || xAxisType=='year') {
+                if(xAxisField!==null) {
+                    try {
+                        var time = new Date(xAxisField);
+                        var timeSec = time.getTime();
+                        var year = time.getFullYear();
+                        var m = time.getMonth() + 1;
+                        var month = m<10 ? '0'+m : m;
+                        var d = time.getDate();
+                        var day = d<10 ? '0'+d : d;
+                        var h = time.getHours();
+                        var hour = h<10 ? '0'+h : h;
+                    } catch (e) {
+                        key = '__OTHERS__';
+                        return emit(key,rst);
+                    }
+                } else {
+                    key = '__OTHERS__';
+                    return emit(key,rst);
+                }
+            } else {
+                if(!isNumber(yAxisField)) {
+                    yAxisField = 0;
+                }
+            }
+
+            if(xAxisField instanceof Array || xAxisField instanceof Object) {
+                if(xAxisField instanceof NumberLong) {
+                    xAxisField = NumberInt(xAxisField);
+                } else {
+                    xAxisField = xAxisField.toString();
+                }
+            }
+
+            switch(xAxisType) {
+                case 'total':
+                    key = xAxisTitle;
+                    break;
+                case 'range':
+                    var	options = [
+                        0,
+                        1, 2, 5,
+                        10, 20, 50,
+                        100, 200, 500,
+                        1000, 2000, 5000,
+                        10000, 20000, 50000,
+                        100000, 200000, 500000,
+                        1000000, 2000000, 5000000,
+                        10000000, 20000000, 50000000,
+                        100000000, 200000000, 500000000,
+                        1000000000, Number.POSITIVE_INFINITY
+                    ];
+                    
+                    for(var index = 0; options[index] < field; index++) {
+                        key = options[index]+'-'+options[index+1];
+                    }
+                    break;
+                case 'day':
+                    key = year+'/'+month+'/'+day;
+                    break;
+                case 'month':
+                    key = year+'/'+month;
+                    break;
+                case 'year':
+                    key = year;
+                    break;
+                case 'hour':
+                    key = hour;
+                    break;
+                default :
+                    key = xAxisField;
+                    break;
+            }
+            
+            if(yAxisType=='unique'||yAxisType=='distinct') {
+                var newKey = {};
+                newKey[xAxisType] = key;
+                newKey['val'] = yAxisFieldValue;
+                return emit(newKey,rst);
+            }
+
+            return emit(key,rst);
+}";
+    
+    $reduce = "function(key,values){
+                var rst = {
+                    total : 0,
+                    count : 0,
+                    max : Number.NEGATIVE_INFINITY,
+                    min : Number.POSITIVE_INFINITY,
+                    val : []
+                };
+
+                var yAxisType = '{$statisticInfo['yAxisType']}';
+                var length = values.length;
+                if(yAxisType=='unique'||yAxisType=='distinct') {
+                        var count = 0;
+                        values.forEach(function(v) {
+                        rst['count'] += v['count'];
+                    });
+                    return rst;
+                }
+
+                for(var idx = 0; idx < length ; idx++) {
+                    if(yAxisType=='count') {
+                        rst.count += values[idx].count;
+                    } else if(yAxisType=='sum') {
+                        rst.total += values[idx].total;
+                    } else if(yAxisType=='max') {
+                        if(rst.max==null)
+                            rst.max = values[idx].max;
+                        else if(rst.max <= values[idx].max) {
+                            rst.max = values[idx].max;
+                        }
+                    } else if(yAxisType=='min') {
+                        if(rst.min==null) {
+                            rst.min = values[idx].min;
+                        }
+                        else if(rst.min >= values[idx].min) {
+                            rst.min = values[idx].min;
+                        }
+                    } else if(yAxisType=='avg') {
+                        rst.total += values[idx].total;
+                        rst.count += values[idx].count;
+                    } else if(yAxisType=='median') {
+                        values[idx].val.forEach(function(v,i){
+                            if(typeof(v)=='number') {
+                                rst.val.push(v);
+                            }
+                        });
+                    } else if(yAxisType=='variance') {
+                        rst.total += values[idx].total;
+                        rst.count += values[idx].count;
+                        values[idx].val.forEach(function(v,i){
+                            rst.val.push(v);
+                        });
+                    } else if(yAxisType=='standard') {
+                        rst.total += values[idx].total;
+                        rst.count += values[idx].count;
+                        values[idx].val.forEach(function(v,i){
+                            rst.val.push(v);
+                        });
+                    }
+                }
+                return rst;
+}";
+    
+    $finalize = "function(key,reducedValue){
+            var rst = 0;
+            var uniqueData = [];
+            var uniqueNumber = 0;
+            var yAxisType = '{$statisticInfo['yAxisType']}';
+            if(yAxisType=='count') {
+                rst = reducedValue.count;
+            }
+            else if(yAxisType=='sum') {
+                rst = reducedValue.total;
+            }
+            else if(yAxisType=='max') {
+                rst = reducedValue.max;
+            }
+            else if(yAxisType=='min') {
+        		rst = reducedValue.min;
+            }
+            else if(yAxisType=='unique' || yAxisType=='distinct') {
+        		return reducedValue.count;
+            }
+    		else if(yAxisType=='avg') {
+    		  rst = reducedValue.total / reducedValue.count;
+    		  rst = Math.round(rst*10000)/10000;
+            }
+    		else if(yAxisType=='median') {
+    		  reducedValue.val.sort(function(a,b){return a>b?1:-1});
+    		  var length = reducedValue.val.length;
+    		  rst = reducedValue.val[parseInt(Math.floor(length/2))];
+            }
+            else if(yAxisType=='variance') {
+                var avg = reducedValue.total / reducedValue.count;
+                var squared_Diff = 0;
+                var length = reducedValue.val.length;
+                for(var i=0;i<length;i++) {
+                    var deviation = reducedValue.val[i] - avg;
+                    squared_Diff += deviation * deviation;
+                }
+                rst = squared_Diff/length;
+                rst = Math.round(rst*10000)/10000;
+            }
+            else if(yAxisType=='standard') {
+                var avg = reducedValue.total / reducedValue.count;
+                var squared_Diff = 0;
+                var length = reducedValue.val.length;
+                for(var i=0;i<length;i++) {
+                    var deviation = reducedValue.val[i] - avg;
+                    squared_Diff += deviation * deviation;
+                }
+                rst = Math.sqrt(squared_Diff/length);
+                rst = Math.round(rst*10000)/10000;
+            }
+            return rst;
+}";
+    
+    $mapUnique = "function(){
+            var rst = {
+                count : 1
+            };
+            var xAxisType = '{$statisticInfo['xAxisType']}';
+            if(this['_id'][xAxisType]==null || this['_id'][xAxisType]==undefined) {
+                return false;
+            }
+            emit(this['_id'][xAxisType], rst);
+}";
+    
+    if ($statisticInfo['yAxisType'] == 'unique' || $statisticInfo['yAxisType'] == 'distinct') {
+        $dataModel->setReadPreference(\MongoClient::RP_SECONDARY);
+        $firstMrResult = $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
+        $firstMrResult->setNoAppendQuery(true);
+        if ($out != null) {
+            $out .= '_unique';
+        }
+        return $firstMrResult->mapReduce($out, $mapUnique, $reduce, array(
+            '_id' => array(
+                '$exists' => true
+            )
+        ), $finalize, $method, $scope, $sort, $limit);
+    } else {
+        $dataModel->setReadPreference(\MongoClient::RP_SECONDARY);
+        return $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
+    }
 }

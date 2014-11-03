@@ -158,6 +158,21 @@ Ext.define('icc.view.idatabase.Structure.Edit', {
 					checked: true
 				}]
 			}, {
+				xtype: 'radiogroup',
+				fieldLabel: '是否只输出文件_id',
+				defaultType: 'radiofield',
+				layout: 'hbox',
+				items: [{
+					boxLabel: '是',
+					name: 'displayFileId',
+					inputValue: true
+				}, {
+					boxLabel: '否',
+					name: 'displayFileId',
+					inputValue: false,
+					checked: true
+				}]
+			}, {
 				xtype: 'textfield',
 				fieldLabel: '文件资源域名/CDN路径设定',
 				name: 'cdnUrl',

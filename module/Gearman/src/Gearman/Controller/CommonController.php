@@ -17,6 +17,7 @@ class CommonController extends Action
 
     public function init()
     {
+        resetTimeMemLimit(0,'8192M');
         $this->_worker = $this->gearman()->worker();
     }
 

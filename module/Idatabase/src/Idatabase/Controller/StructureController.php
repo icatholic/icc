@@ -185,6 +185,7 @@ class StructureController extends Action
         $datas['isLinkageMenu'] = filter_var($this->params()->fromPost('isLinkageMenu', false), FILTER_VALIDATE_BOOLEAN);
         $datas['linkageClearValueField'] = trim($this->params()->fromPost('linkageClearValueField', ''));
         $datas['linkageSetValueField'] = trim($this->params()->fromPost('linkageSetValueField', ''));
+        $datas['displayFileId'] = filter_var($this->params()->fromPost('displayFileId', false), FILTER_VALIDATE_BOOLEAN);
         $datas['cdnUrl'] = trim($this->params()->fromPost('cdnUrl', ''));
         $datas['xTemplate'] = trim($this->params()->fromPost('xTemplate', ''));
         
@@ -311,6 +312,7 @@ class StructureController extends Action
         $datas['isLinkageMenu'] = filter_var($this->params()->fromPost('isLinkageMenu', false), FILTER_VALIDATE_BOOLEAN);
         $datas['linkageClearValueField'] = trim($this->params()->fromPost('linkageClearValueField', ''));
         $datas['linkageSetValueField'] = trim($this->params()->fromPost('linkageSetValueField', ''));
+        $datas['displayFileId'] = filter_var($this->params()->fromPost('displayFileId', false), FILTER_VALIDATE_BOOLEAN);
         $datas['cdnUrl'] = trim($this->params()->fromPost('cdnUrl', ''));
         $datas['xTemplate'] = trim($this->params()->fromPost('xTemplate', ''));
         
