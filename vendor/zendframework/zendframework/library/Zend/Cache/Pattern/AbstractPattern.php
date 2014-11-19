@@ -9,6 +9,7 @@
 
 namespace Zend\Cache\Pattern;
 
+use Traversable;
 use Zend\Cache\Exception;
 
 abstract class AbstractPattern implements PatternInterface
@@ -21,7 +22,7 @@ abstract class AbstractPattern implements PatternInterface
     /**
      * Set pattern options
      *
-     * @param  PatternOptions $options
+     * @param  array|Traversable|PatternOptions $options
      * @return AbstractPattern
      * @throws Exception\InvalidArgumentException
      */

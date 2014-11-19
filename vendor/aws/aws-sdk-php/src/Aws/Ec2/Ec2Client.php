@@ -27,7 +27,6 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
 /**
  * Client to interact with Amazon Elastic Compute Cloud
  *
- * @method Model acceptVpcPeeringConnection(array $args = array()) {@command Ec2 AcceptVpcPeeringConnection}
  * @method Model allocateAddress(array $args = array()) {@command Ec2 AllocateAddress}
  * @method Model assignPrivateIpAddresses(array $args = array()) {@command Ec2 AssignPrivateIpAddresses}
  * @method Model associateAddress(array $args = array()) {@command Ec2 AssociateAddress}
@@ -68,7 +67,6 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
  * @method Model createTags(array $args = array()) {@command Ec2 CreateTags}
  * @method Model createVolume(array $args = array()) {@command Ec2 CreateVolume}
  * @method Model createVpc(array $args = array()) {@command Ec2 CreateVpc}
- * @method Model createVpcPeeringConnection(array $args = array()) {@command Ec2 CreateVpcPeeringConnection}
  * @method Model createVpnConnection(array $args = array()) {@command Ec2 CreateVpnConnection}
  * @method Model createVpnConnectionRoute(array $args = array()) {@command Ec2 CreateVpnConnectionRoute}
  * @method Model createVpnGateway(array $args = array()) {@command Ec2 CreateVpnGateway}
@@ -89,7 +87,6 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
  * @method Model deleteTags(array $args = array()) {@command Ec2 DeleteTags}
  * @method Model deleteVolume(array $args = array()) {@command Ec2 DeleteVolume}
  * @method Model deleteVpc(array $args = array()) {@command Ec2 DeleteVpc}
- * @method Model deleteVpcPeeringConnection(array $args = array()) {@command Ec2 DeleteVpcPeeringConnection}
  * @method Model deleteVpnConnection(array $args = array()) {@command Ec2 DeleteVpnConnection}
  * @method Model deleteVpnConnectionRoute(array $args = array()) {@command Ec2 DeleteVpnConnectionRoute}
  * @method Model deleteVpnGateway(array $args = array()) {@command Ec2 DeleteVpnGateway}
@@ -131,7 +128,6 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
  * @method Model describeVolumeStatus(array $args = array()) {@command Ec2 DescribeVolumeStatus}
  * @method Model describeVolumes(array $args = array()) {@command Ec2 DescribeVolumes}
  * @method Model describeVpcAttribute(array $args = array()) {@command Ec2 DescribeVpcAttribute}
- * @method Model describeVpcPeeringConnections(array $args = array()) {@command Ec2 DescribeVpcPeeringConnections}
  * @method Model describeVpcs(array $args = array()) {@command Ec2 DescribeVpcs}
  * @method Model describeVpnConnections(array $args = array()) {@command Ec2 DescribeVpnConnections}
  * @method Model describeVpnGateways(array $args = array()) {@command Ec2 DescribeVpnGateways}
@@ -154,14 +150,12 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
  * @method Model modifyNetworkInterfaceAttribute(array $args = array()) {@command Ec2 ModifyNetworkInterfaceAttribute}
  * @method Model modifyReservedInstances(array $args = array()) {@command Ec2 ModifyReservedInstances}
  * @method Model modifySnapshotAttribute(array $args = array()) {@command Ec2 ModifySnapshotAttribute}
- * @method Model modifySubnetAttribute(array $args = array()) {@command Ec2 ModifySubnetAttribute}
  * @method Model modifyVolumeAttribute(array $args = array()) {@command Ec2 ModifyVolumeAttribute}
  * @method Model modifyVpcAttribute(array $args = array()) {@command Ec2 ModifyVpcAttribute}
  * @method Model monitorInstances(array $args = array()) {@command Ec2 MonitorInstances}
  * @method Model purchaseReservedInstancesOffering(array $args = array()) {@command Ec2 PurchaseReservedInstancesOffering}
  * @method Model rebootInstances(array $args = array()) {@command Ec2 RebootInstances}
  * @method Model registerImage(array $args = array()) {@command Ec2 RegisterImage}
- * @method Model rejectVpcPeeringConnection(array $args = array()) {@command Ec2 RejectVpcPeeringConnection}
  * @method Model releaseAddress(array $args = array()) {@command Ec2 ReleaseAddress}
  * @method Model replaceNetworkAclAssociation(array $args = array()) {@command Ec2 ReplaceNetworkAclAssociation}
  * @method Model replaceNetworkAclEntry(array $args = array()) {@command Ec2 ReplaceNetworkAclEntry}
@@ -181,7 +175,6 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
  * @method Model terminateInstances(array $args = array()) {@command Ec2 TerminateInstances}
  * @method Model unassignPrivateIpAddresses(array $args = array()) {@command Ec2 UnassignPrivateIpAddresses}
  * @method Model unmonitorInstances(array $args = array()) {@command Ec2 UnmonitorInstances}
- * @method waitUntilSpotInstanceRequestFulfilled(array $input) The input array uses the parameters of the DescribeSpotInstanceRequests operation and waiter specific settings
  * @method waitUntilInstanceRunning(array $input) The input array uses the parameters of the DescribeInstances operation and waiter specific settings
  * @method waitUntilInstanceStopped(array $input) The input array uses the parameters of the DescribeInstances operation and waiter specific settings
  * @method waitUntilInstanceTerminated(array $input) The input array uses the parameters of the DescribeInstances operation and waiter specific settings
@@ -219,6 +212,7 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
  * @method ResourceIteratorInterface getDescribeRegionsIterator(array $args = array()) The input array uses the parameters of the DescribeRegions operation
  * @method ResourceIteratorInterface getDescribeReservedInstancesIterator(array $args = array()) The input array uses the parameters of the DescribeReservedInstances operation
  * @method ResourceIteratorInterface getDescribeReservedInstancesListingsIterator(array $args = array()) The input array uses the parameters of the DescribeReservedInstancesListings operation
+ * @method ResourceIteratorInterface getDescribeReservedInstancesModificationsIterator(array $args = array()) The input array uses the parameters of the DescribeReservedInstancesModifications operation
  * @method ResourceIteratorInterface getDescribeReservedInstancesOfferingsIterator(array $args = array()) The input array uses the parameters of the DescribeReservedInstancesOfferings operation
  * @method ResourceIteratorInterface getDescribeRouteTablesIterator(array $args = array()) The input array uses the parameters of the DescribeRouteTables operation
  * @method ResourceIteratorInterface getDescribeSecurityGroupsIterator(array $args = array()) The input array uses the parameters of the DescribeSecurityGroups operation
@@ -238,7 +232,7 @@ use Guzzle\Service\Resource\ResourceIteratorInterface;
  */
 class Ec2Client extends AbstractClient
 {
-    const LATEST_API_VERSION = '2014-06-15';
+    const LATEST_API_VERSION = '2013-10-15';
 
     /**
      * Factory method to create a new AWS Elastic Beanstalk client using an array of configuration options.
@@ -254,16 +248,12 @@ class Ec2Client extends AbstractClient
             $config[Options::SIGNATURE] = new SignatureV4();
         }
 
-        $client = ClientBuilder::factory(__NAMESPACE__)
+        return ClientBuilder::factory(__NAMESPACE__)
             ->setConfig($config)
             ->setConfigDefaults(array(
                 Options::VERSION             => self::LATEST_API_VERSION,
                 Options::SERVICE_DESCRIPTION => __DIR__ . '/Resources/ec2-%s.php'
             ))
             ->build();
-
-        $client->addSubscriber(new CopySnapshotListener());
-
-        return $client;
     }
 }

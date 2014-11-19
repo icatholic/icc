@@ -130,7 +130,7 @@ class Translator implements ProcessorInterface
      * Process a single value
      *
      * @param $value
-     * @return string
+     * @return mixed
      */
     public function processValue($value)
     {

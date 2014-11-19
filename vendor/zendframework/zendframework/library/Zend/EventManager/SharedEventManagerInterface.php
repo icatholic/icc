@@ -33,7 +33,7 @@ interface SharedEventManagerInterface
      * @param  string $event
      * @param  callable $callback PHP Callback
      * @param  int $priority Priority at which listener should execute
-     * @return CallbackHandler|array Either CallbackHandler or array of CallbackHandlers
+     * @return void
      */
     public function attach($id, $event, $callback, $priority = 1);
 

@@ -12,5 +12,4 @@ namespace Zend\Crypt\Key\Derivation\Exception;
 use Zend\Crypt\Exception\ExceptionInterface as Exception;
 
 interface ExceptionInterface extends Exception
-{
-}
+{}

@@ -53,8 +53,6 @@ class Metadata implements MetadataInterface
                 return new Source\SqliteMetadata($adapter);
             case 'PostgreSQL':
                 return new Source\PostgresqlMetadata($adapter);
-            case 'Oracle':
-                return new Source\OracleMetadata($adapter);
         }
 
         throw new \Exception('cannot create source from adapter');
@@ -186,7 +184,7 @@ class Metadata implements MetadataInterface
      */
     public function getViewNames($schema = null)
     {
-        return $this->source->getViewNames($schema);
+        return $this->source->getTable($schema);
     }
 
     /**

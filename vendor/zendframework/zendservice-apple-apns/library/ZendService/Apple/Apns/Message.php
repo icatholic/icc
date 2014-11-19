@@ -273,21 +273,18 @@ class Message
     public function getPayload()
     {
         $message = array();
-        $aps = array();
+        $message['aps'] = array();
         if ($this->alert && ($alert = $this->alert->getPayload())) {
-            $aps['alert'] = $alert;
+            $message['aps']['alert'] = $alert;
         }
         if (!is_null($this->badge)) {
-            $aps['badge'] = $this->badge;
+            $message['aps']['badge'] = $this->badge;
         }
         if (!is_null($this->sound)) {
-            $aps['sound'] = $this->sound;
+            $message['aps']['sound'] = $this->sound;
         }
         if (!empty($this->custom)) {
             $message = array_merge($this->custom, $message);
-        }
-        if (!empty($aps)) {
-            $message['aps'] = $aps;
         }
 
         return $message;
@@ -302,12 +299,13 @@ class Message
     {
         $payload = $this->getPayload();
         // don't escape utf8 payloads unless json_encode does not exist.
-        if (defined('JSON_UNESCAPED_UNICODE')) {
+        if (defined('JSON_UNESCAPED_UNICODE') && function_exists('mb_strlen')) {
             $payload = json_encode($payload, JSON_UNESCAPED_UNICODE);
+            $length = mb_strlen($payload, 'UTF-8');
         } else {
             $payload = JsonEncoder::encode($payload);
+            $length = strlen($payload);
         }
-        $length = strlen($payload);
 
         return pack('CNNnH*', 1, $this->id, $this->expire, 32, $this->token)
             . pack('n', $length)

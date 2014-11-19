@@ -175,21 +175,6 @@ class Di implements DependencyInjectionInterface
     }
 
     /**
-     * Utility method used to retrieve the class of a particular instance. This is here to allow extending classes to
-     * override how class names are resolved
-     *
-     * @internal this method is used by the ServiceLocator\DependencyInjectorProxy class to interact with instances
-     *           and is a hack to be used internally until a major refactor does not split the `resolveMethodParameters`. Do not
-     *           rely on its functionality.
-     * @param  Object $instance
-     * @return string
-     */
-    protected function getClass($instance)
-    {
-        return get_class($instance);
-    }
-
-    /**
      * @param $name
      * @param array $params
      * @param string $method
@@ -566,7 +551,7 @@ class Di implements DependencyInjectionInterface
      * @param  string                                $method
      * @param  array                                 $callTimeUserParams
      * @param  string                                $alias
-     * @param  int|bool                              $methodRequirementType
+     * @param  int|bolean                            $methodRequirementType
      * @param  bool                                  $isInstantiator
      * @throws Exception\MissingPropertyException
      * @throws Exception\CircularDependencyException
@@ -626,7 +611,7 @@ class Di implements DependencyInjectionInterface
             if (array_key_exists('parameters', $iConfig['requestedClass'])) {
                 $newParameters = array();
 
-                foreach ($iConfig['requestedClass']['parameters'] as $name=>$parameter) {
+                foreach($iConfig['requestedClass']['parameters'] as $name=>$parameter) {
                     $newParameters[$requestedClass.'::'.$method.'::'.$name] = $parameter;
                 }
 
@@ -886,6 +871,21 @@ class Di implements DependencyInjectionInterface
     }
 
     /**
+     * Utility method used to retrieve the class of a particular instance. This is here to allow extending classes to
+     * override how class names are resolved
+     *
+     * @internal this method is used by the ServiceLocator\DependencyInjectorProxy class to interact with instances
+     *           and is a hack to be used internally until a major refactor does not split the `resolveMethodParameters`. Do not
+     *           rely on its functionality.
+     * @param  Object $instance
+     * @return string
+     */
+    protected function getClass($instance)
+    {
+        return get_class($instance);
+    }
+
+    /**
      * Checks if the object has this class as one of its parents
      *
      * @see https://bugs.php.net/bug.php?id=53727
@@ -900,7 +900,7 @@ class Di implements DependencyInjectionInterface
         if (is_subclass_of($className, $type)) {
             return true;
         }
-        if (PHP_VERSION_ID >= 50307) {
+        if (version_compare(PHP_VERSION, '5.3.7', '>=')) {
             return false;
         }
         if (!interface_exists($type)) {

@@ -26,7 +26,7 @@ class CachingFileScanner extends FileScanner
     protected $fileScanner = null;
 
     /**
-     * @param  string $file
+     * @param  array|null $file
      * @param  AnnotationManager $annotationManager
      * @throws Exception\InvalidArgumentException
      */

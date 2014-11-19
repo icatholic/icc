@@ -36,11 +36,8 @@ $credentials = new Credentials(
 $boxService = $serviceFactory->createService('box', $credentials, $storage);
 
 if (!empty($_GET['code'])) {
-    // retrieve the CSRF state parameter
-    $state = isset($_GET['state']) ? $_GET['state'] : null;
-
     // This was a callback request from box, get the token
-    $token = $boxService->requestAccessToken($_GET['code'], $state);
+    $token = $boxService->requestAccessToken($_GET['code']);
 
     // Send a request with it
     $result = json_decode($boxService->request('/users/me'), true);
@@ -49,7 +46,7 @@ if (!empty($_GET['code'])) {
     echo 'Your Box name is ' . $result['name'] . ' and your email is ' . $result['login'];
 
 } elseif (!empty($_GET['go']) && $_GET['go'] === 'go') {
-    $url = $boxService->getAuthorizationUri();
+    $url = $boxService->getAuthorizationUri(array('state' => 'blabla'));
     // var_dump($url);
     header('Location: ' . $url);
 } else {

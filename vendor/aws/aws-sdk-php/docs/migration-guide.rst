@@ -41,7 +41,9 @@ What's New?
 - Plug-ins for over-the-wire logging and response caching
 - "Waiter" objects that allow you to poll a resource until it is in a desired state
 - Resource iterator objects for easily iterating over paginated responses
+- Service-specific sets of exceptions
 - Modeled responses with a simpler interface
+- Grouped constants (Enums) for service parameter options
 - Flexible request batching system
 - Service builder/container that supports easy configuration and dependency injection
 - Full unit test suite with extensive code coverage
@@ -448,6 +450,8 @@ From Version 2 of the SDK
     require '/path/to/vendor/autoload.php';
 
     use Aws\Common\Aws;
+    use Aws\DynamoDb\Enum\ComparisonOperator;
+    use Aws\DynamoDb\Enum\Type;
 
     $aws = Aws::factory('/path/to/config.php');
     $dynamodb = $aws->get('dynamodb');
@@ -458,9 +462,9 @@ From Version 2 of the SDK
         'AttributesToGet' => array('id', 'age', 'name'),
         'ScanFilter'      => array(
             'age' => array(
-                'ComparisonOperator' => 'GE',
+                'ComparisonOperator' => ComparisonOperator::GE,
                 'AttributeValueList' => array(
-                    array('N' => '16')
+                    array(Type::NUMBER => '16')
                 )
             ),
         )
@@ -470,7 +474,7 @@ From Version 2 of the SDK
     // that are 16 or older
     $people = array();
     foreach ($scan as $item) {
-        $people[] = $item['name']['N'];
+        $people[] = $item['name'][Type::STRING];
     }
 
     print_r($people);

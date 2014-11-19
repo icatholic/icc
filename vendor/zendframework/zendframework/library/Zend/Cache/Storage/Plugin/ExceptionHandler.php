@@ -9,6 +9,7 @@
 
 namespace Zend\Cache\Storage\Plugin;
 
+use Zend\Cache\Exception;
 use Zend\Cache\Storage\ExceptionEvent;
 use Zend\EventManager\EventManagerInterface;
 
@@ -55,9 +56,6 @@ class ExceptionHandler extends AbstractPlugin
 
         $this->listeners[] = $events->attach('decrementItem.exception', $callback, $priority);
         $this->listeners[] = $events->attach('decrementItems.exception', $callback, $priority);
-
-        // utility
-        $this->listeners[] = $events->attach('clearExpired.exception', $callback, $priority);
     }
 
     /**

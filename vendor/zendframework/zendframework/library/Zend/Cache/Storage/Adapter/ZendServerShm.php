@@ -72,7 +72,7 @@ class ZendServerShm extends AbstractZendServer implements
     /**
      * Get total space in bytes
      *
-     * @return int
+     * @return int|float
      */
     public function getTotalSpace()
     {

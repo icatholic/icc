@@ -42,8 +42,7 @@ class SequenceFeature extends AbstractFeature
     }
 
     /**
-     * @param Insert $insert
-     * @return Insert
+     * @param  Insert $insert
      */
     public function preInsert(Insert $insert)
     {
@@ -64,10 +63,6 @@ class SequenceFeature extends AbstractFeature
         return $insert;
     }
 
-    /**
-     * @param StatementInterface $statement
-     * @param ResultInterface $result
-     */
     public function postInsert(StatementInterface $statement, ResultInterface $result)
     {
         if ($this->sequenceValue !== null) {
@@ -86,10 +81,10 @@ class SequenceFeature extends AbstractFeature
 
         switch ($platformName) {
             case 'Oracle':
-                $sql = 'SELECT ' . $platform->quoteIdentifier($this->sequenceName) . '.NEXTVAL as "nextval" FROM dual';
+                $sql = 'SELECT ' . $platform->quoteIdentifier($this->sequenceName) . '.NEXTVAL FROM dual';
                 break;
             case 'PostgreSQL':
-                $sql = 'SELECT NEXTVAL(\'"' . $this->sequenceName . '"\')';
+                $sql = 'SELECT NEXTVAL(\'' . $this->sequenceName . '\')';
                 break;
             default :
                 return null;
@@ -114,7 +109,7 @@ class SequenceFeature extends AbstractFeature
 
         switch ($platformName) {
             case 'Oracle':
-                $sql = 'SELECT ' . $platform->quoteIdentifier($this->sequenceName) . '.CURRVAL as "currval" FROM dual';
+                $sql = 'SELECT ' . $platform->quoteIdentifier($this->sequenceName) . '.CURRVAL FROM dual';
                 break;
             case 'PostgreSQL':
                 $sql = 'SELECT CURRVAL(\'' . $this->sequenceName . '\')';

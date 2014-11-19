@@ -102,7 +102,7 @@ class PropertyReflection extends PhpReflectionProperty implements ReflectionInte
      *
      * @param  string $filename
      *
-     * @return CachingFileScanner
+     * @return FileScanner
      */
     protected function createFileScanner($filename)
     {

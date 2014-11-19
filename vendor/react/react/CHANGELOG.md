@@ -1,18 +1,6 @@
 CHANGELOG
 =========
 
-### 0.4.1 (2014-04-13)
-
-  * Bug fix: [EventLoop] null timeout in StreamSelectLoop causing 100% CPU usage (@clue)
-  * Bug fix: [Socket] Check read buffer for data before shutdown signal and end emit (@ArtyDev)
-  * Bug fix: [DNS] Fixed PSR-4 autoload path (@marcj/WyriHaximus)
-  * Bug fix: v0.3.4 changes merged for v0.4.1
-
-### 0.3.4 (2014-03-30)
-
-  * Bug fix: [Stream] Fixed 100% CPU spike from non-empty write buffer on closed stream
-  * Buf fix: [Socket] Reset socket to non-blocking after shutting down (PHP bug)
-
 ### 0.4.0 (2014-02-02)
 
   * Feature: Added ChildProcess to run async child processes within the event loop (@jmikola)

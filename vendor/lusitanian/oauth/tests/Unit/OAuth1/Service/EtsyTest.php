@@ -66,17 +66,9 @@ class EtsyTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertSame(
-            'https://openapi.etsy.com/v2/oauth/request_token',
+            'http://openapi.etsy.com/v2/oauth/request_token',
             $service->getRequestTokenEndpoint()->getAbsoluteUri()
         );
-
-		$service->setScopes(array('email_r', 'cart_rw'));
-
-        $this->assertSame(
-            'https://openapi.etsy.com/v2/oauth/request_token?scope=email_r%20cart_rw',
-            $service->getRequestTokenEndpoint()->getAbsoluteUri()
-        );
-
     }
 
     /**
@@ -93,7 +85,7 @@ class EtsyTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertSame(
-            'https://openapi.etsy.com/v2/',
+            'http://openapi.etsy.com/v2/',
             $service->getAuthorizationEndpoint()->getAbsoluteUri()
         );
     }
@@ -112,7 +104,7 @@ class EtsyTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertSame(
-            'https://openapi.etsy.com/v2/oauth/access_token',
+            'http://openapi.etsy.com/v2/oauth/access_token',
             $service->getAccessTokenEndpoint()->getAbsoluteUri()
         );
     }

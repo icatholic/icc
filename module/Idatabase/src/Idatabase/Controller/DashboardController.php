@@ -175,7 +175,7 @@ class DashboardController extends Action
                 );
                 
                 $out = 'dashboard_' . $statisticInfo['_id']->__toString();
-                $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'replace');
+                $rst = mapReduce1($out, $dataModel, $statisticInfo, $query, 'replace');
                 
                 if ($rst instanceof \MongoCollection) {
                     $outCollectionName = $rst->getName(); // 输出集合名称
@@ -206,15 +206,17 @@ class DashboardController extends Action
                                     '_id' => $row['_id']
                                 ));
                                 $_id = $row['_id'];
-                                $rstModel->update(array(
-                                    '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id
-                                ), array(
-                                    '$set' => array(
-                                        'value' => $row['value']
-                                    )
-                                ), array(
-                                    'upsert' => true
-                                ));
+                                if (! is_object($_id)) {
+                                    $rstModel->update(array(
+                                        '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id
+                                    ), array(
+                                        '$set' => array(
+                                            'value' => $row['value']
+                                        )
+                                    ), array(
+                                        'upsert' => true
+                                    ));
+                                }
                             }
                         } catch (\Exception $e) {
                             var_dump($e);

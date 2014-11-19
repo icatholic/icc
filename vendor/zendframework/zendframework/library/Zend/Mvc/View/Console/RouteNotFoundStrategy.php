@@ -22,6 +22,7 @@ use Zend\Mvc\Application;
 use Zend\Mvc\Exception\RuntimeException;
 use Zend\Mvc\MvcEvent;
 use Zend\ServiceManager\Exception\ServiceNotFoundException;
+use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ResponseInterface as Response;
 use Zend\Stdlib\StringUtils;
 use Zend\Text\Table;
@@ -127,7 +128,7 @@ class RouteNotFoundStrategy extends AbstractListenerAggregate
         $mm = null;
         try{
             $mm = $sm->get('ModuleManager');
-        } catch (ServiceNotFoundException $exception) {
+        } catch (ServiceNotFoundException $e) {
             // The application does not have or use module manager, so we cannot use it
         }
 
@@ -137,9 +138,17 @@ class RouteNotFoundStrategy extends AbstractListenerAggregate
             if (!$console instanceof ConsoleAdapter) {
                 throw new ServiceNotFoundException();
             }
-        } catch (ServiceNotFoundException $exception) {
+        } catch (ServiceNotFoundException $e) {
             // The application does not have console adapter
             throw new RuntimeException('Cannot access Console adapter - is it defined in ServiceManager?');
+        }
+
+        // Try to fetch router
+        $router = null;
+        try{
+            $router = $sm->get('Router');
+        } catch (ServiceNotFoundException $e) {
+            // The application does not have a router
         }
 
         // Retrieve the script's name (entry point)
@@ -378,9 +387,6 @@ class RouteNotFoundStrategy extends AbstractListenerAggregate
         // If there is only 1 column, just concatenate it
         if ($cols == 1) {
             foreach ($data as $row) {
-                if (! isset($row[0])) {
-                    continue;
-                }
                 $result .= $row[0] . "\n";
             }
             return $result;

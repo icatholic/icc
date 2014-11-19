@@ -107,9 +107,6 @@ class Message
     public function generateMessage($EOL = Mime::LINEEND)
     {
         if (!$this->isMultiPart()) {
-            if (empty($this->parts)) {
-                return '';
-            }
             $part = current($this->parts);
             $body = $part->getContent($EOL);
         } else {
@@ -259,8 +256,7 @@ class Message
                         $properties['language'] = $fieldValue;
                         break;
                     default:
-                        // Ignore unknown header
-                        break;
+                        throw new Exception\RuntimeException('Unknown header ignored for MimePart:' . $fieldName);
                 }
             }
 

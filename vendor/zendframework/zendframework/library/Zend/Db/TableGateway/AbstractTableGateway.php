@@ -216,7 +216,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
     protected function executeSelect(Select $select)
     {
         $selectState = $select->getRawState();
-        if ($selectState['table'] != $this->table && (is_array($selectState['table']) && end($selectState['table']) != $this->table)) {
+        if ($selectState['table'] != $this->table) {
             throw new Exception\RuntimeException('The table name of the provided select object must match that of the table');
         }
 
@@ -301,7 +301,7 @@ abstract class AbstractTableGateway implements TableGatewayInterface
      * Update
      *
      * @param  array $set
-     * @param  string|array|\Closure $where
+     * @param  string|array|closure $where
      * @return int
      */
     public function update($set, $where = null)

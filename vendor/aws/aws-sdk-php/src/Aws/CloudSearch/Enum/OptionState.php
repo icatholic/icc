@@ -26,5 +26,4 @@ class OptionState extends Enum
     const REQUIRES_INDEX_DOCUMENTS = 'RequiresIndexDocuments';
     const PROCESSING = 'Processing';
     const ACTIVE = 'Active';
-    const FAILED_TO_VALIDATE = 'FailedToValidate';
 }

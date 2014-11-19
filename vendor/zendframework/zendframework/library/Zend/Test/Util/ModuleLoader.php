@@ -52,7 +52,7 @@ class ModuleLoader
     /**
      * Get the application
      *
-     * @return \Zend\Mvc\Application
+     * @return Zend\Mvc\Application
      */
     public function getApplication()
     {
@@ -62,7 +62,7 @@ class ModuleLoader
     /**
      * Get the module manager
      *
-     * @return \Zend\ModuleManager\ModuleManager
+     * @return Zend\ModuleManager\ModuleManager
      */
     public function getModuleManager()
     {
@@ -70,9 +70,8 @@ class ModuleLoader
     }
 
     /**
-     * Get module by name
+     * Get module
      *
-     * @param $moduleName
      * @return mixed
      */
     public function getModule($moduleName)
@@ -83,7 +82,7 @@ class ModuleLoader
     /**
      * Get the service manager
      *
-     * @return ServiceManager
+     * @var ServiceManager
      */
     public function getServiceManager()
     {

@@ -34,18 +34,15 @@ $credentials = new Credentials(
 $reddit = $serviceFactory->createService('Reddit', $credentials, $storage, array('identity'));
 
 if (!empty($_GET['code'])) {
-    // retrieve the CSRF state parameter
-    $state = isset($_GET['state']) ? $_GET['state'] : null;
-
     // This was a callback request from reddit, get the token
-    $reddit->requestAccessToken($_GET['code'], $state);
+    $reddit->requestAccessToken($_GET['code']);
 
     $result = json_decode($reddit->request('api/v1/me.json'), true);
 
     echo 'Your unique reddit user id is: ' . $result['id'] . ' and your username is ' . $result['name'];
 
 } elseif (!empty($_GET['go']) && $_GET['go'] === 'go') {
-    $url = $reddit->getAuthorizationUri();
+    $url = $reddit->getAuthorizationUri(array('state'=>'A_UNIQUE_TOKEN'));
     header('Location: ' . $url);
 
 } else {

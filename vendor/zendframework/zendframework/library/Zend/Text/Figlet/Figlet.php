@@ -651,6 +651,7 @@ class Figlet
             return false;
         }
 
+        $tempLine = '';
         for ($row = 0; $row < $this->charHeight; $row++) {
             if ($this->rightToLeft === 1) {
                 $tempLine = $this->currentChar[$row];
@@ -717,6 +718,7 @@ class Figlet
         }
 
         $maxSmush = $this->currentCharWidth;
+        $amount   = $maxSmush;
 
         for ($row = 0; $row < $this->charHeight; $row++) {
             if ($this->rightToLeft === 1) {

@@ -455,6 +455,13 @@ class DataController extends Action
         }
         return $this->response;
     }
+    
+    /**
+     * 
+     */
+    public function exportStatisticAction() {
+        
+    }
 
     /**
      * 将指定集合内的数据转化成bson文件

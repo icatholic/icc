@@ -38,7 +38,6 @@ interface PromptInterface
      * Set console adapter to use when showing prompt.
      *
      * @param ConsoleAdapter $adapter
-     * @return void
      */
     public function setConsole(ConsoleAdapter $adapter);
 }

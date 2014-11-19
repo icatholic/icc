@@ -33,8 +33,8 @@ class SqlServer implements PlatformInterface
      */
     public function setDriver($driver)
     {
-        // handle Zend\Db drivers
-        if (($driver instanceof Pdo\Pdo && in_array($driver->getDatabasePlatformName(), array('SqlServer', 'Dblib')))
+        // handle Zend_Db drivers
+        if (($driver instanceof Pdo\Pdo && in_array($driver->getDatabasePlatformName(), array('Sqlsrv', 'Dblib')))
             || (($driver instanceof \PDO && in_array($driver->getAttribute(\PDO::ATTR_DRIVER_NAME), array('sqlsrv', 'dblib'))))
         ) {
             $this->resource = $driver;
@@ -117,7 +117,6 @@ class SqlServer implements PlatformInterface
             'Attempting to quote a value in ' . __CLASS__ . ' without extension/driver support '
                 . 'can introduce security vulnerabilities in a production environment.'
         );
-        $value = addcslashes($value, "\000\032");
         return '\'' . str_replace('\'', '\'\'', $value) . '\'';
     }
 

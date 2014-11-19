@@ -800,7 +800,7 @@ abstract class AbstractObject implements ObjectInterface
      * Add a text drawing instruction in the set of instructions
      * @param string $text
      * @param float $size
-     * @param int[] $position
+     * @param array $position
      * @param string $font
      * @param int $color
      * @param string $alignment
@@ -844,7 +844,6 @@ abstract class AbstractObject implements ObjectInterface
 
     /**
      * Check if a text is really provided to barcode
-     * @param string|null $value
      * @return void
      * @throws \Zend\Barcode\Object\Exception\ExceptionInterface
      */
@@ -978,14 +977,20 @@ abstract class AbstractObject implements ObjectInterface
     public function getOffsetLeft($recalculate = false)
     {
         if ($this->offsetLeft === null || $recalculate) {
-            $this->offsetLeft = - min(
-                array(
-                    0 * cos($this->orientation / 180 * pi()) - 0 * sin($this->orientation / 180 * pi()),
-                    0 * cos($this->orientation / 180 * pi()) - $this->calculateBarcodeHeight() * sin($this->orientation / 180 * pi()),
-                    $this->calculateBarcodeWidth() * cos($this->orientation / 180 * pi()) - $this->calculateBarcodeHeight() * sin($this->orientation / 180 * pi()),
-                    $this->calculateBarcodeWidth() * cos($this->orientation / 180 * pi()) - 0 * sin($this->orientation / 180 * pi()),
-                )
-            );
+            $this->offsetLeft = - min(array(
+                0 * cos(
+                        $this->orientation / 180 * pi()) - 0 * sin(
+                        $this->orientation / 180 * pi()),
+                0 * cos(
+                        $this->orientation / 180 * pi()) - $this->calculateBarcodeHeight() * sin(
+                        $this->orientation / 180 * pi()),
+                $this->calculateBarcodeWidth() * cos(
+                        $this->orientation / 180 * pi()) - $this->calculateBarcodeHeight() * sin(
+                        $this->orientation / 180 * pi()),
+                $this->calculateBarcodeWidth() * cos(
+                        $this->orientation / 180 * pi()) - 0 * sin(
+                        $this->orientation / 180 * pi()),
+            ));
         }
         return $this->offsetLeft;
     }
@@ -999,14 +1004,20 @@ abstract class AbstractObject implements ObjectInterface
     public function getOffsetTop($recalculate = false)
     {
         if ($this->offsetTop === null || $recalculate) {
-            $this->offsetTop = - min(
-                array(
-                    0 * cos($this->orientation / 180 * pi()) + 0 * sin($this->orientation / 180 * pi()),
-                    $this->calculateBarcodeHeight() * cos($this->orientation / 180 * pi()) + 0 * sin($this->orientation / 180 * pi()),
-                    $this->calculateBarcodeHeight() * cos($this->orientation / 180 * pi()) + $this->calculateBarcodeWidth() * sin($this->orientation / 180 * pi()),
-                    0 * cos($this->orientation / 180 * pi()) + $this->calculateBarcodeWidth() * sin($this->orientation / 180 * pi()),
-                )
-            );
+            $this->offsetTop = - min(array(
+                0 * cos(
+                        $this->orientation / 180 * pi()) + 0 * sin(
+                        $this->orientation / 180 * pi()),
+                $this->calculateBarcodeHeight() * cos(
+                        $this->orientation / 180 * pi()) + 0 * sin(
+                        $this->orientation / 180 * pi()),
+                $this->calculateBarcodeHeight() * cos(
+                        $this->orientation / 180 * pi()) + $this->calculateBarcodeWidth() * sin(
+                        $this->orientation / 180 * pi()),
+                0 * cos(
+                        $this->orientation / 180 * pi()) + $this->calculateBarcodeWidth() * sin(
+                        $this->orientation / 180 * pi()),
+            ));
         }
         return $this->offsetTop;
     }
@@ -1015,7 +1026,7 @@ abstract class AbstractObject implements ObjectInterface
      * Apply rotation on a point in X/Y dimensions
      * @param float $x1     x-position before rotation
      * @param float $y1     y-position before rotation
-     * @return int[]    Array of two elements corresponding to the new XY point
+     * @return array        Array of two elements corresponding to the new XY point
      */
     protected function rotate($x1, $y1)
     {
@@ -1140,7 +1151,8 @@ abstract class AbstractObject implements ObjectInterface
                         $this->fontSize * $this->factor,
                         $this->rotate(
                             $leftPosition,
-                            (int) $this->withBorder * 2 + $this->factor * ($this->barHeight + $this->fontSize) + 1
+                            (int) $this->withBorder * 2
+                                + $this->factor * ($this->barHeight + $this->fontSize) + 1
                         ),
                         $this->font,
                         $this->foreColor,
@@ -1154,7 +1166,8 @@ abstract class AbstractObject implements ObjectInterface
                     $this->fontSize * $this->factor,
                     $this->rotate(
                         $this->calculateWidth() / 2,
-                        (int) $this->withBorder * 2 + $this->factor * ($this->barHeight + $this->fontSize) + 1
+                        (int) $this->withBorder * 2
+                            + $this->factor * ($this->barHeight + $this->fontSize) + 1
                     ),
                     $this->font,
                     $this->foreColor,

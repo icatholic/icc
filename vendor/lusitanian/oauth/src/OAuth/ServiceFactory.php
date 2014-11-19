@@ -93,12 +93,14 @@ class ServiceFactory
      * It will first try to build an OAuth2 service and if none found it will try to build an OAuth1 service
      *
      * @param string                $serviceName Name of service to create
-     * @param CredentialsInterface  $credentials
+     * @param Credentials           $credentials
      * @param TokenStorageInterface $storage
      * @param array|null            $scopes      If creating an oauth2 service, array of scopes
      * @param UriInterface|null     $baseApiUri
      *
      * @return ServiceInterface
+     *
+     * @throws Exception
      */
     public function createService(
         $serviceName,
@@ -174,7 +176,7 @@ class ServiceFactory
     /**
      * Resolves scopes for v2 services
      *
-     * @param string  $serviceName The fully qualified service name
+     * @param $string $serviceName The fully qualified service name
      * @param array   $scopes      List of scopes for the service
      *
      * @return array List of resolved scopes
@@ -204,8 +206,6 @@ class ServiceFactory
      * @param string                $serviceName The fully qualified service name
      * @param CredentialsInterface  $credentials
      * @param TokenStorageInterface $storage
-     * @param array                 $scopes
-     * @param UriInterface          $baseApiUri
      *
      * @return ServiceInterface
      *

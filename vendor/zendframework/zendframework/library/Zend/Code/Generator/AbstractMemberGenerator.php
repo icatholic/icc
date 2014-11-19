@@ -9,6 +9,7 @@
 
 namespace Zend\Code\Generator;
 
+
 abstract class AbstractMemberGenerator extends AbstractGenerator
 {
     /**#@+

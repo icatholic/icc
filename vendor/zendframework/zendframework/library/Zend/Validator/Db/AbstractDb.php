@@ -189,7 +189,6 @@ abstract class AbstractDb extends AbstractValidator
     public function setExclude($exclude)
     {
         $this->exclude = $exclude;
-        $this->select  = null;
         return $this;
     }
 
@@ -211,8 +210,7 @@ abstract class AbstractDb extends AbstractValidator
      */
     public function setField($field)
     {
-        $this->field  = (string) $field;
-        $this->select = null;
+        $this->field = (string) $field;
         return $this;
     }
 
@@ -234,8 +232,7 @@ abstract class AbstractDb extends AbstractValidator
      */
     public function setTable($table)
     {
-        $this->table  = (string) $table;
-        $this->select = null;
+        $this->table = (string) $table;
         return $this;
     }
 
@@ -258,7 +255,6 @@ abstract class AbstractDb extends AbstractValidator
     public function setSchema($schema)
     {
         $this->schema = $schema;
-        $this->select = null;
         return $this;
     }
 

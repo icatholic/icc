@@ -16,11 +16,9 @@
 
 namespace Aws\Tests\Sns\MessageValidator;
 
-use Aws\Sns\MessageValidator\Exception\CertificateFromUnrecognizedSourceException;
 use Aws\Sns\MessageValidator\Message;
 use Aws\Sns\MessageValidator\MessageValidator;
 use Guzzle\Common\Collection;
-use Guzzle\Http\Url;
 use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Client;
@@ -44,44 +42,13 @@ class MessageValidatorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($validator->isValid($message));
     }
 
-    public function urlProvider()
+    public function testValidateFailsWhenCertUrlDoesNotMatchAws()
     {
-        return array(
-            array('https://sns.us-east-1.amazonaws.com/key.pem', false),
-            array('https://sns.us-west-2.amazonaws.com/key.pem', false),
-            array('https://sns.us-west-2.amazonaws.com/key.pem', false),
-            array('https://sns.cn-north-1.amazonaws.com.cn/SimpleNotificationService-foo.pem', false),
-            array('https://sns.us-gov-west-1.amazonaws.com/abc.pem', false),
-            // Failure cases
-            array('http://sns.us-gov-west-1.amazonaws.com/abc.pem', true),
-            array('https://sns.us-gov-west-1.amazonaws.com/abc', true),
-            array('https://sns.amazonaws.com/abc', true),
-            array('https://s3.sns.amazonaws.com/abc.pem', true),
-            array('https://s3.amazonaws.com/sns/abc.pem', true),
-            array('https://sns.us-west-2.amazon.com/key.pem', true),
-            array('https://sns.s3.amazonaws.com/key.pem', true),
-        );
-    }
+        $this->setExpectedException('Aws\Sns\MessageValidator\Exception\CertificateFromUnrecognizedSourceException');
 
-    /**
-     * @dataProvider urlProvider
-     */
-    public function testValidateFailsWhenCertUrlDoesNotMatchAws($url, $throws)
-    {
         $validator = new MessageValidator();
-        $m = new \ReflectionMethod($validator, 'validateUrl');
-        $m->setAccessible(true);
-
-        try {
-            $m->invoke($validator, Url::factory($url));
-            if ($throws) {
-                $this->fail('URL was invalid but did not fail the test');
-            }
-        } catch (CertificateFromUnrecognizedSourceException $e) {
-            if (!$throws) {
-                $this->fail('URL was supposed to be valid, but failed test');
-            }
-        }
+        $message = new Message(new Collection());
+        $validator->validate($message);
     }
 
     public function testValidateFailsWhenCannotDeterminePublicKey()
@@ -92,7 +59,7 @@ class MessageValidatorTest extends \Guzzle\Tests\GuzzleTestCase
         $client = $this->getMockClient();
         $validator = new MessageValidator($client);
 
-        $message = new Message(new Collection(array('SigningCertURL' => 'https://sns.foo.amazonaws.com/bar.pem')));
+        $message = new Message(new Collection(array('SigningCertURL' => 'https://foo.amazonaws.com/bar')));
         $validator->validate($message);
     }
 
@@ -108,7 +75,7 @@ class MessageValidatorTest extends \Guzzle\Tests\GuzzleTestCase
         $validator = new MessageValidator($client);
 
         $message = new Message(new Collection(array(
-            'SigningCertURL' => 'https://sns.foo.amazonaws.com/bar.pem',
+            'SigningCertURL' => 'https://foo.amazonaws.com/bar',
             'Signature'      => $signature,
         )));
         $validator->validate($message);
@@ -123,7 +90,7 @@ class MessageValidatorTest extends \Guzzle\Tests\GuzzleTestCase
             'Timestamp'      => time(),
             'TopicArn'       => 'baz',
             'Type'           => 'Notification',
-            'SigningCertURL' => 'https://sns.us-west-2.amazonaws.com/bar.pem',
+            'SigningCertURL' => 'https://foo.amazonaws.com/bar',
             'Signature'      => '',
         ));
 

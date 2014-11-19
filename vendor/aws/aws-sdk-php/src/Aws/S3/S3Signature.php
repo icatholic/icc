@@ -17,6 +17,7 @@
 namespace Aws\S3;
 
 use Aws\Common\Credentials\CredentialsInterface;
+use Aws\S3\S3Client;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
@@ -119,15 +120,6 @@ class S3Signature implements S3SignatureInterface
                 $credentials
             ));
 
-        // Move X-Amz-* headers to the query string
-        foreach ($request->getHeaders() as $name => $header) {
-            $name = strtolower($name);
-            if (strpos($name, 'x-amz-') === 0) {
-                $request->getQuery()->set($name, (string) $header);
-                $request->removeHeader($name);
-            }
-        }
-
         return $request->getUrl();
     }
 
@@ -165,8 +157,9 @@ class S3Signature implements S3SignatureInterface
     private function createCanonicalizedAmzHeaders(RequestInterface $request)
     {
         $headers = array();
-        foreach ($request->getHeaders() as $name => $header) {
-            $name = strtolower($name);
+        foreach ($request->getHeaders(true) as $header) {
+            /** @var $header \Guzzle\Http\Message\Header */
+            $name = strtolower($header->getName());
             if (strpos($name, 'x-amz-') === 0) {
                 $value = trim((string) $header);
                 if ($value || $value === '0') {
@@ -175,7 +168,7 @@ class S3Signature implements S3SignatureInterface
             }
         }
 
-        if (!$headers) {
+        if (empty($headers)) {
             return '';
         }
 

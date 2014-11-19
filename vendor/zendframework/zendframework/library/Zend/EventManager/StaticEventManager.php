@@ -9,6 +9,7 @@
 
 namespace Zend\EventManager;
 
+
 /**
  * Static version of EventManager
  */

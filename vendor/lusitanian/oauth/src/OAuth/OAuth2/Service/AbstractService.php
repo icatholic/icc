@@ -9,7 +9,6 @@ use OAuth\Common\Storage\TokenStorageInterface;
 use OAuth\Common\Http\Exception\TokenResponseException;
 use OAuth\Common\Http\Client\ClientInterface;
 use OAuth\Common\Http\Uri\UriInterface;
-use OAuth\OAuth2\Service\Exception\InvalidAuthorizationStateException;
 use OAuth\OAuth2\Service\Exception\InvalidScopeException;
 use OAuth\OAuth2\Service\Exception\MissingRefreshTokenException;
 use OAuth\Common\Token\TokenInterface;
@@ -26,16 +25,12 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
     /** @var UriInterface|null */
     protected $baseApiUri;
 
-    /** @var bool */
-    protected $stateParameterInAuthUrl;
-
     /**
-     * @param CredentialsInterface  $credentials
+     * @param Credentials           $credentials
      * @param ClientInterface       $httpClient
      * @param TokenStorageInterface $storage
      * @param array                 $scopes
      * @param UriInterface|null     $baseApiUri
-     * @param bool $stateParameterInAutUrl
      *
      * @throws InvalidScopeException
      */
@@ -44,11 +39,9 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
         ClientInterface $httpClient,
         TokenStorageInterface $storage,
         $scopes = array(),
-        UriInterface $baseApiUri = null,
-        $stateParameterInAutUrl = false
+        UriInterface $baseApiUri = null
     ) {
         parent::__construct($credentials, $httpClient, $storage);
-        $this->stateParameterInAuthUrl = $stateParameterInAutUrl;
 
         foreach ($scopes as $scope) {
             if (!$this->isValidScope($scope)) {
@@ -78,13 +71,6 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
 
         $parameters['scope'] = implode(' ', $this->scopes);
 
-        if ($this->needsStateParameterInAuthUrl()) {
-            if (!isset($parameters['state'])) {
-                $parameters['state'] = $this->generateAuthorizationState();
-            }
-            $this->storeAuthorizationState($parameters['state']);
-        }
-
         // Build the url
         $url = clone $this->getAuthorizationEndpoint();
         foreach ($parameters as $key => $val) {
@@ -97,12 +83,8 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
     /**
      * {@inheritdoc}
      */
-    public function requestAccessToken($code, $state = null)
+    public function requestAccessToken($code)
     {
-        if (null !== $state) {
-            $this->validateAuthorizationState($state);
-        }
-
         $bodyParams = array(
             'code'          => $code,
             'client_id'     => $this->credentials->getConsumerId(),
@@ -116,7 +98,6 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
             $bodyParams,
             $this->getExtraOAuthHeaders()
         );
-
         $token = $this->parseAccessTokenResponse($responseBody);
         $this->storage->storeAccessToken($this->service(), $token);
 
@@ -163,8 +144,6 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
             $uri->addToQuery('access_token', $token->getAccessToken());
         } elseif (static::AUTHORIZATION_METHOD_QUERY_STRING_V2 === $this->getAuthorizationMethod()) {
             $uri->addToQuery('oauth2_access_token', $token->getAccessToken());
-        } elseif (static::AUTHORIZATION_METHOD_QUERY_STRING_V3 === $this->getAuthorizationMethod()) {
-            $uri->addToQuery('apikey', $token->getAccessToken());
         } elseif (static::AUTHORIZATION_METHOD_HEADER_BEARER === $this->getAuthorizationMethod()) {
             $extraHeaders = array_merge(array('Authorization' => 'Bearer ' . $token->getAccessToken()), $extraHeaders);
         }
@@ -232,59 +211,6 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
         $reflectionClass = new \ReflectionClass(get_class($this));
 
         return in_array($scope, $reflectionClass->getConstants(), true);
-    }
-
-    /**
-     * Check if the given service need to generate a unique state token to build the authorization url
-     *
-     * @return bool
-     */
-    public function needsStateParameterInAuthUrl()
-    {
-        return $this->stateParameterInAuthUrl;
-    }
-
-    /**
-     * Validates the authorization state against a given one
-     *
-     * @param string $state
-     * @throws InvalidAuthorizationStateException
-     */
-    protected function validateAuthorizationState($state)
-    {
-        if ($this->retrieveAuthorizationState() !== $state) {
-            throw new InvalidAuthorizationStateException();
-        }
-    }
-
-    /**
-     * Generates a random string to be used as state
-     *
-     * @return string
-     */
-    protected function generateAuthorizationState()
-    {
-        return md5(rand());
-    }
-
-    /**
-     * Retrieves the authorization state for the current service
-     *
-     * @return string
-     */
-    protected function retrieveAuthorizationState()
-    {
-        return $this->storage->retrieveAuthorizationState($this->service());
-    }
-
-    /**
-     * Stores a given authorization state into the storage
-     *
-     * @param string $state
-     */
-    protected function storeAuthorizationState($state)
-    {
-        $this->storage->storeAuthorizationState($this->service(), $state);
     }
 
     /**

@@ -12,5 +12,4 @@ namespace Zend\Crypt\Password\Exception;
 use Zend\Crypt\Exception\ExceptionInterface as Exception;
 
 interface ExceptionInterface extends Exception
-{
-}
+{}

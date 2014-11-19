@@ -206,11 +206,6 @@ class ClientBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testAddsDefaultCredentials()
     {
-        $_SERVER['HOME'] = '/tmp';
-        unset($_SERVER[Credentials::ENV_KEY], $_SERVER[Credentials::ENV_SECRET]);
-        putenv('AWS_ACCESS_KEY_ID=');
-        putenv('AWS_SECRET_KEY=');
-
         $creds = Credentials::factory(array('key' => 'foo', 'secret' => 'bar'));
         $config = array(
             'service' => 'dynamodb',
@@ -225,17 +220,9 @@ class ClientBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure that specific credentials can be used
         $client1 = ClientBuilder::factory('Aws\\DynamoDb')->setConfig($config)->build();
         $this->assertSame($creds, $client1->getCredentials());
+        unset($config['credentials']);
 
         // Ensure that the instance metadata service is called when no credentials are supplied
-        $imc = $this->getMock(
-            'Aws\Common\InstanceMetadata\InstanceMetadataClient',
-            array('getInstanceProfileCredentials'),
-            array($this->getMock('Guzzle\Common\Collection'))
-        );
-        $imc->expects($this->any())->method('getInstanceProfileCredentials')
-            ->willThrowException(new \Aws\Common\Exception\InstanceProfileCredentialsException);
-        unset($config['credentials']);
-        $config['credentials.client'] = $imc;
         $client2 = ClientBuilder::factory('Aws\\DynamoDb')->setConfig($config)->build();
         try {
             $client2->getCredentials()->getAccessKeyId();
@@ -244,31 +231,20 @@ class ClientBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             $this->assertInstanceOf('Aws\Common\Exception\InstanceProfileCredentialsException', $e);
         }
 
-        // Ensure that environment credentials are picked up if supplied via $_SERVER
+        // Ensure that environment credentials are picked up if supplied via putenv
         $_SERVER[Credentials::ENV_KEY] = 'server-key';
         $_SERVER[Credentials::ENV_SECRET] = 'server-secret';
         $client3 = ClientBuilder::factory('Aws\\DynamoDb')->setConfig($config)->build();
         $this->assertEquals('server-key', $client3->getCredentials()->getAccessKeyId());
         $this->assertEquals('server-secret', $client3->getCredentials()->getSecretKey());
-
-        // Ensure that environment credentials are picked up if supplied via AWS_SECRET_ACCESS_KEY
-        $_SERVER[Credentials::ENV_KEY] = 'server-key';
-        // Remove the old key name
-        unset($_SERVER[Credentials::ENV_SECRET]);
-        putenv(Credentials::ENV_SECRET);
-        $_SERVER[Credentials::ENV_SECRET_ACCESS_KEY] = 'server-secret';
-        $client4 = ClientBuilder::factory('Aws\\DynamoDb')->setConfig($config)->build();
-        $this->assertEquals('server-key', $client4->getCredentials()->getAccessKeyId());
-        $this->assertEquals('server-secret', $client4->getCredentials()->getSecretKey());
         unset($_SERVER[Credentials::ENV_KEY], $_SERVER[Credentials::ENV_SECRET]);
-        putenv(Credentials::ENV_SECRET_ACCESS_KEY);
 
         // Ensure that environment credentials are picked up if supplied via putenv
         putenv(Credentials::ENV_KEY . '=env-key');
         putenv(Credentials::ENV_SECRET . '=env-secret');
-        $client5 = ClientBuilder::factory('Aws\\DynamoDb')->setConfig($config)->build();
-        $this->assertEquals('env-key', $client5->getCredentials()->getAccessKeyId());
-        $this->assertEquals('env-secret', $client5->getCredentials()->getSecretKey());
+        $client4 = ClientBuilder::factory('Aws\\DynamoDb')->setConfig($config)->build();
+        $this->assertEquals('env-key', $client4->getCredentials()->getAccessKeyId());
+        $this->assertEquals('env-secret', $client4->getCredentials()->getSecretKey());
         putenv(Credentials::ENV_KEY); putenv(Credentials::ENV_SECRET);
     }
 
@@ -364,22 +340,5 @@ class ClientBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 
         $client = ClientBuilder::factory('Aws\\DynamoDb')->setConfig($config)->build();
         $this->assertNotNull($client->getDescription());
-    }
-
-    public function testCanCreateNullCredentials()
-    {
-        $client = ClientBuilder::factory()
-            ->setConfig(array(
-                'service' => 'foo',
-                'region' => 'us-east-1',
-                'credentials' => false,
-                'service.description' => array(
-                    'signatureVersion' => 'v4',
-                    'regions' => array('us-east-1' => array('https' => true, 'hostname' => 'foo.com'))
-                )
-            ))
-            ->build();
-        $this->assertInstanceOf('Aws\\Common\\Signature\\SignatureV4', $client->getSignature());
-        $this->assertInstanceOf('Aws\\Common\\Credentials\\NullCredentials', $client->getCredentials());
     }
 }

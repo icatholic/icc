@@ -212,4 +212,3 @@ The ``WriteRequestBatch``, ``PutRequest``, and ``DeleteRequest`` classes are all
 ``Aws\DynamoDb\Model\BatchRequest`` namespace.
 
 .. apiref:: DynamoDb
-

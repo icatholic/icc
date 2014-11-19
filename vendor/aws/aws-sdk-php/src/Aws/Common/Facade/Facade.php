@@ -41,7 +41,7 @@ abstract class Facade implements FacadeInterface
             if (isset($service['alias'], $service['class'])) {
                 $facadeClass = __NAMESPACE__ . '\\' . $service['alias'];
                 $facadeAlias = ltrim($targetNamespace . '\\' . $service['alias'], '\\');
-                if (!class_exists($facadeAlias) && class_exists($facadeClass)) {
+                if (!class_exists($facadeAlias)) {
                     // @codeCoverageIgnoreStart
                     class_alias($facadeClass, $facadeAlias);
                     // @codeCoverageIgnoreEnd

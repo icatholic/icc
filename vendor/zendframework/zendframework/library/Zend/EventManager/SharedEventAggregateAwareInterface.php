@@ -9,6 +9,7 @@
 
 namespace Zend\EventManager;
 
+
 /**
  * Interface for allowing attachment of shared aggregate listeners.
  */

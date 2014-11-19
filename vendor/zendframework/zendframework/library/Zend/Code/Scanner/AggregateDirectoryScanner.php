@@ -114,4 +114,17 @@ class AggregateDirectoryScanner extends DirectoryScanner
         $scannerClass = new FunctionScanner();
         // @todo
     }
+
+    /*
+    public static function export()
+    {
+        // @todo
+    }
+
+    public function __toString()
+    {
+        // @todo
+    }
+    */
+
 }

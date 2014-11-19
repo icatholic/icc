@@ -723,9 +723,6 @@ return array (
                                     'ComplaintTopic' => array(
                                         'type' => 'string',
                                     ),
-                                    'DeliveryTopic' => array(
-                                        'type' => 'string',
-                                    ),
                                     'ForwardingEnabled' => array(
                                         'type' => 'boolean',
                                     ),

@@ -18,7 +18,6 @@ class ArrayInput extends Input
 
     /**
      * @param  array $value
-     * @throws Exception\InvalidArgumentException
      * @return Input
      */
     public function setValue($value)
@@ -57,8 +56,8 @@ class ArrayInput extends Input
         foreach ($values as $value) {
             $result = $validator->isValid($value, $context);
             if (!$result) {
-                if ($this->hasFallback()) {
-                    $this->setValue($this->getFallbackValue());
+                if ($fallbackValue = $this->getFallbackValue()) {
+                    $this->setValue($fallbackValue);
                     $result = true;
                 }
                 break;

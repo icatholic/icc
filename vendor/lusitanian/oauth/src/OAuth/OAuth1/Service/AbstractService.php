@@ -82,6 +82,10 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
         }
         $this->signature->setTokenSecret($tokenSecret);
 
+        $extraAuthenticationHeaders = array(
+            'oauth_token' => $token,
+        );
+
         $bodyParams = array(
             'oauth_verifier' => $verifier,
         );
@@ -203,8 +207,10 @@ abstract class AbstractService extends BaseAbstractService implements ServiceInt
         }
 
         $parameters = array_merge($parameters, array('oauth_token' => $token->getAccessToken()));
-        $parameters = (is_array($bodyParams)) ? array_merge($parameters, $bodyParams) : $parameters;
-        $parameters['oauth_signature'] = $this->signature->getSignature($uri, $parameters, $method);
+
+        $mergedParams = (is_array($bodyParams)) ? array_merge($parameters, $bodyParams) : $parameters;
+
+        $parameters['oauth_signature'] = $this->signature->getSignature($uri, $mergedParams, $method);
 
         $authorizationHeader = 'OAuth ';
         $delimiter = '';

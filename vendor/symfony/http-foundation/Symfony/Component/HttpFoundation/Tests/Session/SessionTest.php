@@ -217,7 +217,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase
         $this->session->set('hello', 'world');
         $this->session->set('symfony2', 'rocks');
 
-        $this->assertCount(2, $this->session);
+        $this->assertEquals(2, count($this->session));
     }
 
     public function testGetMeta()

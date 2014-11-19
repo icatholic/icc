@@ -90,6 +90,7 @@ class PublicKey extends AbstractKey
         return $encrypted;
     }
 
+
     /**
      * Decrypt using this key
      *

@@ -12,7 +12,6 @@ namespace Zend\Cache\Storage\Adapter;
 use Redis as RedisResource;
 use RedisException as RedisResourceException;
 use stdClass;
-use Traversable;
 use Zend\Cache\Exception;
 use Zend\Cache\Storage\Capabilities;
 use Zend\Cache\Storage\FlushableInterface;

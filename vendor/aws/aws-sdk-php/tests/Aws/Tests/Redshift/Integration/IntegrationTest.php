@@ -111,7 +111,7 @@ class IntegrationTest extends \Aws\Tests\IntegrationTestCase
         $this->assertCount(1, $result->get('Clusters'));
 
         self::log('Wait until the cluster exists. This can take around 20 minutes.');
-        $this->redshift->waitUntil('ClusterAvailable', array(
+        $this->redshift->waitUntilClusterAvailable(array(
             'ClusterIdentifier' => $clusterId
         ));
 
@@ -120,7 +120,7 @@ class IntegrationTest extends \Aws\Tests\IntegrationTestCase
             'ClusterIdentifier'  => $clusterId,
             'SnapshotIdentifier' => $snapshotId,
         ))->execute();
-        $this->redshift->waitUntil('SnapshotAvailable', array(
+        $this->redshift->waitUntilSnapshotAvailable(array(
             'SnapshotIdentifier' => $snapshotId
         ));
 
@@ -136,7 +136,7 @@ class IntegrationTest extends \Aws\Tests\IntegrationTestCase
         ))->execute();
 
         self::log('Wait until the cluster is deleted.');
-        $this->redshift->waitUntil('ClusterDeleted', array(
+        $this->redshift->waitUntilClusterDeleted(array(
             'ClusterIdentifier' => $clusterId,
         ));
     }

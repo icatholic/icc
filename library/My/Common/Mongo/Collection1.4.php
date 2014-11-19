@@ -1078,7 +1078,8 @@ class MongoCollection extends \MongoCollection
                     $locks->insert(array(
                         'out' => $out,
                         'isRunning' => true,
-                        'expire' => new \MongoDate(time() + 300)
+                        'expire' => new \MongoDate(time() + 300),
+                        'rst' => ''
                     ));
                     return false;
                 } else {
@@ -1099,7 +1100,8 @@ class MongoCollection extends \MongoCollection
                     ), array(
                         '$set' => array(
                             'isRunning' => true,
-                            'expire' => new \MongoDate(time() + 300)
+                            'expire' => new \MongoDate(time() + 300),
+                            'rst' => ''
                         )
                     ));
                     return false;

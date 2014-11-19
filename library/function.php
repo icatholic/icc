@@ -1606,15 +1606,19 @@ function mapReduce1($out = null, MongoCollection $dataModel, $statisticInfo, $qu
     if ($statisticInfo['yAxisType'] == 'unique' || $statisticInfo['yAxisType'] == 'distinct') {
         $dataModel->setReadPreference(\MongoClient::RP_SECONDARY);
         $firstMrResult = $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
-        $firstMrResult->setNoAppendQuery(true);
-        if ($out != null) {
-            $out .= '_unique';
+        if($firstMrResult instanceof MongoCollection) {
+            $firstMrResult->setNoAppendQuery(true);
+            if ($out != null) {
+                $out .= '_unique';
+            }
+            return $firstMrResult->mapReduce($out, $mapUnique, $reduce, array(
+                '_id' => array(
+                    '$exists' => true
+                )
+            ), $finalize, $method, $scope, $sort, $limit);
+        } else {
+            return $firstMrResult;
         }
-        return $firstMrResult->mapReduce($out, $mapUnique, $reduce, array(
-            '_id' => array(
-                '$exists' => true
-            )
-        ), $finalize, $method, $scope, $sort, $limit);
     } else {
         $dataModel->setReadPreference(\MongoClient::RP_SECONDARY);
         return $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);

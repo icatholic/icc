@@ -479,6 +479,7 @@ class Memcached extends AbstractAdapter implements
             }
         }
 
+
         return $result;
     }
 

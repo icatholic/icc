@@ -56,7 +56,7 @@ class CallbackCheckAdapter extends AbstractAdapter
      * credential.
      *
      * @param callable $validationCallback
-     * @return self
+     * @return DbTable
      * @throws Exception\InvalidArgumentException
      */
     public function setCredentialValidationCallback($validationCallback)

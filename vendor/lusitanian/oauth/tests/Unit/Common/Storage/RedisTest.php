@@ -27,7 +27,7 @@ class RedisTest extends \PHPUnit_Framework_TestCase
         ));
 
         // set it
-        $this->storage = new Redis($predis, 'test_user_token', 'test_user_state');
+        $this->storage = new Redis($predis, 'test_user_token');
 
         try {
             $predis->connect();

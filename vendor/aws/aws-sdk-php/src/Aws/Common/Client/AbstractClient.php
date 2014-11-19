@@ -19,7 +19,6 @@ namespace Aws\Common\Client;
 use Aws\Common\Aws;
 use Aws\Common\Credentials\Credentials;
 use Aws\Common\Credentials\CredentialsInterface;
-use Aws\Common\Credentials\NullCredentials;
 use Aws\Common\Enum\ClientOptions as Options;
 use Aws\Common\Exception\InvalidArgumentException;
 use Aws\Common\Exception\TransferException;
@@ -85,9 +84,7 @@ abstract class AbstractClient extends Client implements AwsClientInterface
 
         // Add the event listener so that requests are signed before they are sent
         $dispatcher = $this->getEventDispatcher();
-        if (!$credentials instanceof NullCredentials) {
-            $dispatcher->addSubscriber(new SignatureListener($credentials, $signature));
-        }
+        $dispatcher->addSubscriber(new SignatureListener($credentials, $signature));
 
         if ($backoff = $config->get(Options::BACKOFF)) {
             $dispatcher->addSubscriber($backoff, -255);
@@ -138,11 +135,17 @@ abstract class AbstractClient extends Client implements AwsClientInterface
         return $scheme . '://' . $regions[$region]['hostname'];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getCredentials()
     {
         return $this->credentials;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setCredentials(CredentialsInterface $credentials)
     {
         $formerCredentials = $this->credentials;
@@ -157,21 +160,33 @@ abstract class AbstractClient extends Client implements AwsClientInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getSignature()
     {
         return $this->signature;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getRegions()
     {
         return $this->serviceDescription->getData('regions');
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getRegion()
     {
         return $this->getConfig(Options::REGION);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setRegion($region)
     {
         $config = $this->getConfig();
@@ -201,6 +216,9 @@ abstract class AbstractClient extends Client implements AwsClientInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function waitUntil($waiter, array $input = array())
     {
         $this->getWaiter($waiter, $input)->wait();
@@ -208,6 +226,9 @@ abstract class AbstractClient extends Client implements AwsClientInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getWaiter($waiter, array $input = array())
     {
         return $this->getWaiterFactory()->build($waiter)
@@ -215,6 +236,9 @@ abstract class AbstractClient extends Client implements AwsClientInterface
             ->setConfig($input);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setWaiterFactory(WaiterFactoryInterface $waiterFactory)
     {
         $this->waiterFactory = $waiterFactory;
@@ -222,6 +246,9 @@ abstract class AbstractClient extends Client implements AwsClientInterface
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getWaiterFactory()
     {
         if (!$this->waiterFactory) {
@@ -239,6 +266,9 @@ abstract class AbstractClient extends Client implements AwsClientInterface
         return $this->waiterFactory;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getApiVersion()
     {
         return $this->serviceDescription->getApiVersion();

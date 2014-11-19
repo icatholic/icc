@@ -82,9 +82,8 @@ class ClassDefinition implements DefinitionInterface, PartialMarker
        if ($isRequired === null) {
             if ($method === '__construct') {
                 $methodRequirementType = Di::METHOD_IS_CONSTRUCTOR;
-            } else {
-                $methodRequirementType = Di::METHOD_IS_OPTIONAL;
             }
+            $methodRequirementType = Di::METHOD_IS_OPTIONAL;
         } else {
             $methodRequirementType = InjectionMethod::detectMethodRequirement($isRequired);
         }

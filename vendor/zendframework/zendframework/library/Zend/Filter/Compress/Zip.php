@@ -184,12 +184,13 @@ class Zip extends AbstractCompressionAlgorithm
      */
     public function decompress($content)
     {
-        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
+        $archive = $this->getArchive();
 
         if (empty($archive) || !file_exists($archive)) {
             throw new Exception\RuntimeException('ZIP Archive not found');
         }
 
+        $archive = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, realpath($content));
         $zip     = new ZipArchive();
         $res     = $zip->open($archive);
 

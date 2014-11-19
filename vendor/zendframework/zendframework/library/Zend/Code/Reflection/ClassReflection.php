@@ -163,7 +163,7 @@ class ClassReflection extends ReflectionClass implements ReflectionInterface
     /**
      * Get reflection objects of all methods
      *
-     * @param  int $filter
+     * @param  string $filter
      * @return MethodReflection[]
      */
     public function getMethods($filter = -1)

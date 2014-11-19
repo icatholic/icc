@@ -34,14 +34,12 @@ abstract class Rand
      */
     public static function getBytes($length, $strong = false)
     {
-        $length = (int) $length;
-
         if ($length <= 0) {
             return false;
         }
-
+        $bytes = '';
         if (function_exists('openssl_random_pseudo_bytes')
-            && ((PHP_VERSION_ID >= 50304)
+            && (version_compare(PHP_VERSION, '5.3.4') >= 0
             || strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN')
         ) {
             $bytes = openssl_random_pseudo_bytes($length, $usable);
@@ -50,7 +48,7 @@ abstract class Rand
             }
         }
         if (function_exists('mcrypt_create_iv')
-            && ((PHP_VERSION_ID >= 50307)
+            && (version_compare(PHP_VERSION, '5.3.7') >= 0
             || strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN')
         ) {
             $bytes = mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
@@ -77,7 +75,7 @@ abstract class Rand
      */
     public static function getAlternativeGenerator()
     {
-        if (null !== static::$generator) {
+        if (!is_null(static::$generator)) {
             return static::$generator;
         }
         if (!class_exists('RandomLib\\Factory')) {
@@ -136,9 +134,8 @@ abstract class Rand
         // calculate number of bits required to store range on this machine
         $r = $range;
         $bits = 0;
-        while ($r) {
+        while ($r >>= 1) {
             $bits++;
-            $r >>= 1;
         }
 
         $bits   = (int) max($bits, 1);

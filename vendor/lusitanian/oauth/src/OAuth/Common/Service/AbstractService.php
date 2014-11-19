@@ -24,7 +24,7 @@ abstract class AbstractService implements ServiceInterface
     protected $storage;
 
     /**
-     * @param CredentialsInterface  $credentials
+     * @param Credentials           $credentials
      * @param ClientInterface       $httpClient
      * @param TokenStorageInterface $storage
      */

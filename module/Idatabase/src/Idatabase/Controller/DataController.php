@@ -596,7 +596,6 @@ class DataController extends Action
                 }
                 
                 $datas = $rst->findAll(array(), $sort, 0, 1000);
-                
                 $datas = $this->replaceRshData($datas, $map);
                 
                 $excel = array();

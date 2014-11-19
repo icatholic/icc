@@ -125,7 +125,7 @@ class StreamClientTest extends \PHPUnit_Framework_TestCase
         $response = $client->retrieveResponse(
             $endPoint,
             '',
-            array('Content-Type' => 'foo/bar'),
+            array('Content-type' => 'foo/bar'),
             'get'
         );
 
@@ -205,20 +205,18 @@ class StreamClientTest extends \PHPUnit_Framework_TestCase
             ->method('getAbsoluteUri')
             ->will($this->returnValue('http://httpbin.org/post'));
 
-        $formData = array('baz' => 'fab', 'foo' => 'bar');
-
         $client = new StreamClient();
 
         $response = $client->retrieveResponse(
             $endPoint,
-            $formData,
+            'foo',
             array(),
             'POST'
         );
 
         $response = json_decode($response, true);
 
-        $this->assertSame($formData, $response['form']);
+        $this->assertSame('foo', $response['data']);
     }
 
     /**
@@ -235,20 +233,18 @@ class StreamClientTest extends \PHPUnit_Framework_TestCase
             ->method('getAbsoluteUri')
             ->will($this->returnValue('http://httpbin.org/put'));
 
-        $formData = array('baz' => 'fab', 'foo' => 'bar');
-
         $client = new StreamClient();
 
         $response = $client->retrieveResponse(
             $endPoint,
-            $formData,
+            'foo',
             array(),
             'PUT'
         );
 
         $response = json_decode($response, true);
 
-        $this->assertSame($formData, $response['form']);
+        $this->assertSame('foo', $response['data']);
     }
 
     /**
@@ -272,7 +268,7 @@ class StreamClientTest extends \PHPUnit_Framework_TestCase
         $response = $client->retrieveResponse(
             $endPoint,
             '',
-            array('Content-Type' => 'foo/bar'),
+            array('Content-type' => 'foo/bar'),
             'get'
         );
 

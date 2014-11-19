@@ -104,10 +104,6 @@ class Ean5 extends Ean13
         return ($checksum % 10);
     }
 
-    /**
-     * @param int $i
-     * @return string
-     */
     protected function getParity($i)
     {
         $checksum = $this->getChecksum($this->getText());

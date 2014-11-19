@@ -77,12 +77,8 @@ class Bitly extends AbstractService
     /**
      * {@inheritdoc}
      */
-    public function requestAccessToken($code, $state = null)
+    public function requestAccessToken($code)
     {
-        if (null !== $state) {
-            $this->validateAuthorizationState($state);
-        }
-
         $bodyParams = array(
             'code'          => $code,
             'client_id'     => $this->credentials->getConsumerId(),

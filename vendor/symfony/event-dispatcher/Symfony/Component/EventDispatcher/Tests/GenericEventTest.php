@@ -18,6 +18,7 @@ use Symfony\Component\EventDispatcher\GenericEvent;
  */
 class GenericEventTest extends \PHPUnit_Framework_TestCase
 {
+
     /**
      * @var GenericEvent
      */
@@ -33,7 +34,7 @@ class GenericEventTest extends \PHPUnit_Framework_TestCase
         parent::setUp();
 
         $this->subject = new \stdClass();
-        $this->event = new GenericEvent($this->subject, array('name' => 'Event'));
+        $this->event = new GenericEvent($this->subject, array('name' => 'Event'), 'foo');
     }
 
     /**

@@ -10,6 +10,7 @@
 namespace Zend\Mvc\Service;
 
 use Zend\Console\Console;
+use Zend\Mvc\Router\Console\SimpleRouteStack as ConsoleRouter;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 

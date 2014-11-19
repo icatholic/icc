@@ -17,8 +17,6 @@
 namespace Aws\Common\Client;
 
 use Aws\Common\Credentials\Credentials;
-use Aws\Common\Credentials\CredentialsInterface;
-use Aws\Common\Credentials\NullCredentials;
 use Aws\Common\Enum\ClientOptions as Options;
 use Aws\Common\Enum\Region;
 use Aws\Common\Exception\ExceptionListener;
@@ -30,6 +28,7 @@ use Aws\Common\Iterator\AwsResourceIteratorFactory;
 use Aws\Common\Signature\EndpointSignatureInterface;
 use Aws\Common\Signature\SignatureInterface;
 use Aws\Common\Signature\SignatureV2;
+use Aws\Common\Signature\SignatureV3;
 use Aws\Common\Signature\SignatureV3Https;
 use Aws\Common\Signature\SignatureV4;
 use Guzzle\Common\Collection;
@@ -200,10 +199,14 @@ class ClientBuilder
             (self::$commonConfigRequirements + $this->configRequirements)
         );
 
-        // Resolve the endpoint, signature, and credentials
+        // Resolve endpoint and signature from the config and service description
         $description = $this->updateConfigFromDescription($config);
         $signature = $this->getSignature($description, $config);
-        $credentials = $this->getCredentials($config);
+
+        // Resolve credentials
+        if (!$credentials = $config->get('credentials')) {
+            $credentials = Credentials::factory($config);
+        }
 
         // Resolve exception parser
         if (!$this->exceptionParser) {
@@ -218,10 +221,10 @@ class ClientBuilder
                 new TruncatedBackoffStrategy(3,
                     // Retry failed requests with 400-level responses due to throttling
                     new ThrottlingErrorChecker($this->exceptionParser,
-                        // Retry failed requests due to transient network or cURL problems
-                        new CurlBackoffStrategy(null,
-                            // Retry failed requests with 500-level responses
-                            new HttpBackoffStrategy(array(500, 503, 509),
+                        // Retry failed requests with 500-level responses
+                        new HttpBackoffStrategy(array(500, 503, 509),
+                            // Retry failed requests due to transient network or cURL problems
+                            new CurlBackoffStrategy(null,
                                 // Retry requests that failed due to expired credentials
                                 new ExpiredCredentialsChecker($this->exceptionParser,
                                     new ExponentialBackoffStrategy()
@@ -445,17 +448,5 @@ class ClientBuilder
         }
 
         return $signature;
-    }
-
-    protected function getCredentials(Collection $config)
-    {
-        $credentials = $config->get(Options::CREDENTIALS);
-        if ($credentials === false) {
-            $credentials = new NullCredentials();
-        } elseif (!$credentials instanceof CredentialsInterface) {
-            $credentials = Credentials::factory($config);
-        }
-
-        return $credentials;
     }
 }

@@ -358,7 +358,6 @@ class Request
                 if (!isset($server['CONTENT_TYPE'])) {
                     $server['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
                 }
-                // no break
             case 'PATCH':
                 $request = $parameters;
                 $query = array();
@@ -502,8 +501,6 @@ class Request
      */
     public function overrideGlobals()
     {
-        $this->server->set('QUERY_STRING', static::normalizeQueryString(http_build_query($this->query->all(), null, '&')));
-
         $_GET = $this->query->all();
         $_POST = $this->request->all();
         $_SERVER = $this->server->all();
@@ -682,7 +679,7 @@ class Request
     /**
      * Checks whether support for the _method request parameter is enabled.
      *
-     * @return bool    True when the _method request parameter is enabled, false otherwise
+     * @return Boolean True when the _method request parameter is enabled, false otherwise
      */
     public static function getHttpMethodParameterOverride()
     {
@@ -706,7 +703,7 @@ class Request
      *
      * @param string  $key     the key
      * @param mixed   $default the default value
-     * @param bool    $deep    is parameter deep in multidimensional array
+     * @param Boolean $deep    is parameter deep in multidimensional array
      *
      * @return mixed
      */
@@ -731,7 +728,7 @@ class Request
      * Whether the request contains a Session which was started in one of the
      * previous requests.
      *
-     * @return bool
+     * @return Boolean
      *
      * @api
      */
@@ -748,7 +745,7 @@ class Request
      * like whether the session is started or not. It is just a way to check if this Request
      * is associated with a Session instance.
      *
-     * @return bool    true when the Request contains a Session object, false otherwise
+     * @return Boolean true when the Request contains a Session object, false otherwise
      *
      * @api
      */
@@ -958,13 +955,7 @@ class Request
         }
 
         if ($host = $this->headers->get('HOST')) {
-            if ($host[0] === '[') {
-                $pos = strpos($host, ':', strrpos($host, ']'));
-            } else {
-                $pos = strrpos($host, ':');
-            }
-
-            if (false !== $pos) {
+            if (false !== $pos = strrpos($host, ':')) {
                 return intval(substr($host, $pos + 1));
             }
 
@@ -981,7 +972,7 @@ class Request
      */
     public function getUser()
     {
-        return $this->headers->get('PHP_AUTH_USER');
+        return $this->server->get('PHP_AUTH_USER');
     }
 
     /**
@@ -991,7 +982,7 @@ class Request
      */
     public function getPassword()
     {
-        return $this->headers->get('PHP_AUTH_PW');
+        return $this->server->get('PHP_AUTH_PW');
     }
 
     /**
@@ -1033,9 +1024,9 @@ class Request
     }
 
     /**
-     * Returns the requested URI (path and query string).
+     * Returns the requested URI.
      *
-     * @return string The raw URI (i.e. not URI decoded)
+     * @return string The raw URI (i.e. not urldecoded)
      *
      * @api
      */
@@ -1062,9 +1053,9 @@ class Request
     }
 
     /**
-     * Generates a normalized URI (URL) for the Request.
+     * Generates a normalized URI for the Request.
      *
-     * @return string A normalized URI (URL) for the Request
+     * @return string A normalized URI for the Request
      *
      * @see getQueryString()
      *
@@ -1122,7 +1113,7 @@ class Request
      * ("SSL_HTTPS" for instance), configure it via "setTrustedHeaderName()" with
      * the "client-proto" key.
      *
-     * @return bool
+     * @return Boolean
      *
      * @api
      */
@@ -1132,9 +1123,7 @@ class Request
             return in_array(strtolower(current(explode(',', $proto))), array('https', 'on', 'ssl', '1'));
         }
 
-        $https = $this->server->get('HTTPS');
-
-        return !empty($https) && 'off' !== strtolower($https);
+        return 'on' == strtolower($this->server->get('HTTPS')) || 1 == $this->server->get('HTTPS');
     }
 
     /**
@@ -1172,8 +1161,7 @@ class Request
 
         // as the host can come from the user (HTTP_HOST and depending on the configuration, SERVER_NAME too can come from the user)
         // check that it does not contain forbidden characters (see RFC 952 and RFC 2181)
-        // use preg_replace() instead of preg_match() to prevent DoS attacks with long host names
-        if ($host && '' !== preg_replace('/(?:^\[)?[a-zA-Z0-9-:\]_]+\.?/', '', $host)) {
+        if ($host && !preg_match('/^\[?(?:[a-zA-Z0-9-:\]_]+\.?)+$/', $host)) {
             throw new \UnexpectedValueException(sprintf('Invalid Host "%s"', $host));
         }
 
@@ -1299,6 +1287,8 @@ class Request
                 return $format;
             }
         }
+
+        return null;
     }
 
     /**
@@ -1383,16 +1373,6 @@ class Request
     }
 
     /**
-     * Get the default locale.
-     *
-     * @return string
-     */
-    public function getDefaultLocale()
-    {
-        return $this->defaultLocale;
-    }
-
-    /**
      * Sets the locale.
      *
      * @param string $locale
@@ -1419,7 +1399,7 @@ class Request
      *
      * @param string $method Uppercase request method (GET, POST etc).
      *
-     * @return bool
+     * @return Boolean
      */
     public function isMethod($method)
     {
@@ -1429,7 +1409,7 @@ class Request
     /**
      * Checks whether the method is safe or not.
      *
-     * @return bool
+     * @return Boolean
      *
      * @api
      */
@@ -1441,7 +1421,7 @@ class Request
     /**
      * Returns the request body content.
      *
-     * @param bool    $asResource If true, a resource will be returned
+     * @param Boolean $asResource If true, a resource will be returned
      *
      * @return string|resource The request body content or a resource to read the body stream.
      *
@@ -1477,7 +1457,7 @@ class Request
     }
 
     /**
-     * @return bool
+     * @return Boolean
      */
     public function isNoCache()
     {
@@ -1616,7 +1596,7 @@ class Request
      * It is known to work with common JavaScript frameworks:
      * @link http://en.wikipedia.org/wiki/List_of_Ajax_frameworks#JavaScript
      *
-     * @return bool    true if the request is an XMLHttpRequest, false otherwise
+     * @return Boolean true if the request is an XMLHttpRequest, false otherwise
      *
      * @api
      */

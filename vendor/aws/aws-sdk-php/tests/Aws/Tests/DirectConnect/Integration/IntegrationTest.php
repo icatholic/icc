@@ -64,7 +64,7 @@ class IntegrationTest extends \Aws\Tests\IntegrationTestCase
         $client = $this->getServiceBuilder()->get('directconnect', true);
 
         // @begin
-        $iterator = $client->getIterator('DescribeConnections');
+        $iterator = $client->getDescribeConnectionsIterator();
 
         foreach ($iterator as $connection) {
             echo $connection['connectionId'] . "\n";

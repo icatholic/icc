@@ -45,9 +45,7 @@ class Gmp implements AdapterInterface
             }
         }
 
-        set_error_handler(function () { /* Do nothing */}, \E_WARNING);
         $res = gmp_init($sign . $operand, $base);
-        restore_error_handler();
         if ($res === false) {
             return false;
         }

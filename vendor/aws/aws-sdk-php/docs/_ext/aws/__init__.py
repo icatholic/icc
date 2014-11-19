@@ -123,11 +123,7 @@ class ServiceDescription():
 
         :param path: Path to a service description to load
         """
-        description = self.__load_php(path)
-        if 'regions' not in description:
-            description['regions'] = {}
-
-        return description
+        return self.__load_php(path)
 
     def __load_php(self, path):
         """Load a PHP script that returns an array using JSON
