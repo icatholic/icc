@@ -669,7 +669,7 @@ class MongoCollection extends \MongoCollection
     public function findAndModify(array $query, array $update = NULL, array $fields = NULL, array $options = NULL)
     {
         $query = $this->appendQuery($query);
-        if (parent::count($query) == 0 && $options['upsert'] == true) {
+        if (parent::count($query) == 0 && ! empty($options['upsert'])) {
             $query = $this->addSharedKeyToQuery($query);
         } else {
             unset($options['upsert']);
@@ -705,7 +705,7 @@ class MongoCollection extends \MongoCollection
         if (isset($option['upsert']))
             $cmd['upsert'] = is_bool($option['upsert']) ? $option['upsert'] : false;
         
-        if (parent::count($cmd['query']) == 0 && $option['upsert'] == true) {
+        if (parent::count($cmd['query']) == 0 && ! empty($option['upsert'])) {
             $cmd['query'] = $this->addSharedKeyToQuery($cmd['query']);
         } else {
             unset($cmd['upsert']);

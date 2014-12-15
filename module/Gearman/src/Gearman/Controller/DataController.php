@@ -148,10 +148,8 @@ class DataController extends Action
                     {
                         if (isset($rshData[$field])) {
                             $cell = isset($rshData[$field][$cell]) ? $rshData[$field][$cell] : '';
-                            // 过滤掉无效的字符,去掉影响csv格式的字符串
-                            if (! empty($cell))
-                                $cell = preg_replace("/\r|\n|\t|\s/", "", htmlspecialchars($cell));
-                        }
+                        } 
+                        $cell = preg_replace("/\r|\n|\t|\s/", "", htmlspecialchars($cell));
                     });
                 });
                 

@@ -126,12 +126,12 @@ Ext.define('icc.view.idatabase.Collection.Grid', {
 							action : 'lock'
 						}, {
 							xtype : 'button',
-							text : '数据导入',
+							text : '数据导入(不建议)',
 							iconCls : 'dbimport',
 							action : 'dbimport'
 						}, {
 							xtype : 'button',
-							text : 'CSV导入',
+							text : 'CSV导入(建议)',
 							iconCls : 'dbimport',
 							action : 'csvimport'
 						}, {
@@ -149,6 +149,11 @@ Ext.define('icc.view.idatabase.Collection.Grid', {
 							text : '触发动作',
 							iconCls : 'sync',
 							action : 'hook'
+						}, {
+							xtype : 'button',
+							text : '复制文档结构',
+							iconCls : 'copy',
+							action : 'copy'
 						} ]
 					}
 				}, '-', {

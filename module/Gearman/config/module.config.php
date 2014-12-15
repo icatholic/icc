@@ -137,6 +137,15 @@ return array(
                             'action' => 'worker'
                         )
                     )
+                ),
+                'log_error_worker' => array(
+                    'options' => array(
+                        'route' => 'log error worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Log',
+                            'action' => 'log'
+                        )
+                    )
                 )
             )
         )

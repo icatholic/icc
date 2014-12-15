@@ -10,7 +10,7 @@ namespace Gearman\Controller;
 
 use My\Common\Controller\Action;
 
-class DataController extends Action
+class LogController extends Action
 {
 
     private $_worker;

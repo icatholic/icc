@@ -125,7 +125,7 @@ class CollectionController extends Action
         
         $datas = array();
         $cursor = $this->_collection->find($query);
-        // fb($query, 'LOG');
+        //fb($query, 'LOG');
         //fb($cursor->explain(), 'LOG');
         $cursor->sort($sort);
         $cursor->skip($start)->limit($limit);

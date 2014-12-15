@@ -575,7 +575,91 @@ Ext.define('icc.controller.idatabase.Collection', {
 				}, me);
 			}
 		};
+		
+		listeners[controllerName + 'Grid button[action=copy]'] = {
+				click: function(button) {
+					var grid = button.up('gridpanel');
+					var selections = grid.getSelectionModel().getSelection();
+					if (selections.length == 1) {
+						var projectCombobox = Ext.create('icc.view.idatabase.Project.Combobox',{
+							name:'project_id',
+							fieldLabel: '目标项目',
+				            allowBlank: false,
+				        	typeAhead : true,
+							queryMode : 'remote',
+							forceSelection : true,
+							editable : true,
+							minChars : 1,
+							queryParam : 'query',
+				            listeners : {
+				            	select : function(combo, records, eOpts) {
+				            		try {
+					            		var project_id = combo.getValue();
+					            		if(project_id != null) {
+					            			var form = combo.up('form').getForm();
+					                		var collectionCombo = form.findField('collectionAlias');
+					                		collectionCombo.__PROJECT_ID__ = project_id;
+					                		collectionCombo.clearValue();
+					                		collectionCombo.store.proxy.extraParams.__PROJECT_ID__ = project_id;
+					                		collectionCombo.store.proxy.extraParams.action = 'all';
+						            		collectionCombo.store.load(); 
+					            		} else {
+					            			console.info(project_id);
+					            		}
+				            		} catch (e) {
+				            			console.info(e);
+				            		}
+				            	}
+				            }
+				    	});
+						
+						var collectionComboboxStore = Ext.create('icc.store.idatabase.Collection',{});
+						var collectionCombobox = Ext.create('icc.view.idatabase.Collection.Combobox.All',{
+							fieldLabel: '目标集合',
+							name:'collectionAlias',
+				            allowBlank: false,
+				        	typeAhead : true,
+							queryMode : 'remote',
+							forceSelection : true,
+							editable : true,
+							minChars : 1,
+							queryParam : 'query',
+				            store : collectionComboboxStore
+				    	});
+						var record = selections[0];
+						var win = Ext.widget('idatabaseCopyWindow', {
+							__PROJECT_ID__: grid.__PROJECT_ID__,
+							__COLLECTION_ID__: record.get('_id'),
+							__PLUGIN_ID__: grid.__PLUGIN_ID__,
+							projectCombobox : projectCombobox,
+							collectionCombobox : collectionCombobox
+						});
+						win.show();
+					} else {
+						Ext.Msg.alert('提示信息', '请选择一项您要复制文档结构的集合');
+					}
+				}
+			};
 
+		listeners['idatabaseCopyWindow button[action=submit]'] = {
+				click: function(button) {
+					var form = button.up('form').getForm();
+					var win = button.up('window');
+					if (form.isValid()) {
+						form.submit({
+							waitTitle: '系统提示',
+							waitMsg: '系统处理中，请稍后……',
+							success: function(form, action) {
+								Ext.Msg.alert('成功提示', action.result.msg);
+							},
+							failure: function(form, action) {
+								Ext.Msg.alert('失败提示', action.result.msg);
+							}
+						});
+					}
+				}
+			};
+		
 		me.control(listeners);
 	},
 	buildDataPanel: function(grid, tabpanel, record) {

@@ -936,6 +936,7 @@ Ext.ClassManager.addNameAlternateMappings({
   "icc.view.idatabase.Collection.Add": [],
   "icc.view.idatabase.Collection.AllCombobox": [],
   "icc.view.idatabase.Collection.Combobox": [],
+  "icc.view.idatabase.Collection.Combobox.All": [],
   "icc.view.idatabase.Collection.Dashboard": [],
   "icc.view.idatabase.Collection.Edit": [],
   "icc.view.idatabase.Collection.Grid": [],
@@ -946,6 +947,7 @@ Ext.ClassManager.addNameAlternateMappings({
   "icc.view.idatabase.Collection.Order.Window": [],
   "icc.view.idatabase.Collection.Password": [],
   "icc.view.idatabase.Collection.TabPanel": [],
+  "icc.view.idatabase.Copy.Window": [],
   "icc.view.idatabase.Data.Add": [],
   "icc.view.idatabase.Data.Edit": [],
   "icc.view.idatabase.Data.Field.2dfield": [],
@@ -2131,6 +2133,9 @@ Ext.ClassManager.addNameAliasMappings({
   "icc.view.idatabase.Collection.Combobox": [
     "widget.idatabaseCollectionCombobox"
   ],
+  "icc.view.idatabase.Collection.Combobox.All": [
+    "widget.idatabaseCollectionComboboxAll"
+  ],
   "icc.view.idatabase.Collection.Dashboard": [
     "widget.idatabaseCollectionDashboard"
   ],
@@ -2160,6 +2165,9 @@ Ext.ClassManager.addNameAliasMappings({
   ],
   "icc.view.idatabase.Collection.TabPanel": [
     "widget.idatabaseCollectionTabPanel"
+  ],
+  "icc.view.idatabase.Copy.Window": [
+    "widget.idatabaseCopyWindow"
   ],
   "icc.view.idatabase.Data.Add": [
     "widget.idatabaseDataAdd"

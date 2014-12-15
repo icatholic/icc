@@ -46,11 +46,10 @@ class PluginIndex extends Mongo
                     'alias' => $pluginCollectionInfo['alias']
                 ));
                 
-                $this->_data->setCollection(iCollectionName($targetCollection['_id']));
-                $rst = $this->_data->ensureIndex($row['indexes']);
-//                 fb(iCollectionName($targetCollection['_id']),'LOG');
-//                 fb($row['indexes'],'LOG');
-//                 fb($rst,'LOG');
+                if (! empty($targetCollection)) {
+                    $this->_data->setCollection(iCollectionName($targetCollection['_id']));
+                    $rst = $this->_data->ensureIndex($row['indexes']);
+                }
             }
         }
         
