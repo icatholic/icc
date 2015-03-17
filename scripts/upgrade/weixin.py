@@ -111,7 +111,7 @@ reply_collection_id = str(icc['idatabase_collections'].find_one({'project_id':op
 keyword_collection_id = str(icc['idatabase_collections'].find_one({'project_id':options.target_pid,'alias':'iWeixin_keyword'})['_id'])
 user_collection_id = str(icc['idatabase_collections'].find_one({'project_id':options.target_pid,'alias':'iWeixin_user'})['_id'])
 source_collection_id = str(icc['idatabase_collections'].find_one({'project_id':options.target_pid,'alias':'iWeixin_source'})['_id'])
-
+menu_collection_id = str(icc['idatabase_collections'].find_one({'project_id':options.target_pid,'alias':'iWeixin_menu'})['_id'])
 
 #升级自定义页面
 page_map = {}
@@ -133,7 +133,6 @@ for page_info in uma['iDatabase.%s'%(page_form_id,)].find():
     page_map[page_info_id] = str(new_page_id)
 logging.info('写入集合为：idatabase_collection_%s 写入完成'%(page_collection_id,))
 logging.info('完成升级自定义页面')
-
 
 #升级回复内容
 reply_map = {}
@@ -165,12 +164,12 @@ for reply_info in uma['iDatabase.%s'%(reply_form_id,)].find():
     data['priority'] = 'priority' in reply_info and reply_info['priority'] or ''
     data['page'] = 'page' in reply_info and reply_info['page'] or ''
     
-    if data['page']!='' and data['url']=='':
-        #data['url'] = "http://131115-e0262.umaman.com/weixin/index2/page/type/custom/id/%s"%(data['page'],)
-        data['url'] = "%s/weixin/index2/page/type/custom/id/%s"%(options.domain,data['page'])
+    #if data['page']!='' and data['url']=='':
+    #    #data['url'] = "http://131115-e0262.umaman.com/weixin/index2/page/type/custom/id/%s"%(data['page'],)
+    #    data['url'] = "%s/weixin/index2/page/type/custom/id/%s"%(options.domain,data['page'])
         
-    #if data['page']!='':
-    #    data['page'] = data['page'] in page_map and page_map[data['page']] or ''
+    if data['page']!='':
+        data['page'] = data['page'] in page_map and page_map[data['page']] or ''
          
     data['show_times'] = 'show_times' in reply_info and reply_info['show_times'] or ''
     data['click_times'] = 'click_times' in reply_info and reply_info['click_times'] or ''
@@ -222,6 +221,28 @@ for keyword_info in uma['iDatabase.%s'%(keyword_form_id,)].find():
     keyword_map[keyword_info_id] = str(new_keyword_id)
 logging.info('完成升级关键词内容')
 
+#升级自定义菜单
+logging.info('开始升级微信自定义菜单')
+icc['idatabase_collection_%s'%(menu_collection_id,)].drop()
+parent_map = {}
+for menu_info in uma['weixin.menu'].find({'project.projectId':options.weixin_pid}):
+    data = {}
+    data['type'] = 'type' in menu_info and menu_info['type'] or ''
+    data['name'] = 'name' in menu_info and menu_info['name'] or ''
+    data['key'] = 'key' in menu_info and menu_info['key'] or ''
+    data['parent'] = 'fatherNode' in menu_info and menu_info['fatherNode'] or ''
+    data['priority'] = 'showOrder' in menu_info and menu_info['showOrder'] or 0
+    data['__REMOVED__'] = False
+    data['__CREATE_TIME__'] = menu_info['createTime']
+    data['__MODIFY_TIME__'] = menu_info['createTime']
+    new_menu_id = icc['idatabase_collection_%s'%(menu_collection_id,)].insert(data)
+    parent_map[str(menu_info['_id'])] = str(new_menu_id)
+logging.info('更新父ID信息')    
+for has_father_menu_info in icc['idatabase_collection_%s'%(menu_collection_id,)].find({'fatherNode':{'$ne':''}}):
+    icc['idatabase_collection_%s'%(menu_collection_id,)].update({'_id':has_father_menu_info['_id']},{'$set':{'parent':parent_map[has_father_menu_info['parent']]}})
+logging.info('完成升级自定义菜单')
+
+"""
 #升级微信用户数据
 logging.info('开始升级微信用户数据')
 logging.info('读取集合为：weixin.user')
@@ -254,6 +275,8 @@ for record_info in uma['weixin'].find({'project_id':options.weixin_pid}):
     record_info['__CREATE_TIME__'] = record_info['createTime']
     record_info['__MODIFY_TIME__'] = record_info['createTime']
     icc['idatabase_collection_%s'%(source_collection_id,)].insert(record_info)
+
+"""
 
 
     
