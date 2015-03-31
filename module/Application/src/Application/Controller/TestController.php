@@ -194,7 +194,7 @@ class TestController extends AbstractActionController
     {
         try {
             $c = $this->collection(iCollectionName('537e1f8b489619c6668b459f'));
-            //$c->setNoAppendQuery(true);
+            // $c->setNoAppendQuery(true);
             var_dump($c->aggregate(array(
                 array(
                     '$geoNear' => array(
@@ -205,13 +205,22 @@ class TestController extends AbstractActionController
                         'num' => 100,
                         'spherical' => true,
                         'maxDistance' => 0.089992800575954,
-                        'distanceField'=>'location'
+                        'distanceField' => 'location'
                     )
                 )
             )));
         } catch (\Exception $e) {
             var_dump($e);
         }
+        return $this->response;
+    }
+
+    /**
+     * 测试邮件发送
+     */
+    public function sendEmailAction()
+    {
+        echo sendEmail('youngyang@icatholic.net.cn', '测试内容', '测试内容');
         return $this->response;
     }
 }

@@ -22,7 +22,8 @@ Ext.define('icc.view.idatabase.Structure.Grid', {
 		var collectionStore = Ext.create('icc.store.idatabase.Collection.All');
 		collectionStore.proxy.extraParams = {
 			__PROJECT_ID__: me.__PROJECT_ID__,
-			action: 'all'
+			action: 'all',
+			limit : 1000
 		};
 
 		me.on({
@@ -72,7 +73,7 @@ Ext.define('icc.view.idatabase.Structure.Grid', {
 							action: 'save'
 						}, {
 							xtype: 'button',
-							text: '同步插件结构',
+							text: '同步当前集合结构到插件文档结构',
 							iconCls: 'sync',
 							action: 'syncToPlugin'
 						}, {

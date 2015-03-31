@@ -286,8 +286,7 @@ class DataController extends Action
         if ($action == 'search' || $action == 'excel') {
             try {
                 $query = $this->searchCondition();
-            }
-            catch(\Exception $e) {
+            } catch (\Exception $e) {
                 fb($query, 'LOG');
                 return $this->msg(false, '无效的检索条件，请检查你的输入');
             }
@@ -521,10 +520,10 @@ class DataController extends Action
             // 采用数据导出结果
             $rstCollectionName = $statistic_id;
             if (in_array($statisticInfo['yAxisType'], array(
-            		'unique',
-            		'distinct'
+                'unique',
+                'distinct'
             ))) {
-            	$rstCollectionName .= '_unique';
+                $rstCollectionName .= '_unique';
             }
             
             if ($export) {
@@ -560,7 +559,7 @@ class DataController extends Action
                     return $this->msg(true, '统计请求被受理');
                 }
             }
-
+            
             if (is_array($rst) && isset($rst['ok']) && $rst['ok'] === 0) {
                 switch ($rst['code']) {
                     case 500:
@@ -928,8 +927,9 @@ class DataController extends Action
                 $datas = $this->dealData($datas);
             } catch (\Zend\Json\Exception\RuntimeException $e) {
                 return $this->msg(false, $e->getMessage() . $this->_jsonExceptMessage);
+            } catch (\Exception $e) {
+                return $this->msg(false, $e->getMessage());
             }
-            
             if (empty($datas)) {
                 return $this->msg(false, '未发现添加任何有效数据');
             }
@@ -1098,6 +1098,8 @@ class DataController extends Action
             }
         } catch (\Zend\Json\Exception\RuntimeException $e) {
             return $this->msg(false, $e->getMessage() . $this->_jsonExceptMessage);
+        } catch (\Exception $e) {
+            return $this->msg(false, $e->getMessage());
         }
         
         if (empty($datas)) {
@@ -1109,10 +1111,20 @@ class DataController extends Action
                 '_id' => myMongoId($_id)
             ));
             
-            unset($datas['_id']);
-            $this->_data->update(array(
+            $criteria = array(
                 '_id' => myMongoId($_id)
-            ), array(
+            );
+            // 增加提交的modify时间和系统的modify时间的比较，如果不匹配，说明数据已经被编辑而无法提交
+            if (isset($_POST['__MODIFY_TIME__'])) {
+                if ($__OLD_DATA__['__MODIFY_TIME__'] instanceof \MongoDate) {
+                    if ($__OLD_DATA__['__MODIFY_TIME__']->sec !== strtotime($_POST['__MODIFY_TIME__'])) {
+                        return $this->msg(false, '你提交的修改已经过期，原因为：该数据已经在其他场景下被更新。请刷新获取最新数据后，再进行编辑！');
+                    }
+                }
+            }
+            
+            unset($datas['_id']);
+            $this->_data->update($criteria, array(
                 '$set' => $datas
             ));
             
@@ -1148,6 +1160,7 @@ class DataController extends Action
                 return $this->msg(false, '更新数据无效');
             }
             
+            $partialUpdateFailure = false;
             foreach ($updateInfos as $row) {
                 $_id = $row['_id'];
                 unset($row['_id']);
@@ -1168,15 +1181,29 @@ class DataController extends Action
                             }
                         } catch (\Zend\Json\Exception\RuntimeException $e) {
                             return $this->msg(false, $e->getMessage() . $this->_jsonExceptMessage);
+                        } catch (\Exception $e) {
+                            return $this->msg(false, $e->getMessage());
                         }
                         try {
                             $__OLD_DATA__ = $this->_data->findOne(array(
                                 '_id' => myMongoId($_id)
                             ));
                             
-                            $this->_data->update(array(
+                            $criteria = array(
                                 '_id' => myMongoId($_id)
-                            ), array(
+                            );
+                            
+                            // 增加提交的modify时间和系统的modify时间的比较，如果不匹配，说明数据已经被编辑而无法提交
+                            if (isset($row['__MODIFY_TIME__'])) {
+                                if ($__OLD_DATA__['__MODIFY_TIME__'] instanceof \MongoDate) {
+                                    if ($__OLD_DATA__['__MODIFY_TIME__']->sec !== strtotime($row['__MODIFY_TIME__'])) {
+                                        $partialUpdateFailure = true;
+                                        continue;
+                                    }
+                                }
+                            }
+                            
+                            $this->_data->update($criteria, array(
                                 '$set' => $datas
                             ));
                             
@@ -1189,6 +1216,10 @@ class DataController extends Action
                         }
                     }
                 }
+            }
+            
+            if ($partialUpdateFailure) {
+                return $this->msg(false, '部分更新失败提醒！你提交的部分修改已经过期，原因为：该数据已经在其他场景下被更新。请刷新获取最新数据后，再进行编辑！');
             }
             return $this->msg(true, '更新数据成功');
         } catch (\exception $e) {
@@ -1244,13 +1275,22 @@ class DataController extends Action
             return $this->msg(false, '您输入的登录密码错误，请重新输入');
         }
         
-        $rst = $this->_data->drop();
-        if ($rst['ok'] == 1) {
-            return $this->msg(true, '清空数据成功');
-        } else {
-            fb($rst, \FirePHP::LOG);
-            return $this->msg(false, '清空数据失败' . Json::encode($rst));
-        }
+        // if ($this->_data->count() <= 5000) {
+        // $rst = $this->_data->drop();
+        // } else {
+        $params = array(
+            'collection_id' => $this->_collection_id
+        );
+        $this->_gmClient->doBackground('dropDatas', serialize($params), cacheKey('dropDatas', $params));
+        return $this->msg(true, '清空数据任务提交成功，系统将在未来几分钟内清空该数据，请耐心等待！');
+        // }
+        
+        // if ($rst['ok'] == 1) {
+        // return $this->msg(true, '清空数据成功');
+        // } else {
+        // fb($rst, \FirePHP::LOG);
+        // return $this->msg(false, '清空数据失败' . Json::encode($rst));
+        // }
     }
 
     /**
@@ -1359,6 +1399,38 @@ class DataController extends Action
     }
 
     /**
+     * 根据filter的值获取过滤器描述
+     *
+     * @param int $filter            
+     * @return string
+     */
+    private function getFilterDesc($filter)
+    {
+        $map = array();
+        $map['int'] = '整数验证';
+        $map['boolean'] = '是非验证';
+        $map['float'] = '浮点验证';
+        $map['validate_url'] = '是否URL';
+        $map['validate_email'] = '是否Email';
+        $map['validate_ip'] = '是否IP地址';
+        $map['string'] = '过滤字符串';
+        $map['encoded'] = '去除或编码特殊字符';
+        $map['special_chars'] = 'HTML转义';
+        $map['unsafe_raw'] = '无过滤字符串';
+        $map['email'] = '过滤非Email字符';
+        $map['url'] = '过滤非URL字符';
+        $map['number_int'] = '数字过滤非整型';
+        $map['number_float'] = '数字过滤非浮点';
+        $map['magic_quotes'] = '转义字符';
+        
+        foreach (filter_list() as $key => $value) {
+            if (filter_id($value) === $filter) {
+                return $map[$value];
+            }
+        }
+    }
+
+    /**
      * 处理入库的数据
      *
      * @param array $datas            
@@ -1374,7 +1446,20 @@ class DataController extends Action
             $rshCollection = isset($this->_schema['post'][$key]['rshCollection']) ? $this->_schema['post'][$key]['rshCollection'] : '';
             
             if (! empty($filter)) {
-                $value = filter_var($value, $filter);
+                $filterFailure = false;
+                if ($filter === FILTER_VALIDATE_BOOLEAN) {
+                    $value = filter_var($value, $filter, FILTER_NULL_ON_FAILURE);
+                    $filterFailure = $value === null ? true : false;
+                } else {
+                    $value = filter_var($value, $filter);
+                    $filterFailure = $value === false ? true : false;
+                }
+                
+                if ($filterFailure) {
+                    $label = $this->_schema['post'][$key]['label'];
+                    $filterFailureReason = $this->getFilterDesc($filter);
+                    throw new \Exception("属性:<font color=red>{$label}</font>({$key})的输入不符合'<font color=red>{$filterFailureReason}</font>'要求，请重新输入");
+                }
             }
             
             if ($type == 'arrayfield' && isset($this->_rshCollection[$rshCollection])) {
@@ -1695,35 +1780,101 @@ class DataController extends Action
      */
     public function __destruct()
     {
-        fastcgi_finish_request();
+        @fastcgi_finish_request();
+        $emails = array(
+            'youngyang@icatholic.net.cn'
+        );
         try {
             $controller = $this->params('controller');
             $action = $this->params('action');
-            $_POST['__TRIGER__'] = array(
-                'collection' => $this->getCollectionAliasById($this->_collection_id),
-                'controller' => $controller,
-                'action' => $action
-            );
-            $collectionInfo = $this->_collection->findOne(array(
-                '_id' => myMongoId($this->_collection_id),
-                'isAutoHook' => true
-            ));
             
-            if ($collectionInfo !== null && isset($collectionInfo['hook']) && filter_var($collectionInfo['hook'], FILTER_VALIDATE_URL) !== false) {
-                $sign = dataSignAlgorithm($_POST, $collectionInfo['hookKey']);
-                $_POST['__SIGN__'] = $sign;
-                $response = doPost($collectionInfo['hook'], $_POST);
-                $this->_collection->update(array(
-                    '_id' => $collectionInfo['_id']
-                ), array(
-                    '$set' => array(
-                        'hookLastResponseResult' => $response
-                    )
+            if (in_array($action, array(
+                'add',
+                'edit',
+                'save',
+                'remove',
+                'drop'
+            ))) {
+                $_POST['__TRIGER__'] = array(
+                    'collection' => $this->getCollectionAliasById($this->_collection_id),
+                    'controller' => $controller,
+                    'action' => $action
+                );
+                $collectionInfo = $this->_collection->findOne(array(
+                    '_id' => myMongoId($this->_collection_id),
+                    'isAutoHook' => true
                 ));
+                
+                // 设定告警邮箱
+                if (isset($collectionInfo['hook_notify_email']) && filter_var($collectionInfo['hook_notify_email'], FILTER_VALIDATE_EMAIL))
+                    array_push($emails, $collectionInfo['hook_notify_email']);
+                
+                if ($collectionInfo !== null && isset($collectionInfo['hook']) && filter_var($collectionInfo['hook'], FILTER_VALIDATE_URL) !== false) {
+                    $sign = dataSignAlgorithm($_POST, $collectionInfo['hookKey']);
+                    $_POST['__SIGN__'] = $sign;
+                    
+                    $response = doPost($collectionInfo['hook'], $_POST, true);
+                    if ($response->isServerError() || $response->isClientError()) {
+                        $error = '';
+                        $error .= 'HookUrl:' . $collectionInfo['hook'] . "\r\n";
+                        $error .= 'CollectionId:' . $this->_collection_id . "\r\n";
+                        $error .= 'StatusCode:' . $response->getStatusCode() . "\r\n";
+                        $error .= 'Body:' . $response->getBody();
+                        $this->sendEmailGearMan($emails, '触发器响应错误提醒', $error);
+                        // sendEmail($emails, '触发器响应错误提醒', $error);
+                        return false;
+                    }
+                    
+                    $this->_collection->update(array(
+                        '_id' => $collectionInfo['_id']
+                    ), array(
+                        '$set' => array(
+                            'hookLastResponseResult' => $response->getBody()
+                        )
+                    ));
+                    
+                    // 开启debug模式时，进行提醒
+                    if (isset($collectionInfo['hook_debug_mode']) && is_bool($collectionInfo['hook_debug_mode']) && $collectionInfo['hook_debug_mode']) {
+                        $error = '';
+                        $error .= 'HookUrl:' . $collectionInfo['hook'] . "\r\n";
+                        $error .= 'CollectionId:' . $this->_collection_id . "\r\n";
+                        $error .= 'StatusCode:' . $response->getStatusCode() . "\r\n";
+                        $error .= 'Body:' . $response->getBody();
+                        $this->sendEmailGearMan($emails, '触发器响应Debug提醒', $error);
+                        // sendEmail($emails, '触发器响应Debug提醒', $error);
+                    }
+                    
+                    return true;
+                }
             }
         } catch (\Exception $e) {
-            $this->log(exceptionMsg($e));
+            $error = '';
+            $error .= 'HookUrl:' . $collectionInfo['hook'] . "\r\n";
+            $error .= 'CollectionId:' . $this->_collection_id . "\r\n";
+            $error .= 'ExceptionMsg:' . exceptionMsg($e) . "\r\n";
+            
+            $this->sendEmailGearMan($emails, '触发器调用异常警告', $error);
+            // sendEmail($emails, '触发器调用异常警告', $error);
+            return false;
         }
         return false;
+    }
+
+    /**
+     * 采用异步的方式发送电子邮件，避免因为繁重的邮件发送拖慢发送速度
+     * @param string $toEmail
+     * @param string $subject
+     * @param string $content
+     * @return boolean
+     */
+    private function sendEmailGearMan($toEmail, $subject, $content)
+    {
+        $params = array(
+            'toEmail' => $toEmail,
+            'subject' => $subject,
+            'content' => $content
+        );
+        $this->_gmClient->doBackground('sendEmailWorker', serialize($params));
+        return true;
     }
 }

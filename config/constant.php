@@ -3,11 +3,11 @@
  * 定义全局的常量
  */
 defined('ROOT_PATH') || define('ROOT_PATH', dirname(__DIR__));
-defined('CACHE_ADAPTER') || define('CACHE_ADAPTER', 'memcachedCache'); // [fileCache|memcachedCache|redisCache]
-defined('APPLICATION_ENV') || define('APPLICATION_ENV', 'production'); // [development|production]
+defined('CACHE_ADAPTER') || define('CACHE_ADAPTER', 'fileCache'); // [fileCache|memcachedCache|redisCache]
+defined('APPLICATION_ENV') || define('APPLICATION_ENV', 'development'); // [development|production]
 defined('DEFAULT_DATABASE') || define('DEFAULT_DATABASE', 'ICCv1');
 defined('DEFAULT_CLUSTER') || define('DEFAULT_CLUSTER', 'default');
-defined('DOMAIN') || define('DOMAIN', 'http://cloud.umaman.com');
+defined('DOMAIN') || define('DOMAIN', 'http://localhost');
 
 /**
  * ICC指定数据库列表

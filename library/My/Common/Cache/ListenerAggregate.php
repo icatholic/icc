@@ -15,9 +15,9 @@ class ListenerAggregate implements ListenerAggregateInterface
     private $_key = null;
 
     private $_cache_result = '';
-    
+
     const PRE = 'cache.pre';
-    
+
     const POST = 'cache.post';
 
     protected $listeners = array();
@@ -85,6 +85,7 @@ class ListenerAggregate implements ListenerAggregateInterface
     }
 
     /**
+     * 保存缓存
      *
      * @method 保存缓存
      * @param EventInterface $e            
@@ -92,6 +93,6 @@ class ListenerAggregate implements ListenerAggregateInterface
      */
     public function save(EventInterface $e)
     {
-        $this->cache->setItem($this->getKey($e), $this->_cache_result);
+        return $this->cache->setItem($this->getKey($e), $this->_cache_result);
     }
 }

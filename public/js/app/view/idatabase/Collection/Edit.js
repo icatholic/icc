@@ -1,176 +1,254 @@
 Ext.define('icc.view.idatabase.Collection.Edit', {
-	extend : 'icc.common.Window',
-	alias : 'widget.idatabaseCollectionEdit',
-	title : '编辑项目',
-	initComponent : function() {
+	extend: 'icc.common.Window',
+	alias: 'widget.idatabaseCollectionEdit',
+	title: '编辑项目',
+	initComponent: function() {
 		Ext.apply(this, {
-			items : [ {
-				xtype : 'iform',
-				url : '/idatabase/collection/edit',
-				items : [ {
-					xtype : 'hiddenfield',
-					name : '__PROJECT_ID__',
-					value : this.__PROJECT_ID__,
-					vtype : 'alphanum'
-				}, {
-					xtype : 'hiddenfield',
-					name : '_id',
-					allowBlank : false,
-					vtype : 'alphanum'
-				}, {
-					xtype : 'hiddenfield',
-					name : 'plugin',
-					value : this.plugin,
-					allowBlank : false
-				}, {
-					xtype : 'hiddenfield',
-					name : '__PLUGIN_ID__',
-					value : this.__PLUGIN_ID__,
-					vtype : 'alphanum',
-					allowBlank : false
-				}, {
-					xtype : 'hiddenfield',
-					name : '__PLUGIN_COLLECTION_ID__',
-					value : this.__PLUGIN_COLLECTION_ID__,
-					vtype : 'alphanum',
-					allowBlank : false
-				}, {
-					name : 'alias',
-					fieldLabel : '集合别名(英文)',
-					allowBlank : false,
-					vtype : 'alphanum'
-				}, {
-					name : 'name',
-					fieldLabel : '集合名称(中文)',
-					allowBlank : false
-				}, {
-					xtype : 'textareafield',
-					name : 'desc',
-					fieldLabel : '功能描述',
-					allowBlank : false
-				}, {
-					xtype : 'numberfield',
-					name : 'orderBy',
-					fieldLabel : '排列顺序',
-					allowBlank : false
-				}, {
-					xtype : 'fieldset',
-					title : '高级设定(选填)',
-					collapsed : true,
-					collapsible : true,
-					items : [ {
-						xtype : 'radiogroup',
-						fieldLabel : '是否专家集合',
-						defaultType : 'radiofield',
-						layout : 'hbox',
-						items : [ {
-							boxLabel : '是',
-							name : 'isProfessional',
-							inputValue : true
+			items: [{
+					xtype: 'iform',
+					url: '/idatabase/collection/edit',
+					items: [{
+							xtype: 'hiddenfield',
+							name: '__PROJECT_ID__',
+							value: this.__PROJECT_ID__,
+							vtype: 'alphanum'
 						}, {
-							boxLabel : '否',
-							name : 'isProfessional',
-							inputValue : false,
-							checked : true
-						} ]
-					}, {
-						xtype : 'radiogroup',
-						fieldLabel : '是否树状集合',
-						defaultType : 'radiofield',
-						layout : 'hbox',
-						items : [ {
-							boxLabel : '是',
-							name : 'isTree',
-							inputValue : true
+							xtype: 'hiddenfield',
+							name: '_id',
+							allowBlank: false,
+							vtype: 'alphanum'
 						}, {
-							boxLabel : '否',
-							name : 'isTree',
-							inputValue : false,
-							checked : true
-						} ]
-					}, {
-						xtype : 'fieldset',
-						title : '触发iWebsite关联逻辑的URL(选填)',
-						collapsed : true,
-						collapsible : true,
-						items : [ {
-							xtype : 'radiogroup',
-							fieldLabel : '是否自动执行',
-							defaultType : 'radiofield',
-							layout : 'hbox',
-							items : [ {
-								boxLabel : '是',
-								name : 'isAutoHook',
-								inputValue : true
-							}, {
-								boxLabel : '否',
-								name : 'isAutoHook',
-								inputValue : false,
-								checked : true
-							} ]
+							xtype: 'hiddenfield',
+							name: 'plugin',
+							value: this.plugin,
+							allowBlank: false
 						}, {
-							xtype : 'textfield',
-							name : 'hook',
-							fieldLabel : 'Hook触发器',
-							allowBlank : true,
-							vtype : 'url'
+							xtype: 'hiddenfield',
+							name: '__PLUGIN_ID__',
+							value: this.__PLUGIN_ID__,
+							vtype: 'alphanum',
+							allowBlank: false
 						}, {
-							xtype : 'textfield',
-							name : 'hookKey',
-							fieldLabel : 'Hook安全密钥(至少8位)',
-							allowBlank : true,
-							minLength : 8
-						} ]
-					}, {
-						xtype : 'fieldset',
-						title : '行展开模式设定（选填）',
-						collapsed : true,
-						collapsible : true,
-						items : [ {
-							xtype : 'radiogroup',
-							fieldLabel : '是否行展开显示',
-							defaultType : 'radiofield',
-							layout : 'hbox',
-							items : [ {
-								boxLabel : '是',
-								name : 'isRowExpander',
-								inputValue : true
-							}, {
-								boxLabel : '否',
-								name : 'isRowExpander',
-								inputValue : false,
-								checked : true
-							} ]
+							xtype: 'hiddenfield',
+							name: '__PLUGIN_COLLECTION_ID__',
+							value: this.__PLUGIN_COLLECTION_ID__,
+							vtype: 'alphanum',
+							allowBlank: false
 						}, {
-							xtype : 'textareafield',
-							name : 'rowExpanderTpl',
-							fieldLabel : '行展开模板(支持Ext.Xtemplate)',
-							allowBlank : true
-						} ]
-					} , {
-						xtype : 'fieldset',
-						title : '插件设定（选填）',
-						collapsed : true,
-						collapsible : true,
-						items : [ {
-							xtype : 'radiogroup',
-							fieldLabel : '设定为插件默认数据源',
-							defaultType : 'radiofield',
-							layout : 'hbox',
-							items : [ {
-								boxLabel : '是',
-								name : 'defaultSourceData',
-								inputValue : true
-							}, {
-								boxLabel : '否',
-								name : 'defaultSourceData',
-								inputValue : false,
-								checked : true
-							} ]
-						}]
-					}  ]
-				} ]
-			} ]
+							name: 'alias',
+							fieldLabel: '集合别名(英文)',
+							allowBlank: false,
+							vtype: 'alphanum'
+						}, {
+							name: 'name',
+							fieldLabel: '集合名称(中文)',
+							allowBlank: false
+						}, {
+							xtype: 'textareafield',
+							name: 'desc',
+							fieldLabel: '功能描述',
+							allowBlank: false
+						}, {
+							xtype: 'numberfield',
+							name: 'orderBy',
+							fieldLabel: '排列顺序',
+							allowBlank: false
+						}, {
+							xtype: 'fieldset',
+							title: '高级设定(选填)',
+							collapsed: true,
+							collapsible: true,
+							items: [{
+									xtype: 'radiogroup',
+									fieldLabel: '是否专家集合',
+									defaultType: 'radiofield',
+									layout: 'hbox',
+									items: [{
+											boxLabel: '是',
+											name: 'isProfessional',
+											inputValue: true
+										}, {
+											boxLabel: '否',
+											name: 'isProfessional',
+											inputValue: false,
+											checked: true
+										}
+									]
+								}, {
+									xtype: 'radiogroup',
+									fieldLabel: '是否树状集合',
+									defaultType: 'radiofield',
+									layout: 'hbox',
+									items: [{
+											boxLabel: '是',
+											name: 'isTree',
+											inputValue: true
+										}, {
+											boxLabel: '否',
+											name: 'isTree',
+											inputValue: false,
+											checked: true
+										}
+									]
+								}, {
+									xtype: 'fieldset',
+									title: '触发iWebsite关联逻辑的URL(选填)',
+									collapsed: true,
+									collapsible: true,
+									items: [{
+											xtype: 'radiogroup',
+											fieldLabel: '是否自动执行',
+											defaultType: 'radiofield',
+											layout: 'hbox',
+											items: [{
+													boxLabel: '是',
+													name: 'isAutoHook',
+													inputValue: true
+												}, {
+													boxLabel: '否',
+													name: 'isAutoHook',
+													inputValue: false,
+													checked: true
+												}
+											]
+										}, {
+											xtype: 'textfield',
+											name: 'hook',
+											fieldLabel: 'Hook触发器',
+											allowBlank: true,
+											vtype: 'url'
+										}, {
+											xtype: 'textfield',
+											name: 'hookKey',
+											fieldLabel: 'Hook安全密钥(至少8位)',
+											allowBlank: true,
+											minLength: 8
+										}, {
+											xtype: 'textfield',
+											name: 'hook_notify_email',
+											fieldLabel: 'Hook告警通知邮箱',
+											allowBlank: true,
+											vtype: 'email'
+										}, {
+											xtype: 'radiogroup',
+											fieldLabel: '是否开启Debug模式',
+											defaultType: 'radiofield',
+											layout: 'hbox',
+											items: [{
+													boxLabel: '是',
+													name: 'hook_debug_mode',
+													inputValue: true
+												}, {
+													boxLabel: '否',
+													name: 'hook_debug_mode',
+													inputValue: false,
+													checked: true
+												}
+											]
+										}
+									]
+								}, {
+									xtype: 'fieldset',
+									title: '行展开模式设定（选填）',
+									collapsed: true,
+									collapsible: true,
+									items: [{
+											xtype: 'radiogroup',
+											fieldLabel: '是否行展开显示',
+											defaultType: 'radiofield',
+											layout: 'hbox',
+											items: [{
+													boxLabel: '是',
+													name: 'isRowExpander',
+													inputValue: true
+												}, {
+													boxLabel: '否',
+													name: 'isRowExpander',
+													inputValue: false,
+													checked: true
+												}
+											]
+										}, {
+											xtype: 'textareafield',
+											name: 'rowExpanderTpl',
+											fieldLabel: '行展开模板(支持Ext.Xtemplate)',
+											allowBlank: true
+										}
+									]
+								}, {
+									xtype: 'fieldset',
+									title: '插件设定（选填）',
+									collapsed: true,
+									collapsible: true,
+									items: [{
+											xtype: 'radiogroup',
+											fieldLabel: '设定为插件默认数据源',
+											defaultType: 'radiofield',
+											layout: 'hbox',
+											items: [{
+													boxLabel: '是',
+													name: 'defaultSourceData',
+													inputValue: true
+												}, {
+													boxLabel: '否',
+													name: 'defaultSourceData',
+													inputValue: false,
+													checked: true
+												}
+											]
+										}
+									]
+								}, {
+									xtype: 'fieldset',
+									title: 'HTTP访问权限控制',
+									collapsed: true,
+									collapsible: true,
+									items: [{
+											xtype: 'radiogroup',
+											fieldLabel: '是否开启',
+											defaultType: 'radiofield',
+											layout: 'hbox',
+											items: [{
+													boxLabel: '是',
+													name: 'isAllowHttpAccess',
+													inputValue: true
+												}, {
+													boxLabel: '否',
+													name: 'isAllowHttpAccess',
+													inputValue: false,
+													checked: true
+												}
+											]
+										}, {
+											xtype: 'checkboxgroup',
+											fieldLabel: '开放权限设定',
+											items: [{
+													boxLabel: '读取',
+													name: 'promissionDefinition[]',
+													inputValue: 'read',
+													checked: true
+												}, {
+													boxLabel: '创建',
+													name: 'promissionDefinition[]',
+													inputValue: 'create'
+												}, {
+													boxLabel: '修改',
+													name: 'promissionDefinition[]',
+													inputValue: 'update'
+												}, {
+													boxLabel: '删除',
+													name: 'promissionDefinition[]',
+													inputValue: 'delete'
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
 		});
 		this.callParent();
 	}

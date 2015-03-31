@@ -36,6 +36,7 @@ class FileController extends Action
         $width = intval($this->params()->fromRoute('w', 0));
         $height = intval($this->params()->fromRoute('h', 0));
         $quality = intval($this->params()->fromRoute('q', 100));
+        $source = $this->params()->fromRoute('s', false);
         
         if ($id == null) {
             header("HTTP/1.1 404 Not Found");
@@ -44,7 +45,13 @@ class FileController extends Action
         
         $gridFsFile = $this->_file->getGridFsFileById($id);
         if ($gridFsFile instanceof \MongoGridFSFile) {
+            isImages:
             if (strpos(strtolower($gridFsFile->file['mime']), 'image') !== false) {
+                if($source) {
+                    $this->_file->output($gridFsFile, true, $download == null ? false : true);
+                    return $this->response;
+                }
+                
                 // 图片处理
                 $fileInfo = $gridFsFile->file;
                 $fileName = $fileInfo['filename'];
@@ -93,6 +100,14 @@ class FileController extends Action
                     header('Content-Disposition:filename="' . $fileName . '"');
                 echo $data;
             } else {
+                //当检测到文件类型为空是，判断一下文件的类型
+                if(empty($gridFsFile->file['mime'])) {
+                    $finfo = new \finfo(FILEINFO_MIME);
+                    $gridFsFile->file['mime'] = $finfo->buffer($gridFsFile->getBytes());
+                    if(!empty($gridFsFile->file['mime'])) 
+                        goto isImages;
+                }
+                
                 $this->_file->output($gridFsFile, true, $download == null ? false : true);
             }
             

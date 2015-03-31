@@ -37,6 +37,7 @@ class StructureController extends Action
 
     private $_filter = array(
         '_id',
+        'id',
         'start',
         'action',
         'page',
@@ -188,6 +189,7 @@ class StructureController extends Action
         $datas['displayFileId'] = filter_var($this->params()->fromPost('displayFileId', false), FILTER_VALIDATE_BOOLEAN);
         $datas['cdnUrl'] = trim($this->params()->fromPost('cdnUrl', ''));
         $datas['xTemplate'] = trim($this->params()->fromPost('xTemplate', ''));
+        $datas['emptyText'] = trim($this->params()->fromPost('emptyText', ''));
         
         if (in_array(strtolower($datas['field']), $this->_filter, true)) {
             return $this->msg(false, '保留字段不允许作为字段名称,保留字段为：' . join(',', $this->_filter));
@@ -315,6 +317,7 @@ class StructureController extends Action
         $datas['displayFileId'] = filter_var($this->params()->fromPost('displayFileId', false), FILTER_VALIDATE_BOOLEAN);
         $datas['cdnUrl'] = trim($this->params()->fromPost('cdnUrl', ''));
         $datas['xTemplate'] = trim($this->params()->fromPost('xTemplate', ''));
+        $datas['emptyText'] = trim($this->params()->fromPost('emptyText', ''));
         
         if (in_array(strtolower($datas['field']), $this->_filter, true)) {
             return $this->msg(false, '保留字段不允许作为字段名称,保留字段为：' . join(',', $this->_filter));
@@ -621,8 +624,10 @@ class StructureController extends Action
             $row = $cursorStructure->getNext();
             array_unset_recursive($row, array(
                 '_id',
+                'plugin_id',
                 'plugin_collection_id'
             ));
+            $row['plugin_id'] = $this->_plugin_id;
             $row['plugin_collection_id'] = $plugin_collection_id;
             $rst = $this->_plugin_structure->update(array(
                 'plugin_collection_id' => $plugin_collection_id,

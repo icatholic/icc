@@ -9,9 +9,7 @@
 namespace Service\Controller;
 
 use My\Common\Controller\Action;
-use OAuth\Common\Exception\Exception;
 use My\Service\Database;
-use Zend\Serializer\Serializer;
 
 class DatabaseController extends Action
 {

@@ -15,7 +15,7 @@ Ext.Loader.setConfig({
 
 Ext.onReady(function() {
 	//Ext.require(['Ext.ux.form.HtmlEditor.ImageCropDialog','Ext.ux.form.HtmlEditor.ImageDialog','Ext.ux.form.HtmlEditor.imageUpload','Ext.form.UEditor']);
-	Ext.require(['Ext.ux.form.HtmlEditor.ImageCropDialog','Ext.ux.form.HtmlEditor.ImageDialog','Ext.ux.form.HtmlEditor.imageUpload']);
+	Ext.require(['Ext.ux.form.HtmlEditor.ImageCropDialog', 'Ext.ux.form.HtmlEditor.ImageDialog', 'Ext.ux.form.HtmlEditor.imageUpload']);
 	Ext.require(['Ext.data.proxy.Ajax', 'Ext.form.field.ComboBox', 'Ext.form.field.VTypes', 'Ext.grid.plugin.RowExpander', 'Ext.toolbar.Toolbar'], function() {
 		Ext.override('Ext.data.proxy.Ajax', {
 			timeout: 60000
@@ -101,23 +101,24 @@ Ext.onReady(function() {
 				constrain: true
 			},
 			items: [{
-				xtype: 'button',
-				rtl: false,
-				hidden: false,
-				enableToggle: true,
-				text: '注销登录',
-				margin: '0 5 0 0',
-				listeners: {
-					click: function() {
-						window.location.href = '/application/auth/logout';
+					xtype: 'button',
+					rtl: false,
+					hidden: false,
+					enableToggle: true,
+					text: '注销登录',
+					margin: '0 5 0 0',
+					listeners: {
+						click: function() {
+							window.location.href = '/application/auth/logout';
+						}
 					}
 				}
-			}],
+			],
 			constraintInsets: '0 -' + (Ext.getScrollbarSize().width + 4) + ' 0 0'
 		});
 		toolbar.show();
 		toolbar.alignTo(
-		document.body, Ext.optionsToolbarAlign || 'tr-tr', [(Ext.getScrollbarSize().width + 4) * (Ext.rootHierarchyState.rtl ? 1 : -1), -(document.body.scrollTop || document.documentElement.scrollTop)]);
+			document.body, Ext.optionsToolbarAlign || 'tr-tr', [(Ext.getScrollbarSize().width + 4) * (Ext.rootHierarchyState.rtl ? 1 : -1), -(document.body.scrollTop || document.documentElement.scrollTop)]);
 
 		var constrainer = function() {
 			toolbar.doConstrain();
@@ -125,17 +126,18 @@ Ext.onReady(function() {
 		Ext.EventManager.onWindowResize(constrainer);
 	}, 100);
 
-	var task = new Ext.util.DelayedTask(function(){
+	var task = new Ext.util.DelayedTask(function() {
 		Ext.TaskManager.start({
-		    run: function(){
-		    	Ext.Ajax.request({
-					url : '/application/auth/keep',
-					success : function(response) {}
+			run: function() {
+				Ext.Ajax.request({
+					url: '/application/auth/keep',
+					success: function(response) {}
 				});
-		    },
-		    interval: 60000 //1分钟
+			},
+			interval: 300000 //5分钟
 		});
 	});
+
+	task.delay(300000);
 	
-	task.delay(60000);
 });

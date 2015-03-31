@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 升级MUFE的示例脚本
-python weixin.py -s 52c4dd514a9619360d8b58af -t 548a61234a96197a638b4597 -w 52c4d890499619204a999846 -d http://131115-e0262.umaman.com
+python weixin.py -s 52bcdea2489619b16833ab27 -t 550785ca489619342f8b465c -w 52bce00e4896198d68389e53 -d http://131224fg0402.umaman.com -i On
 -s --source设定来源项目
 -t --target设定目标项目
 -w --weixin 参数设定UMA系统中的微信项目编号
@@ -78,6 +78,10 @@ parser.add_option("-d", "--domain", action="store", type="string",
                       dest="domain", default=None,
                       help="""请使用-d 或者--domain UMA系统下使用的微信域名""")
 
+parser.add_option("-i", "--inc", action="store", type="string",
+                      dest="inc", default=False,
+                      help="""请使用-i 或者--inc 增量的时间""")
+
 (options, args) = parser.parse_args()
 
 
@@ -92,17 +96,21 @@ if options.target_pid is None:
 if options.weixin_pid is None:
     logging.debug('请设定-w 或者--weixin 参数,UMA系统中的微信项目编号')
     sys.exit(2)
-    
+   
 if options.domain is None:
     logging.debug('请使用-d 或者--domain UMA系统下使用的微信域名')
     sys.exit(2)
 
+incremental = False    
+if options.inc:
+    incremental = True
+
 #获取UMA中的集合编号
-page_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_page'})['_id'])
-reply_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_reply'})['_id'])
-keyword_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_keyword'})['_id'])
-rsh_keyword_reply_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_rsh_keyword_reply'})['_id'])
-request_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_request'})['_id'])
+page_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_page','del_flag':{'$ne':1}})['_id'])
+reply_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_reply','del_flag':{'$ne':1}})['_id'])
+keyword_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_keyword','del_flag':{'$ne':1}})['_id'])
+rsh_keyword_reply_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_rsh_keyword_reply','del_flag':{'$ne':1}})['_id'])
+request_form_id = str(uma['iDatabase.form'].find_one({'projectId':options.source_pid,'formAlias':'iWeixin_request','del_flag':{'$ne':1}})['_id'])
 
 
 #获取ICC中的集合编号
@@ -125,6 +133,8 @@ for page_info in uma['iDatabase.%s'%(page_form_id,)].find():
     page_info_id = str(page_info['_id'])
     data['title'] = 'title' in page_info and page_info['title'] or ''
     data['picture'] = 'image' in page_info and page_info['image'] or ''
+    if data['picture']!='':
+        data['picture'] = file_from_uma_to_icc(data['picture'])
     data['content'] = 'content' in page_info and page_info['content'] or ''
     data['__REMOVED__'] = False
     data['__CREATE_TIME__'] = page_info['createTime']
@@ -223,36 +233,59 @@ logging.info('完成升级关键词内容')
 
 #升级自定义菜单
 logging.info('开始升级微信自定义菜单')
-icc['idatabase_collection_%s'%(menu_collection_id,)].drop()
+print 'idatabase_collection_%s'%(menu_collection_id,)
+try:
+    icc['idatabase_collection_%s'%(menu_collection_id,)].drop()
+except Exception,e:
+    pass
+
 parent_map = {}
-for menu_info in uma['weixin.menu'].find({'project.projectId':options.weixin_pid}):
+print {'project.projectId':options.weixin_pid}
+cursor = uma['weixin.menu'].find({'project_id':options.weixin_pid})
+n = cursor.count()
+cursor.close()
+logging.info('自定义菜单条数：%d'%(n,))
+for menu_info in uma['weixin.menu'].find({'project_id':options.weixin_pid}):
+    logging.info(menu_info)
     data = {}
     data['type'] = 'type' in menu_info and menu_info['type'] or ''
     data['name'] = 'name' in menu_info and menu_info['name'] or ''
-    data['key'] = 'key' in menu_info and menu_info['key'] or ''
+    if data['type']=='view':
+        data['key'] = data['name']
+        data['url'] = 'key' in menu_info and menu_info['key'] or ''
+    else:
+        data['key'] = 'key' in menu_info and menu_info['key'] or ''
+        data['url'] = ''
+    
     data['parent'] = 'fatherNode' in menu_info and menu_info['fatherNode'] or ''
     data['priority'] = 'showOrder' in menu_info and menu_info['showOrder'] or 0
     data['__REMOVED__'] = False
     data['__CREATE_TIME__'] = menu_info['createTime']
     data['__MODIFY_TIME__'] = menu_info['createTime']
     new_menu_id = icc['idatabase_collection_%s'%(menu_collection_id,)].insert(data)
+    logging.info(new_menu_id)
     parent_map[str(menu_info['_id'])] = str(new_menu_id)
-logging.info('更新父ID信息')    
-for has_father_menu_info in icc['idatabase_collection_%s'%(menu_collection_id,)].find({'fatherNode':{'$ne':''}}):
+logging.info('更新父ID信息')
+logging.info(parent_map)
+for has_father_menu_info in icc['idatabase_collection_%s'%(menu_collection_id,)].find({'parent':{'$ne':''}}):
     icc['idatabase_collection_%s'%(menu_collection_id,)].update({'_id':has_father_menu_info['_id']},{'$set':{'parent':parent_map[has_father_menu_info['parent']]}})
 logging.info('完成升级自定义菜单')
 
-"""
 #升级微信用户数据
 logging.info('开始升级微信用户数据')
-logging.info('读取集合为：weixin.user')
-user_number = uma['weixin.user'].count()
-logging.info('读取条数:%d'%(user_number,))
-icc['idatabase_collection_%s'%(user_collection_id,)].drop()
-logging.info('写入集合为：idatabase_collection_%s drop完成'%(user_collection_id,))
-print {'project.projectId':options.source_pid}
+query_user = {'project.projectId':options.weixin_pid}
+if incremental:
+    #找到最后记录的时间
+    last_user_info = icc['idatabase_collection_%s'%(user_collection_id,)].find().sort('__CREATE_TIME__',DESCENDING).limit(1)[0]
+    logging.info('最后插入用户时间为：%s'%(last_user_info['__CREATE_TIME__'],))
+    query_user['createTime'] = {'$gt':last_user_info['__CREATE_TIME__']}
+else:
+    icc['idatabase_collection_%s'%(user_collection_id,)].drop()
+    logging.info('写入集合为：idatabase_collection_%s drop完成'%(user_collection_id,))
+
+#print {'project.projectId':options.source_pid}
 #for user_info in uma['weixin.user'].find({'project.projectId':'52c4d890499619204a999846'}):
-for user_info in uma['weixin.user'].find({'project.projectId':options.weixin_pid}):
+for user_info in uma['weixin.user'].find(query_user):
     if user_info.has_key('weixin'):
         data = user_info['weixin']
         if data.has_key('subscribe'):
@@ -267,16 +300,22 @@ for user_info in uma['weixin.user'].find({'project.projectId':options.weixin_pid
 
 ##升级回复原始记录
 logging.info('开始升级微信用户原始记录')
-icc['idatabase_collection_%s'%(source_collection_id,)].drop()
+query_source = {'project_id':options.weixin_pid}
+if incremental:
+    last_source_info = icc['idatabase_collection_%s'%(source_collection_id,)].find().sort('__CREATE_TIME__',DESCENDING).limit(1)[0]
+    logging.info('最后插入用户时间为：%s'%(last_source_info['__CREATE_TIME__'],))
+    query_source['createTime'] = {'$gt':last_source_info['__CREATE_TIME__']}
+else:    
+    icc['idatabase_collection_%s'%(source_collection_id,)].drop()
 #for record_info in uma['weixin'].find({'project_id':'52c4d890499619204a999846'}):
-for record_info in uma['weixin'].find({'project_id':options.weixin_pid}):
+for record_info in uma['weixin'].find(query_source):
     del record_info['_id']
     record_info['__REMOVED__'] = False
     record_info['__CREATE_TIME__'] = record_info['createTime']
     record_info['__MODIFY_TIME__'] = record_info['createTime']
     icc['idatabase_collection_%s'%(source_collection_id,)].insert(record_info)
 
-"""
+
 
 
     

@@ -54,7 +54,7 @@ function isValidEmail($email, $getmxrr = 0)
  */
 function isValidMobile($mobile)
 {
-    if (preg_match("/^1[3,4,5,8]{1}[0-9]{9}$/", $mobile))
+    if (preg_match("/^1[3,4,5,7,8]{1}[0-9]{9}$/", $mobile))
         return true;
     return false;
 }
@@ -598,9 +598,38 @@ function doPost($url, $params = array(), $returnObj = false)
         $response = $client->send();
         return $returnObj ? $response : $response->getBody();
     } catch (Exception $e) {
-        fb(exceptionMsg($e), \FirePHP::LOG);
+        try {
+            fb(exceptionMsg($e), \FirePHP::LOG);
+            return false;
+        } catch (Exception $e) {
+            var_dump($e);
+            return false;
+        }
+    }
+}
+
+/**
+ * 通过Gearman的方式，发送不记录返回值的请求
+ *
+ * @param string $url            
+ * @param array $get            
+ * @param array $post            
+ */
+function doRequestBackground($url, $get = array(), $post = array(), $returnObj = false)
+{
+    if (! class_exists('\GearmanClient')) {
         return false;
     }
+    $gmClient = new \GearmanClient();
+    $gmClient->addServers(GEARMAN_SERVERS);
+    $params = array(
+        'url' => $url,
+        'get' => $get,
+        'post' => $post
+    );
+    $params = serialize($params);
+    $gmClient->doBackground('doRequestWorker', serialize($params), md5($params));
+    return true;
 }
 
 /**
@@ -1606,7 +1635,7 @@ function mapReduce1($out = null, MongoCollection $dataModel, $statisticInfo, $qu
     if ($statisticInfo['yAxisType'] == 'unique' || $statisticInfo['yAxisType'] == 'distinct') {
         $dataModel->setReadPreference(\MongoClient::RP_SECONDARY);
         $firstMrResult = $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
-        if($firstMrResult instanceof MongoCollection) {
+        if ($firstMrResult instanceof MongoCollection) {
             $firstMrResult->setNoAppendQuery(true);
             if ($out != null) {
                 $out .= '_unique';
@@ -1623,4 +1652,76 @@ function mapReduce1($out = null, MongoCollection $dataModel, $statisticInfo, $qu
         $dataModel->setReadPreference(\MongoClient::RP_SECONDARY);
         return $dataModel->mapReduce($out, $map, $reduce, $query, $finalize, $method, $scope, $sort, $limit);
     }
+}
+
+/**
+ * 解压压缩包中的指定类型的文件到临时目录文件中
+ *
+ * @param string $zipfile            
+ * @param array $type            
+ */
+function unzip($zipfile, $types = array())
+{
+    $rst = array();
+    $zip = new ZipArchive();
+    if ($zip->open($zipfile) === true) {
+        for ($i = 0; $i < $zip->numFiles; $i ++) {
+            $entry = $zip->getNameIndex($i);
+            if (! empty($types)) {
+                foreach ($types as $type) {
+                    if (! preg_match('#\.(' . $type . ')$#i', $entry)) {
+                        continue 2;
+                    }
+                }
+            }
+            $tmpname = tempnam(sys_get_temp_dir(), 'unzip_');
+            copy('zip://' . $zipfile . '#' . $entry, $tmpname);
+            $rst[] = $tmpname;
+        }
+        $zip->close();
+        return $rst;
+    } else {
+        throw new Exception("ZIP archive failed");
+        return false;
+    }
+}
+
+/**
+ * Check if the file is encrypted
+ *
+ * Notice: if file doesn't exists or cannot be opened, function
+ * also return false.
+ *
+ * @param string $pathToArchive            
+ * @return boolean return true if file is encrypted
+ */
+function isEncryptedZip($pathToArchive)
+{
+    $fp = @fopen($pathToArchive, 'r');
+    $encrypted = false;
+    if ($fp && fseek($fp, 6) == 0) {
+        $string = fread($fp, 2);
+        if (false !== $string) {
+            $data = unpack("vgeneral", $string);
+            $encrypted = $data['general'] & 0x01 ? true : false;
+        }
+        fclose($fp);
+    }
+    return $encrypted;
+}
+
+/**
+ * 检测指定内容是否为zip压缩文件
+ *
+ * @param string $content            
+ * @return boolean
+ */
+function isZip($content)
+{
+    $finfo = new \finfo(FILEINFO_MIME);
+    $mime = $finfo->buffer($content);
+    if (strpos($mime, 'zip') !== false) {
+        return true;
+    }
+    return false;
 }

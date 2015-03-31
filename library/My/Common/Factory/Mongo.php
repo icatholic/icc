@@ -43,9 +43,9 @@ abstract class Mongo
             $options = array(
                 'connect' => false,
                 'readPreference' => \MongoClient::RP_SECONDARY,
-                'connectTimeoutMS' => 3600000,
-                'socketTimeoutMS' => 3600000,
-                'wTimeout' => 3600000
+                'connectTimeoutMS' => 10*24*365*3600*1000,
+                'socketTimeoutMS' => 10*24*365*3600*1000,
+                'wTimeout' => 10*24*365*3600*1000
             );
         } else {
             $options = array(

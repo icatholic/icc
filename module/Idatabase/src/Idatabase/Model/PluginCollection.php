@@ -54,7 +54,11 @@ class PluginCollection extends Mongo
         array_unset_recursive($datas, array(
             'isAutoHook',
             'hook',
-            'hookKey'
+            'hookKey',
+            'hook_notify_email',
+            'hook_debug_mode',
+            'isAllowHttpAccess',
+            'promissionDefinition'
         ));
         $this->insertRef($datas);
         if ($datas['_id'] instanceof \MongoId)
@@ -76,7 +80,11 @@ class PluginCollection extends Mongo
             'project_id',
             'isAutoHook',
             'hook',
-            'hookKey'
+            'hookKey',
+            'hook_notify_email',
+            'hook_debug_mode',
+            'isAllowHttpAccess',
+            'promissionDefinition'
         ));
         if (! empty($plugin_collection_id)) {
             $rst = $this->update(array(

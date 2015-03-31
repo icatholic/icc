@@ -8,6 +8,7 @@ Ext.define('icc.view.idatabase.Collection.AllCombobox', {
 	queryMode : 'remote',
 	pageSize : 20,
 	editable : true,
+	minChars : 1,
 	typeAhead : true,
 	initComponent : function() {
 		var store = Ext.create('icc.store.idatabase.Collection.All');

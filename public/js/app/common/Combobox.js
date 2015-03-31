@@ -6,5 +6,6 @@ Ext.define('icc.common.Combobox', {
 	pageSize : 10,
 	queryParam : 'search',
 	typeAhead : true,
-	allowBlank : true
+	allowBlank : true,
+	minChars : 1
 });

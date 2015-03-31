@@ -129,16 +129,24 @@ class ImportController extends Action
             return $this->msg(false, '上传文件或者集合编号不能为空');
         }
         
-        if (strpos($upload['name'], '.csv') === false) {
-            return $this->msg(false, '请上传csv格式的文件');
-        }
+        $uploadFileNameLower = strtolower($upload['name']);
         
-        $bytes = file_get_contents($upload['tmp_name']);
-        if (! detectUTF8($bytes)) {
-            return $this->msg(false, '请使用文本编辑器将文件转化为UTF-8格式');
+        if (strpos($uploadFileNameLower, '.zip') !== false) {
+            $bytes = file_get_contents($upload['tmp_name']);
+            $fileInfo = $this->_file->storeBytesToGridFS($bytes, 'import.zip');
+            $key = $fileInfo['_id']->__toString();
+        } else {
+            if (strpos($uploadFileNameLower, '.csv') === false) {
+                return $this->msg(false, '请上传csv格式的文件');
+            }
+            
+            $bytes = file_get_contents($upload['tmp_name']);
+            if (! detectUTF8($bytes)) {
+                return $this->msg(false, '请使用文本编辑器将文件转化为UTF-8格式');
+            }
+            $fileInfo = $this->_file->storeBytesToGridFS($bytes, 'import.csv');
+            $key = $fileInfo['_id']->__toString();
         }
-        $fileInfo = $this->_file->storeBytesToGridFS($bytes, 'import.csv');
-        $key = $fileInfo['_id']->__toString();
         
         $workload = array();
         $workload['key'] = $key;

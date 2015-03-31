@@ -53,7 +53,7 @@ class ProjectController extends Action
     {
         $query = array();
         $isSystem = filter_var($this->params()->fromQuery('isSystem', ''), FILTER_VALIDATE_BOOLEAN);
-        $search = $this->params()->fromQuery('query', null);
+        $search = $this->params()->fromQuery('query', $this->params()->fromQuery('search',null));
         $start = intval($this->params()->fromQuery('start', 0));
         $limit = intval($this->params()->fromQuery('limit', 10));
         

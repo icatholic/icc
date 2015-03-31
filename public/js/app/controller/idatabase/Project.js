@@ -212,6 +212,7 @@ Ext.define('icc.controller.idatabase.Project', {
 										__PROJECT_ID__: id,
 										plugin: true,
 										__PLUGIN_ID__: item.get('plugin_id'),
+										minHeight : 400,
 										isStoreLoaded : false,
 										listeners : {
 											expand : function( p, eOpts ){

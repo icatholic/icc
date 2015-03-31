@@ -93,15 +93,6 @@ return array(
                         )
                     )
                 ),
-                'data_import_java_worker' => array(
-                    'options' => array(
-                        'route' => 'data import java worker',
-                        'defaults' => array(
-                            'controller' => 'Gearman\Controller\Data',
-                            'action' => 'importJava'
-                        )
-                    )
-                ),
                 'data_bson_import_worker' => array(
                     'options' => array(
                         'route' => 'data import bson worker',
@@ -138,12 +129,39 @@ return array(
                         )
                     )
                 ),
+                'send_email_worker' => array(
+                    'options' => array(
+                        'route' => 'send email worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Common',
+                            'action' => 'sendEmail'
+                        )
+                    )
+                ),
+                'do_request_worker' => array(
+                    'options' => array(
+                        'route' => 'do request worker',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Common',
+                            'action' => 'doRequest'
+                        )
+                    )
+                ),
                 'log_error_worker' => array(
                     'options' => array(
                         'route' => 'log error worker',
                         'defaults' => array(
                             'controller' => 'Gearman\Controller\Log',
                             'action' => 'log'
+                        )
+                    )
+                ),
+                'drop_collection_datas' => array(
+                    'options' => array(
+                        'route' => 'drop collection datas',
+                        'defaults' => array(
+                            'controller' => 'Gearman\Controller\Data',
+                            'action' => 'dropDatas'
                         )
                     )
                 )

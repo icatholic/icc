@@ -10,6 +10,11 @@ Ext.define('icc.view.idatabase.Project.Grid', {
 	disableSelection: false,
 	sortableColumns: false,
 	columns: [{
+		text : '项目的系统编号',
+		dataIndex : '_id',
+		flex : 1,
+		hidden : true
+	}, {
 		text: '项目名称',
 		dataIndex: 'name',
 		flex: 2

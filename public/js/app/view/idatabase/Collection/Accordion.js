@@ -7,13 +7,15 @@ Ext.define('icc.view.idatabase.Collection.Accordion', {
 	title : '数据与插件',
 	resizable : false,
 	collapsible : true,
+	autoScroll : true,
 	pluginItems : [],
 	initComponent : function() {
 		var items = [ {
 			xtype : 'idatabaseCollectionGrid',
 			__PROJECT_ID__ : this.__PROJECT_ID__,
 			plugin : false,
-			__PLUGIN_ID__ : ''
+			__PLUGIN_ID__ : '',
+			minHeight : 400
 		} ];
 
 		items = Ext.Array.merge(items, this.pluginItems);

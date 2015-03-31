@@ -97,5 +97,8 @@ Ext.define('icc.model.idatabase.Structure', {
 	}, {
 		name: 'xTemplate',
 		type: 'string'
+	},{
+		name: 'emptyText',
+		type: 'string'
 	}]
 });

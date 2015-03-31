@@ -153,7 +153,7 @@ class PluginController extends Action
     public function readPluginAction()
     {
         $query = array();
-        $search = $this->params()->fromQuery('query', null);
+        $search = $this->params()->fromQuery('query', $this->params()->fromQuery('search', null));
         $start = intval($this->params()->fromQuery('start', 0));
         $limit = intval($this->params()->fromQuery('limit', 10));
         

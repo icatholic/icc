@@ -89,6 +89,9 @@ class CollectionController extends Action
     {
         $startTime = microtime(true);
         $search = trim($this->params()->fromQuery('query', ''));
+        if (empty($search)) {
+            $search = trim($this->params()->fromQuery('search', ''));
+        }
         $action = trim($this->params()->fromQuery('action', ''));
         $start = intval($this->params()->fromQuery('start', 0));
         $limit = intval($this->params()->fromQuery('limit', 10));
@@ -125,8 +128,6 @@ class CollectionController extends Action
         
         $datas = array();
         $cursor = $this->_collection->find($query);
-        //fb($query, 'LOG');
-        //fb($cursor->explain(), 'LOG');
         $cursor->sort($sort);
         $cursor->skip($start)->limit($limit);
         while ($cursor->hasNext()) {
@@ -150,7 +151,6 @@ class CollectionController extends Action
             
             $datas[] = $row;
         }
-        //fb(microtime(true) - $startTime, 'LOG');
         return $this->rst($datas, $cursor->count(), true);
     }
 
@@ -283,6 +283,10 @@ class CollectionController extends Action
             $defaultSourceData = filter_var($this->params()->fromPost('defaultSourceData', false), FILTER_VALIDATE_BOOLEAN);
             $hook = trim($this->params()->fromPost('hook', ''));
             $hookKey = trim($this->params()->fromPost('hookKey', ''));
+            $hookNotifyEmail = trim($this->params()->fromPost('hook_notify_email', ''));
+            $isAllowHttpAccess = filter_var($this->params()->fromPost('isAllowHttpAccess', false), FILTER_VALIDATE_BOOLEAN);
+            $promissionDefinition = $this->params()->fromPost('promissionDefinition', array());
+            $hookDebugMode = filter_var($this->params()->fromPost('hook_debug_mode', false), FILTER_VALIDATE_BOOLEAN);
             
             if ($project_id == null) {
                 return $this->msg(false, '无效的项目编号');
@@ -326,6 +330,10 @@ class CollectionController extends Action
             $datas['defaultSourceData'] = $defaultSourceData;
             $datas['hook'] = $hook;
             $datas['hookKey'] = $hookKey;
+            $datas['hook_notify_email'] = $hookNotifyEmail;
+            $datas['hook_debug_mode'] = $hookDebugMode;
+            $datas['isAllowHttpAccess'] = $isAllowHttpAccess;
+            $datas['promissionDefinition'] = $promissionDefinition;
             $datas['plugin_collection_id'] = $this->_plugin_collection->addPluginCollection($datas);
             $rst = $this->_collection->insert($datas);
             
@@ -384,6 +392,10 @@ class CollectionController extends Action
         $defaultSourceData = filter_var($this->params()->fromPost('defaultSourceData', false), FILTER_VALIDATE_BOOLEAN);
         $hook = trim($this->params()->fromPost('hook', ''));
         $hookKey = trim($this->params()->fromPost('hookKey', ''));
+        $hookNotifyEmail = trim($this->params()->fromPost('hook_notify_email', ''));
+        $hookDebugMode = filter_var($this->params()->fromPost('hook_debug_mode', false), FILTER_VALIDATE_BOOLEAN);
+        $isAllowHttpAccess = filter_var($this->params()->fromPost('isAllowHttpAccess', false), FILTER_VALIDATE_BOOLEAN);
+        $promissionDefinition = $this->params()->fromPost('promissionDefinition', array());
         $plugin_collection_id = trim($this->params()->fromPost('__PLUGIN_COLLECTION_ID__', ''));
         
         if ($_id == null) {
@@ -440,6 +452,10 @@ class CollectionController extends Action
         $datas['defaultSourceData'] = $defaultSourceData;
         $datas['hook'] = $hook;
         $datas['hookKey'] = $hookKey;
+        $datas['hook_notify_email'] = $hookNotifyEmail;
+        $datas['hook_debug_mode'] = $hookDebugMode;
+        $datas['isAllowHttpAccess'] = $isAllowHttpAccess;
+        $datas['promissionDefinition'] = $promissionDefinition;
         $datas['plugin_collection_id'] = $plugin_collection_id;
         $datas['plugin_collection_id'] = $this->_plugin_collection->editPluginCollection($datas);
         
@@ -489,7 +505,8 @@ class CollectionController extends Action
             ));
             
             if ($rowInfo != null) {
-                $this->_plugin_collection->removePluginCollection($this->_project_id, $this->_plugin_id, $rowInfo['alias']);
+                // 禁止在集合中删除插件中的集合内容
+                // $this->_plugin_collection->removePluginCollection($this->_project_id, $this->_plugin_id, $rowInfo['alias']);
                 $this->_collection->remove(array(
                     '_id' => myMongoId($row)
                 ));

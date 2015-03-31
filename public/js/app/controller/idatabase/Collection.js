@@ -2,7 +2,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 	extend: 'Ext.app.Controller',
 	models: ['idatabase.Collection', 'idatabase.Structure'],
 	stores: ['idatabase.Collection', 'idatabase.Collection.Type', 'idatabase.Structure'],
-	views: ['idatabase.Import.Csv','idatabase.Collection.Grid', 'idatabase.Collection.Add', 'idatabase.Collection.Edit', 'idatabase.Collection.TabPanel', 'idatabase.Collection.Password', 'idatabase.Collection.Dashboard'],
+	views: ['idatabase.Import.Csv', 'idatabase.Collection.Grid', 'idatabase.Collection.Add', 'idatabase.Collection.Edit', 'idatabase.Collection.TabPanel', 'idatabase.Collection.Password', 'idatabase.Collection.Dashboard'],
 	controllerName: 'idatabaseCollection',
 	plugin: false,
 	__PLUGIN_ID__: '',
@@ -13,9 +13,10 @@ Ext.define('icc.controller.idatabase.Collection', {
 		save: '/idatabase/collection/save'
 	},
 	refs: [{
-		ref: 'projectTabPanel',
-		selector: 'idatabaseProjectTabPanel'
-	}],
+			ref: 'projectTabPanel',
+			selector: 'idatabaseProjectTabPanel'
+		}
+	],
 	collectionTabPanel: function() {
 		return this.getProjectTabPanel().getActiveTab().down('idatabaseCollectionTabPanel');
 	},
@@ -32,18 +33,19 @@ Ext.define('icc.controller.idatabase.Collection', {
 		}
 
 		me.addRef([{
-			ref: 'main',
-			selector: me.controllerName + 'Main'
-		}, {
-			ref: 'list',
-			selector: me.controllerName + 'Grid'
-		}, {
-			ref: 'add',
-			selector: me.controllerName + 'Add'
-		}, {
-			ref: 'edit',
-			selector: me.controllerName + 'Edit'
-		}]);
+				ref: 'main',
+				selector: me.controllerName + 'Main'
+			}, {
+				ref: 'list',
+				selector: me.controllerName + 'Grid'
+			}, {
+				ref: 'add',
+				selector: me.controllerName + 'Add'
+			}, {
+				ref: 'edit',
+				selector: me.controllerName + 'Edit'
+			}
+		]);
 
 		var listeners = {};
 
@@ -115,9 +117,21 @@ Ext.define('icc.controller.idatabase.Collection', {
 						plugin: grid.plugin,
 						__PROJECT_ID__: grid.__PROJECT_ID__,
 						__PLUGIN_ID__: grid.__PLUGIN_ID__,
-						__PLUGIN_COLLECTION_ID__ : record.get('plugin_collection_id')
+						__PLUGIN_COLLECTION_ID__: record.get('plugin_collection_id')
 					});
 					var form = win.down('form').getForm();
+					var fields = form.getFields();
+
+					fields.each(function(field, index, len) {
+						var fieldName = field.getName();
+						if (Ext.isString(fieldName)) {
+							if (fieldName.indexOf('[]') >= 0) {
+								var sourceFieldName = fieldName.replace("[]", "");
+								form.findField(fieldName).setValue(record.get(sourceFieldName));
+							}
+						}
+					});
+
 					form.loadRecord(record);
 					win.show();
 				} else {
@@ -422,7 +436,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 				return true;
 			}
 		};
-		
+
 		listeners[controllerName + 'Grid button[action=csvimport]'] = {
 			click: function(button) {
 				var grid = button.up('gridpanel');
@@ -450,18 +464,18 @@ Ext.define('icc.controller.idatabase.Collection', {
 						var grid = button.up('gridpanel');
 						var tab = button.up('tabpanel');
 						var mask = new Ext.LoadMask(tab, {
-							autoShow : true,
-							msg : "同步中，请稍后...",
-							useMsg : true
+							autoShow: true,
+							msg: "同步中，请稍后...",
+							useMsg: true
 						});
 
 						var loop = 0;
-						var interval = setInterval(function () {
+						var interval = setInterval(function() {
 							var params = {
 								__PROJECT_ID__: grid.__PROJECT_ID__,
 								__PLUGIN_ID__: grid.__PLUGIN_ID__
 							};
-							if(loop > 0) {
+							if (loop > 0) {
 								params.wait = true;
 							}
 							Ext.Ajax.request({
@@ -470,7 +484,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 								scope: me,
 								success: function(response) {
 									var text = Ext.JSON.decode(response.responseText, true);
-									if(text.success) {
+									if (text.success) {
 										clearInterval(interval);
 										mask.hide();
 										Ext.Msg.alert('提示信息', text.msg);
@@ -479,73 +493,73 @@ Ext.define('icc.controller.idatabase.Collection', {
 								}
 							});
 							loop += 1;
-						},3000);
+						}, 3000);
 					}
 				}, me);
 			}
 		};
-		
-		listeners[controllerName + 'Grid button[action=bsonexport]'] = {
-				click: function(button) {
-					var grid = button.up('gridpanel');
-					var selections = grid.getSelectionModel().getSelection();
-					if (selections.length == 0) {
-						Ext.Msg.alert('提示信息', '请选择一项您要操作的集合');
-						return false;
-					}
-					var record = selections[0];
-					var id = record.get('_id');
-					
-					Ext.Msg.confirm('提示信息', '请确认你要导出当前集合的BSON数据?', function(btn) {
-						if (btn == 'yes') {
-							var grid = button.up('gridpanel');
-							var mask = new Ext.LoadMask(Ext.getBody(), {
-								autoShow : true,
-								msg : "BSON数据创建中，如果数据量较大可能需要等待较长时间，请耐心等待",
-								useMsg : true
-							});
 
-							button.setDisabled(true);
-							var loop = 0;
-							var interval = setInterval(function () {
-								var params = {
-									'__PROJECT_ID__': grid.__PROJECT_ID__,
-									'__COLLECTION_ID__' : id
-								};
-								if(loop > 0) {
-									params.wait = true;
-								}
-								Ext.Ajax.request({
-									url: '/idatabase/data/export-bson',
-									params: params,
-									method : 'GET',
-									success: function(response) {
-										var text = Ext.JSON.decode(response.responseText, true);
-										if(loop==0) {
-											if(text.success) {
-												clearInterval(interval);
-												mask.hide();
-												Ext.Msg.alert('提示信息', text.msg);
-											}
-										}
-										if(text.success) {
+		listeners[controllerName + 'Grid button[action=bsonexport]'] = {
+			click: function(button) {
+				var grid = button.up('gridpanel');
+				var selections = grid.getSelectionModel().getSelection();
+				if (selections.length == 0) {
+					Ext.Msg.alert('提示信息', '请选择一项您要操作的集合');
+					return false;
+				}
+				var record = selections[0];
+				var id = record.get('_id');
+
+				Ext.Msg.confirm('提示信息', '请确认你要导出当前集合的BSON数据?', function(btn) {
+					if (btn == 'yes') {
+						var grid = button.up('gridpanel');
+						var mask = new Ext.LoadMask(Ext.getBody(), {
+							autoShow: true,
+							msg: "BSON数据创建中，如果数据量较大可能需要等待较长时间，请耐心等待",
+							useMsg: true
+						});
+
+						button.setDisabled(true);
+						var loop = 0;
+						var interval = setInterval(function() {
+							var params = {
+								'__PROJECT_ID__': grid.__PROJECT_ID__,
+								'__COLLECTION_ID__': id
+							};
+							if (loop > 0) {
+								params.wait = true;
+							}
+							Ext.Ajax.request({
+								url: '/idatabase/data/export-bson',
+								params: params,
+								method: 'GET',
+								success: function(response) {
+									var text = Ext.JSON.decode(response.responseText, true);
+									if (loop == 0) {
+										if (text.success) {
 											clearInterval(interval);
 											mask.hide();
-											button.setDisabled(false);
-											delete params.wait;
-											window.location.href = '/idatabase/data/export-bson?' + Ext.Object.toQueryString(params);
-											return true;
+											Ext.Msg.alert('提示信息', text.msg);
 										}
 									}
-								});
-								loop += 1;
-							},5000);
-						}
-					}, me);
-				}
-			};
-			
-		
+									if (text.success) {
+										clearInterval(interval);
+										mask.hide();
+										button.setDisabled(false);
+										delete params.wait;
+										window.location.href = '/idatabase/data/export-bson?' + Ext.Object.toQueryString(params);
+										return true;
+									}
+								}
+							});
+							loop += 1;
+						}, 5000);
+					}
+				}, me);
+			}
+		};
+
+
 
 		listeners[controllerName + 'Grid button[action=hook]'] = {
 			click: function(button) {
@@ -575,91 +589,91 @@ Ext.define('icc.controller.idatabase.Collection', {
 				}, me);
 			}
 		};
-		
+
 		listeners[controllerName + 'Grid button[action=copy]'] = {
-				click: function(button) {
-					var grid = button.up('gridpanel');
-					var selections = grid.getSelectionModel().getSelection();
-					if (selections.length == 1) {
-						var projectCombobox = Ext.create('icc.view.idatabase.Project.Combobox',{
-							name:'project_id',
-							fieldLabel: '目标项目',
-				            allowBlank: false,
-				        	typeAhead : true,
-							queryMode : 'remote',
-							forceSelection : true,
-							editable : true,
-							minChars : 1,
-							queryParam : 'query',
-				            listeners : {
-				            	select : function(combo, records, eOpts) {
-				            		try {
-					            		var project_id = combo.getValue();
-					            		if(project_id != null) {
-					            			var form = combo.up('form').getForm();
-					                		var collectionCombo = form.findField('collectionAlias');
-					                		collectionCombo.__PROJECT_ID__ = project_id;
-					                		collectionCombo.clearValue();
-					                		collectionCombo.store.proxy.extraParams.__PROJECT_ID__ = project_id;
-					                		collectionCombo.store.proxy.extraParams.action = 'all';
-						            		collectionCombo.store.load(); 
-					            		} else {
-					            			console.info(project_id);
-					            		}
-				            		} catch (e) {
-				            			console.info(e);
-				            		}
-				            	}
-				            }
-				    	});
-						
-						var collectionComboboxStore = Ext.create('icc.store.idatabase.Collection',{});
-						var collectionCombobox = Ext.create('icc.view.idatabase.Collection.Combobox.All',{
-							fieldLabel: '目标集合',
-							name:'collectionAlias',
-				            allowBlank: false,
-				        	typeAhead : true,
-							queryMode : 'remote',
-							forceSelection : true,
-							editable : true,
-							minChars : 1,
-							queryParam : 'query',
-				            store : collectionComboboxStore
-				    	});
-						var record = selections[0];
-						var win = Ext.widget('idatabaseCopyWindow', {
-							__PROJECT_ID__: grid.__PROJECT_ID__,
-							__COLLECTION_ID__: record.get('_id'),
-							__PLUGIN_ID__: grid.__PLUGIN_ID__,
-							projectCombobox : projectCombobox,
-							collectionCombobox : collectionCombobox
-						});
-						win.show();
-					} else {
-						Ext.Msg.alert('提示信息', '请选择一项您要复制文档结构的集合');
-					}
+			click: function(button) {
+				var grid = button.up('gridpanel');
+				var selections = grid.getSelectionModel().getSelection();
+				if (selections.length == 1) {
+					var projectCombobox = Ext.create('icc.view.idatabase.Project.Combobox', {
+						name: 'project_id',
+						fieldLabel: '目标项目',
+						allowBlank: false,
+						typeAhead: true,
+						queryMode: 'remote',
+						forceSelection: true,
+						editable: true,
+						minChars: 1,
+						queryParam: 'query',
+						listeners: {
+							select: function(combo, records, eOpts) {
+								try {
+									var project_id = combo.getValue();
+									if (project_id != null) {
+										var form = combo.up('form').getForm();
+										var collectionCombo = form.findField('collectionAlias');
+										collectionCombo.__PROJECT_ID__ = project_id;
+										collectionCombo.clearValue();
+										collectionCombo.store.proxy.extraParams.__PROJECT_ID__ = project_id;
+										collectionCombo.store.proxy.extraParams.action = 'all';
+										collectionCombo.store.load();
+									} else {
+										console.info(project_id);
+									}
+								} catch (e) {
+									console.info(e);
+								}
+							}
+						}
+					});
+
+					var collectionComboboxStore = Ext.create('icc.store.idatabase.Collection', {});
+					var collectionCombobox = Ext.create('icc.view.idatabase.Collection.Combobox.All', {
+						fieldLabel: '目标集合',
+						name: 'collectionAlias',
+						allowBlank: false,
+						typeAhead: true,
+						queryMode: 'remote',
+						forceSelection: true,
+						editable: true,
+						minChars: 1,
+						queryParam: 'query',
+						store: collectionComboboxStore
+					});
+					var record = selections[0];
+					var win = Ext.widget('idatabaseCopyWindow', {
+						__PROJECT_ID__: grid.__PROJECT_ID__,
+						__COLLECTION_ID__: record.get('_id'),
+						__PLUGIN_ID__: grid.__PLUGIN_ID__,
+						projectCombobox: projectCombobox,
+						collectionCombobox: collectionCombobox
+					});
+					win.show();
+				} else {
+					Ext.Msg.alert('提示信息', '请选择一项您要复制文档结构的集合');
 				}
-			};
+			}
+		};
 
 		listeners['idatabaseCopyWindow button[action=submit]'] = {
-				click: function(button) {
-					var form = button.up('form').getForm();
-					var win = button.up('window');
-					if (form.isValid()) {
-						form.submit({
-							waitTitle: '系统提示',
-							waitMsg: '系统处理中，请稍后……',
-							success: function(form, action) {
-								Ext.Msg.alert('成功提示', action.result.msg);
-							},
-							failure: function(form, action) {
-								Ext.Msg.alert('失败提示', action.result.msg);
-							}
-						});
-					}
+			click: function(button) {
+				var form = button.up('form').getForm();
+				var win = button.up('window');
+				if (form.isValid()) {
+					form.submit({
+						waitTitle: '系统提示',
+						waitMsg: '系统处理中，请稍后……',
+						success: function(form, action) {
+							Ext.Msg.alert('成功提示', action.result.msg);
+						},
+						failure: function(form, action) {
+							Ext.Msg.alert('失败提示', action.result.msg);
+						}
+					});
 				}
-			};
-		
+			}
+		};
+
 		me.control(listeners);
 	},
 	buildDataPanel: function(grid, tabpanel, record) {
@@ -672,23 +686,24 @@ Ext.define('icc.controller.idatabase.Collection', {
 		var isRowExpander = Ext.isBoolean(record.get('isRowExpander')) ? record.get('isRowExpander') : false;
 		var rowBodyTpl = record.get('rowExpanderTpl');
 		var linkagedElementInitValueFrom = {};
-		
+
 		var me = this;
 		var panel = tabpanel.getComponent(__COLLECTION_ID__);
 		if (panel == null) {
 			// model的fields动态创建
 			var modelFields = [];
 			var searchFields = [{
-				xtype: 'hiddenfield',
-				name: '__PROJECT_ID__',
-				value: __PROJECT_ID__,
-				allowBlank: false
-			}, {
-				xtype: 'hiddenfield',
-				name: '__COLLECTION_ID__',
-				value: __COLLECTION_ID__,
-				allowBlank: false
-			}];
+					xtype: 'hiddenfield',
+					name: '__PROJECT_ID__',
+					value: __PROJECT_ID__,
+					allowBlank: false
+				}, {
+					xtype: 'hiddenfield',
+					name: '__COLLECTION_ID__',
+					value: __COLLECTION_ID__,
+					allowBlank: false
+				}
+			];
 
 			var gridColumns = [];
 
@@ -698,7 +713,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 				__COLLECTION_ID__: __COLLECTION_ID__,
 				__PLUGIN_ID__: __PLUGIN_ID__,
 				__PLUGIN_COLLECTION_ID__: __PLUGIN_COLLECTION_ID__,
-				limit : 1000
+				limit: 1000
 			};
 
 			var treeField = '';
@@ -715,11 +730,11 @@ Ext.define('icc.controller.idatabase.Collection', {
 					var linkageSetValueField = Ext.isString(record.get('linkageSetValueField')) ? record.get('linkageSetValueField') : '';
 					var jsonSearch = Ext.isString(record.get('rshSearchCondition')) ? record.get('rshSearchCondition') : '';
 					var cdnUrl = Ext.isString(record.get('cdnUrl')) ? record.get('cdnUrl') : '';
-					if(cdnUrl=='') {
+					if (cdnUrl == '') {
 						cdnUrl = 'http://cloud.umaman.com';
 					}
 					var xTemplate = Ext.isString(record.get('xTemplate')) ? record.get('xTemplate') : '';
-					
+
 
 					// 获取fatherField
 					if (record.get('rshKey')) {
@@ -739,55 +754,61 @@ Ext.define('icc.controller.idatabase.Collection', {
 					var recordField = convertDot(record.get('field'));
 					var recordLabel = record.get('label');
 					var allowBlank = !record.get('required');
+					var emptyText = Ext.isString(record.get('emptyText')) ? record.get('emptyText') : '';
 
-					// 创建添加和编辑的field表单开始
+					// 创建添加和编辑的field表单开始,默认属性
 					var addOrEditField = {
 						xtype: recordType,
 						fieldLabel: recordLabel,
 						name: recordField,
-						allowBlank: allowBlank
+						allowBlank: allowBlank,
+						emptyText: emptyText
 					};
 
 					switch (recordType) {
-					case 'arrayfield':
-					case 'documentfield':
-						addOrEditField.xtype = 'textareafield';
-						addOrEditField.name = recordField;
-						break;
-					case 'boolfield':
-						delete addOrEditField.name;
-						addOrEditField.radioName = recordField;
-						break;
-					case 'filefield':
-						addOrEditField = {
-							xtype: 'filefield',
-							name: recordField,
-							fieldLabel: recordLabel,
-							labelWidth: 100,
-							msgTarget: 'side',
-							allowBlank: true,
-							anchor: '100%',
-							buttonText: '浏览本地文件'
-						};
-						break;
-					case '2dfield':
-						addOrEditField.title = recordLabel;
-						addOrEditField.fieldName = recordField;
-						break;
-					case 'datefield':
-						addOrEditField.format = 'Y-m-d H:i:s';
-						break;
-					case 'numberfield':
-						addOrEditField.decimalPrecision = 8;
-						break;
-					case 'htmleditor':
-						addOrEditField.height = 300;
-						addOrEditField.plugins = [new Ext.create('Ext.ux.form.HtmlEditor.imageUpload', {dragResize:true,dragWheel:true,collection_id:__COLLECTION_ID__})];
-						break;
-					case 'ueditor':
-						addOrEditField.__PROJECT_ID__ = __PROJECT_ID__;
-						addOrEditField.__COLLECTION_ID__ = __COLLECTION_ID__;
-						break;
+						case 'arrayfield':
+						case 'documentfield':
+							addOrEditField.xtype = 'textareafield';
+							addOrEditField.name = recordField;
+							break;
+						case 'boolfield':
+							delete addOrEditField.name;
+							addOrEditField.radioName = recordField;
+							break;
+						case 'filefield':
+							addOrEditField = {
+								xtype: 'filefield',
+								name: recordField,
+								fieldLabel: recordLabel,
+								labelWidth: 100,
+								msgTarget: 'side',
+								allowBlank: !record.get('required'),
+								anchor: '100%',
+								buttonText: '浏览本地文件'
+							};
+							break;
+						case '2dfield':
+							addOrEditField.title = recordLabel;
+							addOrEditField.fieldName = recordField;
+							break;
+						case 'datefield':
+							addOrEditField.format = 'Y-m-d H:i:s';
+							break;
+						case 'numberfield':
+							addOrEditField.decimalPrecision = 8;
+							break;
+						case 'htmleditor':
+							addOrEditField.height = 300;
+							addOrEditField.plugins = [new Ext.create('Ext.ux.form.HtmlEditor.imageUpload', {
+									dragResize: true,
+									dragWheel: true,
+									collection_id: __COLLECTION_ID__
+								})];
+							break;
+						case 'ueditor':
+							addOrEditField.__PROJECT_ID__ = __PROJECT_ID__;
+							addOrEditField.__COLLECTION_ID__ = __COLLECTION_ID__;
+							break;
 					};
 
 					var rshCollection = record.get('rshCollection');
@@ -811,12 +832,13 @@ Ext.define('icc.controller.idatabase.Collection', {
 						Ext.define(rshCollectionModel, {
 							extend: 'icc.model.common.Model',
 							fields: [{
-								name: record.get('rshCollectionDisplayField'),
-								convert: convert
-							}, {
-								name: record.get('rshCollectionValueField'),
-								convert: convert
-							}]
+									name: record.get('rshCollectionDisplayField'),
+									convert: convert
+								}, {
+									name: record.get('rshCollectionValueField'),
+									convert: convert
+								}
+							]
 						});
 
 						var comboboxStore = Ext.create('Ext.data.Store', {
@@ -911,14 +933,13 @@ Ext.define('icc.controller.idatabase.Collection', {
 
 					addOrEditFields.push(addOrEditField);
 					// 创建添加和编辑的field表单结束
-					
-					if(linkageSetValueField!='') {
+
+					if (linkageSetValueField != '') {
 						var setValueFields = linkageSetValueField.split(',');
 						Ext.Array.forEach(setValueFields, function(field) {
-							if(Ext.isArray(linkagedElementInitValueFrom[field])) {
+							if (Ext.isArray(linkagedElementInitValueFrom[field])) {
 								linkagedElementInitValueFrom[field].push(recordField);
-							}
-							else {
+							} else {
 								linkagedElementInitValueFrom[field] = [recordField];
 							}
 						});
@@ -930,57 +951,57 @@ Ext.define('icc.controller.idatabase.Collection', {
 						type: 'string'
 					};
 					switch (recordType) {
-					case 'arrayfield':
-						field.convert = function(value, record) {
-							if (Ext.isArray(value)) {
-								return Ext.JSON.encode(value);
-							} else {
+						case 'arrayfield':
+							field.convert = function(value, record) {
+								if (Ext.isArray(value)) {
+									return Ext.JSON.encode(value);
+								} else {
+									return value;
+								}
+							};
+							break;
+						case 'documentfield':
+							field.convert = function(value, record) {
+								if (Ext.isObject(value) || Ext.isArray(value)) {
+									return Ext.JSON.encode(value);
+								} else {
+									return value;
+								}
+							};
+							break;
+						case '2dfield':
+							field.convert = function(value, record) {
+								if (Ext.isArray(value)) {
+									return value.join(',');
+								}
 								return value;
-							}
-						};
-						break;
-					case 'documentfield':
-						field.convert = function(value, record) {
-							if (Ext.isObject(value) || Ext.isArray(value)) {
-								return Ext.JSON.encode(value);
-							} else {
+							};
+							break;
+						case 'datefield':
+							field.convert = function(value, record) {
+								if (Ext.isObject(value) && value['sec'] != undefined) {
+									var date = new Date();
+									date.setTime(value.sec * 1000);
+									return date;
+								} else {
+									return value;
+								}
+							};
+							break;
+						case 'numberfield':
+							field.type = 'float';
+							break;
+						case 'boolfield':
+							field.type = 'boolean';
+							field.convert = function(value, record) {
+								if (Ext.isBoolean(value)) {
+									return value;
+								} else if (Ext.isString(value)) {
+									return value === 'true' || value === '√' ? true : false;
+								}
 								return value;
-							}
-						};
-						break;
-					case '2dfield':
-						field.convert = function(value, record) {
-							if (Ext.isArray(value)) {
-								return value.join(',');
-							}
-							return value;
-						};
-						break;
-					case 'datefield':
-						field.convert = function(value, record) {
-							if (Ext.isObject(value) && value['sec'] != undefined) {
-								var date = new Date();
-								date.setTime(value.sec * 1000);
-								return date;
-							} else {
-								return value;
-							}
-						};
-						break;
-					case 'numberfield':
-						field.type = 'float';
-						break;
-					case 'boolfield':
-						field.type = 'boolean';
-						field.convert = function(value, record) {
-							if (Ext.isBoolean(value)) {
-								return value;
-							} else if (Ext.isString(value)) {
-								return value === 'true' || value === '√' ? true : false;
-							}
-							return value;
-						};
-						break;
+							};
+							break;
 					}
 					modelFields.push(field);
 
@@ -1003,51 +1024,51 @@ Ext.define('icc.controller.idatabase.Collection', {
 						}
 
 						switch (recordType) {
-						case 'boolfield':
-							column.xtype = 'booleancolumn';
-							column.trueText = '√';
-							column.falseText = '×';
-							column.field = {
-								xtype: 'commonComboboxBoolean'
-							};
-							break;
-						case '2dfield':
-							column.align = 'center';
-							break;
-						case 'datefield':
-							column.xtype = 'datecolumn';
-							column.format = 'Y-m-d H:i:s';
-							column.align = 'center';
-							column.field = {
-								xtype: 'datefield',
-								allowBlank: allowBlank,
-								format: 'Y-m-d H:i:s'
-							};
-							break;
-						case 'numberfield':
-							column.format = '0,000.00';
-							column.align = 'right';
-							column.field = {
-								xtype: 'numberfield',
-								allowBlank: allowBlank
-							};
-							break;
-						case 'filefield':
-							if (xTemplate != '') {
-								column.tpl = column.tpl.replace('{cdnUrl}', cdnUrl);
-							}
-							else {
-								if (record.get('showImage') != undefined && record.get('showImage') == true) {
-									column.tpl = '<a href="' + cdnUrl + '/file/{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '/file/{' + recordField + '}/w/64/h/64" border="0" /></a>';
+							case 'boolfield':
+								column.xtype = 'booleancolumn';
+								column.trueText = '√';
+								column.falseText = '×';
+								column.field = {
+									xtype: 'commonComboboxBoolean'
+								};
+								break;
+							case '2dfield':
+								column.align = 'center';
+								break;
+							case 'datefield':
+								column.xtype = 'datecolumn';
+								column.format = 'Y-m-d H:i:s';
+								column.align = 'center';
+								column.field = {
+									xtype: 'datefield',
+									allowBlank: allowBlank,
+									format: 'Y-m-d H:i:s'
+								};
+								break;
+							case 'numberfield':
+								column.format = '0,000.00';
+								column.align = 'right';
+								column.field = {
+									xtype: 'numberfield',
+									allowBlank: allowBlank
+								};
+								break;
+							case 'filefield':
+								if (xTemplate != '') {
+									column.tpl = column.tpl.replace('{cdnUrl}', cdnUrl);
+								} else {
+									if (record.get('showImage') != undefined && record.get('showImage') == true) {
+										column.xtype = 'templatecolumn';
+										column.tpl = '<a href="' + cdnUrl + '/file/{' + recordField + '}" target="_blank"><img src="' + cdnUrl + '/file/{' + recordField + '}/w/64/h/64" border="0" /></a>';
+									}
 								}
-							}
-							break;
-						default:
-							column.field = {
-								xtype: 'textfield',
-								allowBlank: allowBlank
-							};
-							break;
+								break;
+							default:
+								column.field = {
+									xtype: 'textfield',
+									allowBlank: allowBlank
+								};
+								break;
 						}
 
 						// 存在关联集合数据，则直接采用combobox的方式进行显示
@@ -1143,7 +1164,53 @@ Ext.define('icc.controller.idatabase.Collection', {
 								displayField: record.get('rshCollectionDisplayField'),
 								valueField: record.get('rshCollectionValueField'),
 								queryParam: 'search',
-								minChars: 1
+								fatherField: record.get('rshCollectionFatherField'),
+								minChars: 1,
+								listeners: {
+									select: function(combo, records, eOpts) {
+										if (isLinkageMenu) {
+											var value = [];
+											if (records.length == 0 || linkageClearValueField == '' || linkageSetValueField == '') {
+												return false;
+											}
+
+											Ext.Array.forEach(records, function(record) {
+												value.push(record.get(combo.valueField));
+											});
+
+											var form = combo.up('form').getForm();
+
+											var clearValueFields = linkageClearValueField.split(',');
+											Ext.Array.forEach(clearValueFields, function(field) {
+												var formField = form.findField(field) == null ? form.findField(field + '[]') : form.findField(field);
+												if (formField != null) {
+													formField.clearValue();
+												}
+											});
+
+
+											var setValueFields = linkageSetValueField.split(',');
+											Ext.Array.forEach(setValueFields, function(field) {
+												var formField = form.findField(field) == null ? form.findField(field + '[]') : form.findField(field);
+												if (formField != null) {
+													var store = formField.store;
+													var extraParams = store.proxy.extraParams;
+													var linkageSearch = {};
+													if (formField.fatherField != '') {
+														linkageSearch[formField.fatherField] = {
+															"$in": value
+														};
+														extraParams.linkageSearch = Ext.JSON.encode(linkageSearch);
+													}
+													store.load();
+												}
+											});
+
+										}
+										return true;
+									}
+
+								}
 							};
 
 							searchField = {
@@ -1167,14 +1234,14 @@ Ext.define('icc.controller.idatabase.Collection', {
 									labelSeparator: '',
 									format: 'Y-m-d H:i:s'
 								},
-								items: [exclusive,
-								{
-									fieldLabel: '开始时间',
-									name: recordField + '[start]'
-								}, {
-									fieldLabel: '截止时间',
-									name: recordField + '[end]'
-								}]
+								items: [exclusive, {
+										fieldLabel: '开始时间',
+										name: recordField + '[start]'
+									}, {
+										fieldLabel: '截止时间',
+										name: recordField + '[end]'
+									}
+								]
 							};
 						} else if (recordType == 'numberfield') {
 							searchField = {
@@ -1186,14 +1253,14 @@ Ext.define('icc.controller.idatabase.Collection', {
 									labelAlign: 'top',
 									labelSeparator: ''
 								},
-								items: [exclusive,
-								{
-									fieldLabel: '最小值(>=)',
-									name: recordField + '[min]'
-								}, {
-									fieldLabel: '最大值(<=)',
-									name: recordField + '[max]'
-								}]
+								items: [exclusive, {
+										fieldLabel: '最小值(>=)',
+										name: recordField + '[min]'
+									}, {
+										fieldLabel: '最大值(<=)',
+										name: recordField + '[max]'
+									}
+								]
 							};
 						} else if (recordType == '2dfield') {
 							searchField = {
@@ -1204,18 +1271,19 @@ Ext.define('icc.controller.idatabase.Collection', {
 								fieldDefaults: {
 									labelAlign: 'top',
 									labelSeparator: '',
-									decimalPrecision : 8
+									decimalPrecision: 8
 								},
 								items: [{
-									name: recordField + '[lng]',
-									fieldLabel: '经度'
-								}, {
-									name: recordField + '[lat]',
-									fieldLabel: '维度'
-								}, {
-									name: recordField + '[distance]',
-									fieldLabel: '附近范围(km)'
-								}]
+										name: recordField + '[lng]',
+										fieldLabel: '经度'
+									}, {
+										name: recordField + '[lat]',
+										fieldLabel: '维度'
+									}, {
+										name: recordField + '[distance]',
+										fieldLabel: '附近范围(km)'
+									}
+								]
 							};
 						} else if (recordType == 'boolfield') {
 							searchField = {
@@ -1233,11 +1301,11 @@ Ext.define('icc.controller.idatabase.Collection', {
 									labelAlign: 'top',
 									labelSeparator: ''
 								},
-								items: [exclusive, exactMatch,
-								{
-									name: recordField,
-									fieldLabel: recordLabel
-								}]
+								items: [exclusive, exactMatch, {
+										name: recordField,
+										fieldLabel: recordLabel
+									}
+								]
 							};
 						}
 
@@ -1248,45 +1316,46 @@ Ext.define('icc.controller.idatabase.Collection', {
 
 				// 完善树状结构
 				gridColumns = Ext.Array.merge(gridColumns, [{
-					text: "_id",
-					sortable: false,
-					dataIndex: '_id',
-					flex: 1,
-					editor: 'textfield',
-					hidden: true
-				}, {
-					xtype: 'datecolumn',
-					format: 'Y-m-d H:i:s',
-					text: "创建时间",
-					sortable: false,
-					flex: 1,
-					dataIndex: '__CREATE_TIME__'
-				}, {
-					xtype: 'datecolumn',
-					format: 'Y-m-d H:i:s',
-					text: "修改时间",
-					sortable: false,
-					flex: 1,
-					dataIndex: '__MODIFY_TIME__',
-					hidden: true
-				}]);
+						text: "_id",
+						sortable: false,
+						dataIndex: '_id',
+						flex: 1,
+						editor: 'textfield',
+						hidden: true
+					}, {
+						xtype: 'datecolumn',
+						format: 'Y-m-d H:i:s',
+						text: "创建时间",
+						sortable: false,
+						flex: 1,
+						dataIndex: '__CREATE_TIME__'
+					}, {
+						xtype: 'datecolumn',
+						format: 'Y-m-d H:i:s',
+						text: "修改时间",
+						sortable: false,
+						flex: 1,
+						dataIndex: '__MODIFY_TIME__',
+						hidden: true
+					}
+				]);
 
 				// 创建数据的model
 				var dataModelName = 'dataModel' + __COLLECTION_ID__;
 				modelFields.push({
 					name: '__DOMAIN__',
 					type: 'string',
-					defaultValue : __DOMAIN__
+					defaultValue: __DOMAIN__
 				});
 				modelFields.push({
 					name: '__PROJECT_ID__',
 					type: 'string',
-					defaultValue : __PROJECT_ID__
+					defaultValue: __PROJECT_ID__
 				});
 				modelFields.push({
 					name: '__COLLECTION_ID__',
 					type: 'string',
-					defaultValue : __COLLECTION_ID__
+					defaultValue: __COLLECTION_ID__
 				});
 				var dataModel = Ext.define(dataModelName, {
 					extend: 'icc.model.common.Model',
@@ -1345,7 +1414,17 @@ Ext.define('icc.controller.idatabase.Collection', {
 						}
 					});
 				}
-				
+
+				//增加添加和编辑状态下的Modify_time提交用于检验提交是否有效
+				addOrEditFields.push({
+					xtype: 'datefield',
+					fieldLabel: '修改时间',
+					name: '__MODIFY_TIME__',
+					allowBlank: true,
+					format: 'Y-m-d H:i:s',
+					hidden: true
+				});
+
 				panel = Ext.widget('idatabaseDataMain', {
 					id: __COLLECTION_ID__,
 					name: collection_name,
@@ -1358,7 +1437,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 					isTree: isTree,
 					searchFields: searchFields,
 					addOrEditFields: addOrEditFields,
-					linkagedElementInitValueFrom : linkagedElementInitValueFrom,
+					linkagedElementInitValueFrom: linkagedElementInitValueFrom,
 					isRowExpander: isRowExpander,
 					rowBodyTpl: rowBodyTpl
 				});

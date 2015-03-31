@@ -51,5 +51,17 @@ Ext.define('icc.model.idatabase.Collection', {
 	}, {
 		name : 'hookKey',
 		type : 'string'
+	}, {
+		name : 'hook_notify_email',
+		type : 'string'
+	} , {
+		name : 'hook_debug_mode',
+		type : 'boolean'
+	}  , {
+		name : 'isAllowHttpAccess',
+		type : 'boolean'
+	}  , {
+		name : 'promissionDefinition',
+		type : 'array'
 	} ]
 });

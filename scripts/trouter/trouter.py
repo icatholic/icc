@@ -27,6 +27,9 @@ import pickle
 import socket
 import optparse
 import urllib
+import platform
+import zmq
+import md5
 
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -40,16 +43,24 @@ from conf.log import logging
 from tornado.escape import utf8, _unicode
 from tornado.options import define, options, parse_command_line
 from tornado.httpclient import AsyncHTTPClient
+from tornado.httputil import HTTPHeaders
  
 """代码版本"""
-version = '0.2'
+version = '0.3'
 
 define("conn", type=int, default=5000, help="最大连接数")
 define("apps", type=str, default="", help="app servers多台应用服务器请使用英文逗号分隔")
 define("port", type=int, default=12345, help="监听端口")
 define("threshold", type=int, default=500, help="进行操作等待的阈值")
 define("sync_threshold", type=int, default=300, help="保障同步操作的数量")
+define("request_timeout", type=int, default=300, help="客户端请求最大超时时间，默认300秒")
+define("enable_zmq", type=int, default=0, help="开启ZeroMQ模式,0为关闭1为开启")
+define("zmq_device", type=str, default="", help="zmq device服务地址,tcp://127.0.0.1:55555")
 parse_command_line()
+
+request_timeout = float(options.request_timeout)
+enable_zmq = options.enable_zmq
+zmq_device = options.zmq_device
 
 if options.conn is None:
     logging.error('请设定最大连接数，默认10000')
@@ -97,10 +108,18 @@ pool = 0
 sync = 0
 async = 0
 
-#采用curl的方式进行处理，速度更快,莫名的异常退出
-#AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+if platform.system() != 'Windows':
+    #采用curl的方式进行处理，速度更快，兼容性更好
+    AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+    
 http_client_async = AsyncHTTPClient(max_clients=2*threshold)
 http_client_sync = AsyncHTTPClient(max_clients=2*threshold)
+
+#如果设置了zeroMQ那么连接zeroMQ服务器
+if enable_zmq > 0 and zmq_device != '':
+    context = zmq.Context()
+    zmq_socket = context.socket(zmq.PUSH)
+    zmq_socket.connect(zmq_device)
 
 class RouterHandler(tornado.web.RequestHandler):
     def initialize(self, redis_client,logging,http_client_sync,http_client_async):
@@ -115,6 +134,31 @@ class RouterHandler(tornado.web.RequestHandler):
         self.security()
         self.logging.info("initialize")
     
+    def set_headers(self, response):
+        global pool,conn_count,sync,async
+        try:
+            if isinstance(response.headers,HTTPHeaders):
+                self.logging.info("headers type is HTTPHeaders")
+                headers = response.headers.get_all()
+
+            elif isinstance(response.headers,dict):
+                self.logging.info("headers type is dict")
+                headers = response.headers
+            else:
+                self.logging.debug(response.headers)
+                headers = []
+                
+            for k,v in headers:
+                if k!='Transfer-Encoding':
+                    self.logging.info("%s:%s"%(k,v))
+                    self.set_header(k,_unicode(v))
+            
+            #添加trouter信息，便于debug
+            self.set_header('trouter','version:%s,current pool:%d,current conn count:%d'%(version,pool,conn_count))
+        except Exception,e:
+            self.logging.error(e)
+    
+    
     def on_response(self, response):
         global pool,conn_count,sync,async
         pool -= 1
@@ -122,7 +166,9 @@ class RouterHandler(tornado.web.RequestHandler):
             async -= 1
         self.logging.info("after response the pool number is:%d"%(pool,))
         self.logging.info("after response the async pool number is:%d"%(async,))
-
+        self.logging.info("response code:%d"%(response.code,))
+        
+        #检测到599，重试
         if response.error and response.code==599:
             return tornado.ioloop.IOLoop.instance().add_callback(self.router)
 
@@ -133,10 +179,14 @@ class RouterHandler(tornado.web.RequestHandler):
                 self.logging.error(e)
                 self.set_status(500)
             
-            if not response.error:
+            self.set_headers(response)
+
+            if not response.error or response.body !='':
+                self.logging.info("response.body execute")
                 self.write(response.body)
             else:
                 self.logging.error(u"%s,%s"%(response.error,response.body))
+            
             try:
                 self.finish()
             except Exception,e:
@@ -149,12 +199,14 @@ class RouterHandler(tornado.web.RequestHandler):
         if self.start:
             conn_count -= 1
             self.start = False
-        self.add_header('__PROXY__', 'Trouter %s'%(version,))
+            self.logging.info("conn number is:%d"%(conn_count,))
         
     #Called at the beginning of a request before  `get`/`post`/etc
+    @tornado.web.asynchronous
     def prepare(self):
         global conn_count
         conn_count += 1
+        self.logging.info("conn number is %d"%(conn_count,))
     
     @tornado.web.asynchronous
     def get(self,params):
@@ -183,6 +235,7 @@ class RouterHandler(tornado.web.RequestHandler):
         if not async_result:
             async_result = self.get_query_argument('__ASYNC_RESULT__',default='{"ok":1}')
         
+        
         #如果代码进行了urlencode编码，则自动进行解码
         if isinstance(blacklist, basestring):
             blacklist = urllib.unquote(blacklist)
@@ -208,11 +261,20 @@ class RouterHandler(tornado.web.RequestHandler):
                 nodelay = True
                 async_filter = True
                 
+        #开启debug模式时关闭异步操作    
+        enable_debug_mode = self.get_query_argument('__ENABLE_DEBUG__',default=False)
+        if enable_debug_mode:
+            nodelay = False
+                
         if nodelay:
             if not self._finished:
                 self.is_async = True
                 self.write('%s'%(async_result,))
                 self.finish()
+                #如果设置了zeroMQ队列的话，放到zmq列队中结束请求
+                if enable_zmq > 0 and zmq_device != '':
+                    self.logging.info("zmq_socket send_pyobj")
+                    return zmq_socket.send_pyobj(self.construct_request(self.request,True))
         
         if pool > self.threshold or (async > self.threshold - self.sync_threshold and self.is_async):
             self.start = False
@@ -244,23 +306,43 @@ class RouterHandler(tornado.web.RequestHandler):
             self.logging.error(e)
             self.finish()
     
-    def construct_request(self, server_request):
+    def construct_request(self, server_request,is_pickle = False):
         self.logging.info(app_servers)
         url = "%s://%s%s"%(self.request.protocol,str(random_list(app_servers)),self.request.uri)
         if not hasattr(server_request,'body') or server_request.body=='':
             server_request.body = None
-
+        
+        if is_pickle:
+            dict_headers = {}
+            for k,v in server_request.headers.get_all():
+                dict_headers[k] = v
+            server_request.headers = dict_headers
+            self.logging.info(server_request.headers)
+        
         return tornado.httpclient.HTTPRequest(
             url,
             method=server_request.method,
             headers=server_request.headers,
             body=server_request.body,
+            follow_redirects = False,#不自动执行重定向，返回给用户浏览器处理
+            request_timeout = request_timeout,
             allow_nonstandard_methods = True
         )
     
     #进行必要的安全检查,拦截有问题操作,考虑使用贝叶斯算法屏蔽有问题的访问
     def security(self):
-        pass
+        session_id = self.get_cookie('PHPSESSID')
+        ip = self.request.headers.get('X-Real-Ip', self.request.remote_ip)
+        user_agent = self.request.headers.get('User-Agent', '')
+        if session_id != None:
+            pass
+        if user_agent != '':
+            user_agent = hashlib.md5(user_agent).hexdigest()
+        
+        #进行安全检查
+        
+            
+        
     
     #在body、url、POST GET中匹配字符串,匹配,匹配的性能有待优化 
     def match_list(self, match_list):
@@ -273,7 +355,9 @@ class RouterHandler(tornado.web.RequestHandler):
             del arguments['__ASYNCLIST__']
         if '__ASYNC_RESULT__' in arguments:
             del arguments['__ASYNC_RESULT__']
-
+        if '__ENABLE_DEBUG__' in arguments:
+            del arguments['__ENABLE_DEBUG__']
+            
         match = "|".join(match_list)
         for k in arguments.keys():
             if re.match(match,_unicode(" ".join(arguments[k]))):
@@ -281,10 +365,6 @@ class RouterHandler(tornado.web.RequestHandler):
         if server_request.body != '' and re.match(match,_unicode(server_request.body)):
             return True
         return False  
-    
-    def hash_request(self):
-        self.hash_request = obj_hash(self.request)
-        return self.hash_request
 
 
 

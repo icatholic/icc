@@ -51,6 +51,7 @@ Ext.define('icc.controller.idatabase.Data', {
 				var form = button.up('form').getForm();
 				if (form.isValid()) {
 					form.submit({
+						submitEmptyText : false,
 						waitTitle: '系统提示',
 						waitMsg: '系统处理中，请稍后……',
 						success: function(form, action) {
@@ -83,6 +84,7 @@ Ext.define('icc.controller.idatabase.Data', {
 					}
 
 					form.submit({
+						submitEmptyText : false,
 						waitTitle: '系统提示',
 						waitMsg: '系统处理中，请稍后……',
 						success: function(form, action) {

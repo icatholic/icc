@@ -36,6 +36,10 @@ Ext.define('icc.view.idatabase.Structure.Add', {
 			fieldLabel: '属性描述',
 			allowBlank: false
 		}, {
+			name:'emptyText',
+			fieldLabel: '属性填写要求',
+			allowBlank: true
+		}, {
 			xtype: 'combobox',
 			name: 'type',
 			fieldLabel: '输入类型',

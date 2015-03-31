@@ -10,6 +10,7 @@
 namespace Gearman\Controller;
 
 use My\Common\Controller\Action;
+use Aws\CloudFront\Exception\Exception;
 
 class DataController extends Action
 {
@@ -148,8 +149,9 @@ class DataController extends Action
                     {
                         if (isset($rshData[$field])) {
                             $cell = isset($rshData[$field][$cell]) ? $rshData[$field][$cell] : '';
-                        } 
-                        $cell = preg_replace("/\r|\n|\t|\s/", "", htmlspecialchars($cell));
+                        }
+                        if (is_string($cell))
+                            $cell = preg_replace("/\r|\n|\t|\s/", "", htmlspecialchars($cell));
                     });
                 });
                 
@@ -241,6 +243,23 @@ class DataController extends Action
             
             // 加载csv数据
             $csv = $this->_file->getFileFromGridFS($key);
+            
+            // 判断该文件是不是压缩文件,如果是压缩文件解压处理，注意只能解压压缩包根目录下的文件
+            if ($this->isZip($csv)) {
+                $tmpZip = tempnam(sys_get_temp_dir(), 'tmpzip_');
+                file_put_contents($tmpZip, $csv);
+                $unzipList = unzip($tmpZip, array(
+                    'csv'
+                ));
+                if (empty($unzipList)) {
+                    throw new Exception("加压文件列表为空，未发现有效的csv文件");
+                }
+                $csv = file_get_contents($unzipList[0]);
+                unlink($unzipList[0]);
+                unlink($tmpZip);
+            }
+            
+            // 删除过期的临时缓存文件
             $this->_file->removeFileFromGridFS($key);
             
             if (empty($csv)) {
@@ -271,6 +290,8 @@ class DataController extends Action
             }
             
             if (count($titles) == 0) {
+                var_dump($titles);
+                var_dump($firstRow);
                 echo '无匹配的标题或者标题字段，请检查导入数据的格式是否正确';
                 $job->sendFail();
                 return false;
@@ -351,6 +372,10 @@ class DataController extends Action
                 ));
                 $zip->addFile($filename, IDATABASE_COLLECTIONS . '.bson');
                 
+                // 添加集合列表映射关系说明
+                $filename = $this->projectMap2Excel($_id);
+                $zip->addFile($filename, '项目集合列表.xlsx');
+                
                 // 添加结构数据
                 $collection_ids = array();
                 $cursor = $this->_collection->find(array(
@@ -381,6 +406,10 @@ class DataController extends Action
                     foreach ($collection_ids as $collection_id) {
                         $filename = $this->collection2bson(iCollectionName($collection_id), array());
                         $zip->addFile($filename, iCollectionName($collection_id) . '.bson');
+                        
+                        // 添加文档结构说明
+                        $filename = $this->collectionStructure2Excel($collection_id);
+                        $zip->addFile($filename, iCollectionName($collection_id) . '文档结构说明.xlsx');
                     }
                 }
             }
@@ -404,12 +433,6 @@ class DataController extends Action
         return $this->response;
     }
 
-    /**
-     * 导出整个项目为相应的bson文件并制成压缩包提供下载
-     *
-     * @return boolean false
-     */
-    
     /**
      * 导出某个集合为bson文件
      *
@@ -453,12 +476,56 @@ class DataController extends Action
         }
         return $this->response;
     }
-    
+
     /**
-     * 
+     * 清空数据
      */
-    public function exportStatisticAction() {
+    public function dropDatasAction()
+    {
+        $this->_worker->addFunction("dropDatas", function (\GearmanJob $job)
+        {
+            $mongoBin = '/home/mongodb/bin/';
+            $host = '10.0.0.31';
+            $port = '57017';
+            $dbName = 'ICCv1';
+            $backupDbName = 'backup';
+            $out = sys_get_temp_dir() . '/';
+            
+            $job->handle();
+            $workload = $job->workload();
+            $params = unserialize($workload);
+            $collection_id = $params['collection_id'];
+            $this->getSchema($collection_id); // 获取集合的数据结构
+            $this->_data->setCollection(iCollectionName($collection_id));
+            
+            // 导出数据为bson
+            $exportCmd = $mongoBin . "mongodump --host {$host} --port {$port} -d $dbName -c idatabase_collection_{$collection_id} -o {$out}";
+            $fp = popen($exportCmd, 'r');
+            pclose($fp);
+            
+            // 将bson导入到备份数据库
+            $bson = $out . $dbName . '/idatabase_collection_' . $collection_id . '.bson';
+            $backupCollection = 'bak_' . date("YmdHis") . '_' . $collection_id;
+            $restoreCmd = $mongoBin . "mongorestore --host {$host} --port {$port} -d {$backupDbName} -c {$backupCollection} {$bson}";
+            $fp = popen($restoreCmd, 'r');
+            pclose($fp);
+            
+            // 删除导出的bson文件
+            unlink($bson);
+            
+            // drop集合数据库
+            $this->_data->physicalDrop();
+            
+            $job->sendComplete('complete');
+            return true;
+        });
         
+        while ($this->_worker->work()) {
+        	if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
+        		echo "return_code: " . $this->_worker->returnCode() . "\n";
+        	}
+        }
+        return $this->response;
     }
 
     /**
@@ -489,6 +556,73 @@ class DataController extends Action
             }
             return $bson;
         }
+    }
+
+    /**
+     * 将项目关系表，导出到指定的文件中
+     *
+     * @param string $project_id            
+     * @return string
+     */
+    private function projectMap2Excel($project_id)
+    {
+        $dataModel = $this->collection(IDATABASE_COLLECTIONS);
+        $cursor = $dataModel->find(array(
+            'project_id' => $project_id
+        ));
+        $map = array();
+        while ($cursor->hasNext()) {
+            $row = $cursor->getNext();
+            $map[] = array(
+                iCollectionName($row['_id']->__toString()),
+                $row['name'],
+                $row['desc']
+            );
+        }
+        
+        $tmp = tempnam(sys_get_temp_dir(), 'excel_');
+        $datas = array();
+        $datas['title'] = array(
+            '物理集合',
+            '集合名',
+            '集合描述'
+        );
+        $datas['result'] = $map;
+        arrayToExcel($datas, '项目集合对应关系结构', $tmp);
+        return $tmp;
+    }
+
+    /**
+     * 集合数据结构到excel表格
+     *
+     * @return string
+     */
+    private function collectionStructure2Excel($collection_id)
+    {
+        $dataModel = $this->collection(IDATABASE_STRUCTURES);
+        $cursor = $dataModel->find(array(
+            'collection_id' => $collection_id
+        ));
+        $map = array();
+        while ($cursor->hasNext()) {
+            $row = $cursor->getNext();
+            $map[] = array(
+                $row['field'],
+                $row['label'],
+                $row['type']
+            );
+        }
+        
+        $tmp = tempnam(sys_get_temp_dir(), 'excel_');
+        $datas = array();
+        $datas['title'] = array(
+            '字段名',
+            '字段说明',
+            '字段类型'
+        );
+        $datas['result'] = $map;
+        arrayToExcel($datas, iCollectionName($collection_id), $tmp);
+        return $tmp;
     }
 
     /**
@@ -575,5 +709,21 @@ class DataController extends Action
         }
         
         return $collectionInfo['_id']->__toString();
+    }
+
+    /**
+     * 检测指定内容是否为zip压缩文件
+     *
+     * @param string $content            
+     * @return boolean
+     */
+    private function isZip($content)
+    {
+        $finfo = new \finfo(FILEINFO_MIME);
+        $mime = $finfo->buffer($content);
+        if (strpos($mime, 'zip') !== false) {
+            return true;
+        }
+        return false;
     }
 }
