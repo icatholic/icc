@@ -589,6 +589,29 @@ Ext.define('icc.controller.idatabase.Collection', {
 				}, me);
 			}
 		};
+		
+		listeners[controllerName + 'Grid button[action=createIndex]'] = {
+				click: function(button) {
+					Ext.Msg.confirm('提示信息', '请确认要现在建立索引?', function(btn) {
+						if (btn == 'yes') {
+							var grid = button.up('gridpanel');
+							Ext.Ajax.request({
+								url: '/idatabase/collection/create-index',
+								params: {
+									__PROJECT_ID__: grid.__PROJECT_ID__,
+									__PLUGIN_ID__: grid.__PLUGIN_ID__
+								},
+								scope: me,
+								success: function(response) {
+									var text = Ext.JSON.decode(response.responseText, true);
+									Ext.Msg.alert('提示信息', text.msg);
+								}
+							});
+						}
+					}, me);
+				}
+			};
+		
 
 		listeners[controllerName + 'Grid button[action=copy]'] = {
 			click: function(button) {

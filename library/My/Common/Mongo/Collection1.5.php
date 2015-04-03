@@ -256,23 +256,25 @@ class MongoCollection extends \MongoCollection
      */
     public function autoCreateSystemIndex()
     {
-        static::createIndex(array(
-            '__REMOVED__' => 1
-        ), array(
-            'background' => true
-        ));
-        
-        static::createIndex(array(
-            '__CREATE_TIME__' => - 1
-        ), array(
-            'background' => true
-        ));
-        
-        static::createIndex(array(
-            '__MODIFY_TIME__' => - 1
-        ), array(
-            'background' => true
-        ));
+        if (rand(0, 100) === 1) {
+            static::createIndex(array(
+                '__REMOVED__' => 1
+            ), array(
+                'background' => true
+            ));
+            
+            static::createIndex(array(
+                '__CREATE_TIME__' => - 1
+            ), array(
+                'background' => true
+            ));
+            
+            static::createIndex(array(
+                '__MODIFY_TIME__' => - 1
+            ), array(
+                'background' => true
+            ));
+        }
     }
 
     /**
@@ -391,15 +393,21 @@ class MongoCollection extends \MongoCollection
             $this->_collectionOptions = array_merge($defaultCollectionOptions, $this->_collectionOptions);
         }
         
-        $this->_db->createCollection($this->_collection, $this->_collectionOptions);
-        $rst = $this->_admin->command(array(
-            'shardCollection' => $this->_database . '.' . $this->_collection,
-            'key' => array(
-                '_id' => 1
-            )
-        ));
-        if ($rst['ok'] == 1) {
-            return true;
+        if (rand(0, 100) === 1) {
+            $checkCollection = $this->_db->selectCollection($this->_collection);
+            $check = $checkCollection->validate(false);
+            if (empty($check['ok'])) {
+                $this->_db->createCollection($this->_collection, $this->_collectionOptions);
+                $rst = $this->_admin->command(array(
+                    'shardCollection' => $this->_database . '.' . $this->_collection,
+                    'key' => array(
+                        '_id' => 1
+                    )
+                ));
+                if ($rst['ok'] == 1) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -601,6 +609,7 @@ class MongoCollection extends \MongoCollection
     {
         $default = array();
         $default['background'] = true;
+        $default['w'] = 0;
         // $default['expireAfterSeconds'] = 3600; // 请充分了解后开启此参数，慎用
         $options = ($options === NULL) ? $default : array_merge($default, $options);
         return parent::createIndex($key_keys, $options);
@@ -616,6 +625,7 @@ class MongoCollection extends \MongoCollection
     {
         $default = array();
         $default['background'] = true;
+        $default['w'] = 0;
         // $default['expireAfterSeconds'] = 3600; // 请充分了解后开启此参数，慎用
         $options = ($options === NULL) ? $default : array_merge($default, $options);
         return parent::createIndex($key_keys, $options);
@@ -1430,6 +1440,7 @@ class MongoCollection extends \MongoCollection
      */
     public function __destruct()
     {
-        $this->debug();
+        if (! empty($_GET['__DEBUG__']))
+            $this->debug();
     }
 }

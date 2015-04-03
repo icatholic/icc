@@ -107,7 +107,7 @@ class CollectionController extends Action
             $query['plugin_id'] = $plugin_id;
             
             // 如果加载插件，则自动检测是否添加索引
-            $this->_plugin_index->autoCreateIndexes($this->_project_id, $plugin_id);
+            //$this->_plugin_index->autoCreateIndexes($this->_project_id, $plugin_id);
         }
         
         if ($search != '') {
@@ -152,6 +152,16 @@ class CollectionController extends Action
             $datas[] = $row;
         }
         return $this->rst($datas, $cursor->count(), true);
+    }
+
+    /**
+     * 增加创建索引的操作增加性能，当集合很大时，可能导致创建失败，建议在集合创建之处就进行索引设置。
+     */
+    public function createIndexAction()
+    {
+        $plugin_id = $this->_plugin_id;
+        $this->_plugin_index->autoCreateIndexes($this->_project_id, $plugin_id);
+        return $this->msg(true, '创建索引成功');
     }
 
     /**
