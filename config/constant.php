@@ -3,11 +3,15 @@
  * 定义全局的常量
  */
 defined('ROOT_PATH') || define('ROOT_PATH', dirname(__DIR__));
+
+//切换到本地环境，请修改下列三个参数，开始
 defined('CACHE_ADAPTER') || define('CACHE_ADAPTER', 'fileCache'); // [fileCache|memcachedCache|redisCache]
 defined('APPLICATION_ENV') || define('APPLICATION_ENV', 'development'); // [development|production]
+defined('DOMAIN') || define('DOMAIN', 'http://localhost');
+//切换到本地环境，请修改以上三个参数，结束
+
 defined('DEFAULT_DATABASE') || define('DEFAULT_DATABASE', 'ICCv1');
 defined('DEFAULT_CLUSTER') || define('DEFAULT_CLUSTER', 'default');
-defined('DOMAIN') || define('DOMAIN', 'http://localhost');
 
 /**
  * ICC指定数据库列表

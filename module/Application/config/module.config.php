@@ -218,12 +218,12 @@ return array(
     'console' => array(
         'router' => array(
             'routes' => array(
-                'notify_keys' => array(
+                'optimize' => array(
                     'options' => array(
-                        'route' => 'notify keys',
+                        'route' => 'optimize <action>',
                         'defaults' => array(
-                            'controller' => 'Application\Controller\Notify',
-                            'action' => 'keys'
+                            'controller' => 'Application\Controller\Console',
+                            'action' => 'index'
                         )
                     )
                 )
