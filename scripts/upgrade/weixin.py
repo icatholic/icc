@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 升级MUFE的示例脚本
-python weixin.py -s 52bcdea2489619b16833ab27 -t 550785ca489619342f8b465c -w 52bce00e4896198d68389e53 -d http://131224fg0402.umaman.com -i On
+python /home/webs/icc/scripts/upgrade/weixin.py -s 52bcdea2489619b16833ab27 -t 550785ca489619342f8b465c -w 52bce00e4896198d68389e53 -d http://131224fg0402.umaman.com -i On
 -s --source设定来源项目
 -t --target设定目标项目
 -w --weixin 参数设定UMA系统中的微信项目编号
@@ -276,9 +276,12 @@ logging.info('开始升级微信用户数据')
 query_user = {'project.projectId':options.weixin_pid}
 if incremental:
     #找到最后记录的时间
-    last_user_info = icc['idatabase_collection_%s'%(user_collection_id,)].find().sort('__CREATE_TIME__',DESCENDING).limit(1)[0]
-    logging.info('最后插入用户时间为：%s'%(last_user_info['__CREATE_TIME__'],))
-    query_user['createTime'] = {'$gt':last_user_info['__CREATE_TIME__']}
+    try:
+        last_user_info = icc['idatabase_collection_%s'%(user_collection_id,)].find().sort('__CREATE_TIME__',DESCENDING).limit(1)[0]
+        logging.info('最后插入用户时间为：%s'%(last_user_info['__CREATE_TIME__'],))
+        query_user['createTime'] = {'$gt':last_user_info['__CREATE_TIME__']}
+    except Exception:
+        pass
 else:
     icc['idatabase_collection_%s'%(user_collection_id,)].drop()
     logging.info('写入集合为：idatabase_collection_%s drop完成'%(user_collection_id,))
@@ -302,9 +305,12 @@ for user_info in uma['weixin.user'].find(query_user):
 logging.info('开始升级微信用户原始记录')
 query_source = {'project_id':options.weixin_pid}
 if incremental:
-    last_source_info = icc['idatabase_collection_%s'%(source_collection_id,)].find().sort('__CREATE_TIME__',DESCENDING).limit(1)[0]
-    logging.info('最后插入用户时间为：%s'%(last_source_info['__CREATE_TIME__'],))
-    query_source['createTime'] = {'$gt':last_source_info['__CREATE_TIME__']}
+    try:
+        last_source_info = icc['idatabase_collection_%s'%(source_collection_id,)].find().sort('__CREATE_TIME__',DESCENDING).limit(1)[0]
+        logging.info('最后插入用户时间为：%s'%(last_source_info['__CREATE_TIME__'],))
+        query_source['createTime'] = {'$gt':last_source_info['__CREATE_TIME__']}
+    except Exception:
+        pass
 else:    
     icc['idatabase_collection_%s'%(source_collection_id,)].drop()
 #for record_info in uma['weixin'].find({'project_id':'52c4d890499619204a999846'}):

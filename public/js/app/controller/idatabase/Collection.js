@@ -446,6 +446,7 @@ Ext.define('icc.controller.idatabase.Collection', {
 					var win = Ext.widget('idatabaseImportCsv', {
 						__PROJECT_ID__: grid.__PROJECT_ID__,
 						__COLLECTION_ID__: record.get('_id'),
+						__COLLECTION_NAME__: record.get('name'),
 						width: 480,
 						height: 320
 					});
@@ -709,6 +710,9 @@ Ext.define('icc.controller.idatabase.Collection', {
 		var isRowExpander = Ext.isBoolean(record.get('isRowExpander')) ? record.get('isRowExpander') : false;
 		var rowBodyTpl = record.get('rowExpanderTpl');
 		var linkagedElementInitValueFrom = {};
+		
+		var submitConfirm = Ext.isBoolean(record.get('submitConfirm')) ? record.get('submitConfirm') : false;
+		var submitConfirmInfo = record.get('submitConfirmInfo');
 
 		var me = this;
 		var panel = tabpanel.getComponent(__COLLECTION_ID__);
@@ -1018,6 +1022,8 @@ Ext.define('icc.controller.idatabase.Collection', {
 							field.type = 'boolean';
 							field.convert = function(value, record) {
 								if (Ext.isBoolean(value)) {
+									return value;
+								} else if (Ext.isString(value) && Ext.isEmpty(value)) {
 									return value;
 								} else if (Ext.isString(value)) {
 									return value === 'true' || value === '√' ? true : false;
@@ -1462,7 +1468,9 @@ Ext.define('icc.controller.idatabase.Collection', {
 					addOrEditFields: addOrEditFields,
 					linkagedElementInitValueFrom: linkagedElementInitValueFrom,
 					isRowExpander: isRowExpander,
-					rowBodyTpl: rowBodyTpl
+					rowBodyTpl: rowBodyTpl,
+					submitConfirm : submitConfirm,
+					submitConfirmInfo: submitConfirmInfo
 				});
 
 				panel.on({

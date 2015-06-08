@@ -13,10 +13,6 @@ use Zend\View\Model\JsonModel;
 use Zend\Json\Json;
 use My\Common\Controller\Action;
 use My\Common\MongoCollection;
-use Psr\Log\AbstractLogger;
-use Aws\CloudFront\Exception\Exception;
-use Zend\Serializer\Serializer;
-use MyProject\Proxies\__CG__\OtherProject\Proxies\__CG__\stdClass;
 
 class DataController extends Action
 {
@@ -234,7 +230,10 @@ class DataController extends Action
         $this->_collection_name = 'idatabase_collection_' . $this->_collection_id;
         
         // 进行访问权限验证
-        if (! $_SESSION['acl']['admin']) {
+        if (empty($_SESSION['acl']['admin'])) {
+            if (empty($_SESSION['acl']['collection'])) {
+                return $this->deny();
+            }
             if (! in_array($this->_collection_id, $_SESSION['acl']['collection'], true)) {
                 return $this->deny();
             }
@@ -551,7 +550,7 @@ class DataController extends Action
                         'method' => 'replace'
                     );
                     fb($params, 'LOG');
-                    $jobHandle = $this->_gmClient->doBackground('mapreduce_test', serialize($params), $statistic_id);
+                    $jobHandle = $this->_gmClient->doBackground('mapreduce', serialize($params), $statistic_id);
                     $stat = $this->_gmClient->jobStatus($jobHandle);
                     if (isset($stat[0]) && $stat[0]) {
                         $this->cache()->save(true, $statistic_id, 60);
@@ -577,7 +576,7 @@ class DataController extends Action
                 }
             }
             
-            if (! $rst instanceof \MongoCollection) {
+            if (! $rst instanceof MongoCollection) {
                 return $this->deny('$rst不是MongoCollection的子类实例');
                 throw new \Exception('$rst不是MongoCollection的子类实例');
             }
@@ -716,7 +715,9 @@ class DataController extends Action
                     $datas[$key] = $value;
                 }
             }
-            $this->_rshData[$detail['collectionField']] = $datas;
+            
+            if (! empty($detail['collectionField']) && is_string($detail['collectionField']))
+                $this->_rshData[$detail['collectionField']] = $datas;
         }
     }
 
@@ -924,7 +925,7 @@ class DataController extends Action
             }
             
             try {
-                $datas = $this->dealData($datas);
+                $datas = $this->dealData($datas, 'insert');
             } catch (\Zend\Json\Exception\RuntimeException $e) {
                 return $this->msg(false, $e->getMessage() . $this->_jsonExceptMessage);
             } catch (\Exception $e) {
@@ -1089,7 +1090,7 @@ class DataController extends Action
         }
         
         try {
-            $datas = $this->dealData($datas);
+            $datas = $this->dealData($datas, 'update', $_id);
             // 修正更新数据时候出现mods错误的问题
             foreach ($datas as $key => $value) {
                 if (strpos($key, '.') !== false) {
@@ -1124,6 +1125,9 @@ class DataController extends Action
             }
             
             unset($datas['_id']);
+            
+            fb($criteria, 'LOG');
+            fb($datas, 'LOG');
             $this->_data->update($criteria, array(
                 '$set' => $datas
             ));
@@ -1172,7 +1176,7 @@ class DataController extends Action
                     $datas = array_intersect_key($row, $this->_schema['post']);
                     if (! empty($datas)) {
                         try {
-                            $datas = $this->dealData($datas);
+                            $datas = $this->dealData($datas, 'save', $_id);
                             // 修正更新数据时候出现mods错误的问题
                             foreach ($datas as $key => $value) {
                                 if (strpos($key, '.') !== false) {
@@ -1381,12 +1385,23 @@ class DataController extends Action
                     if (empty($rshCollectionKeyField))
                         throw new \Exception('字段' . $row['field'] . '的“关联集合”的键值属性尚未设定，请检查表表结构设定');
                     
-                    $this->_rshCollection[$row['rshCollection']] = array(
-                        'collectionField' => $row['field'],
-                        'rshCollectionKeyField' => $rshCollectionKeyField,
-                        'rshCollectionValueField' => $rshCollectionValueField,
-                        'rshCollectionValueFieldType' => $rshCollectionValueFieldType
-                    );
+                    if (isset($this->_rshCollection[$row['rshCollection']])) {
+                        $collectionField = $this->_rshCollection[$row['rshCollection']]['collectionField'];
+                        if (is_string($collectionField)) {
+                            $collectionField = array(
+                                $collectionField
+                            );
+                        }
+                        array_push($collectionField, $row['field']);
+                        $this->_rshCollection[$row['rshCollection']]['collectionField'] = $collectionField;
+                    } else {
+                        $this->_rshCollection[$row['rshCollection']] = array(
+                            'collectionField' => $row['field'],
+                            'rshCollectionKeyField' => $rshCollectionKeyField,
+                            'rshCollectionValueField' => $rshCollectionValueField,
+                            'rshCollectionValueFieldType' => $rshCollectionValueFieldType
+                        );
+                    }
                 } else {
                     throw new \Exception('字段' . $row['field'] . '的“关联集合”的键值属性尚未设定，请检查表表结构设定');
                 }
@@ -1436,10 +1451,10 @@ class DataController extends Action
      * @param array $datas            
      * @return array
      */
-    private function dealData($datas)
+    private function dealData($datas, $action = null, $_id = null)
     {
         $validPostData = array_intersect_key($datas, $this->_schema['post']);
-        array_walk($validPostData, function (&$value, $key)
+        array_walk($validPostData, function (&$value, $key) use($action, $_id)
         {
             $filter = isset($this->_schema['post'][$key]['filter']) ? $this->_schema['post'][$key]['filter'] : '';
             $type = $this->_schema['post'][$key]['type'];
@@ -1460,6 +1475,29 @@ class DataController extends Action
                     $filterFailureReason = $this->getFilterDesc($filter);
                     throw new \Exception("属性:<font color=red>{$label}</font>({$key})的输入不符合'<font color=red>{$filterFailureReason}</font>'要求，请重新输入");
                 }
+            }
+            
+            // 增加唯一性检测，仅针对ICC后台人工录入进行唯一性检测，且有可能在高并发操作下不能确保唯一性。
+            $checkUnique = isset($this->_schema['post'][$key]['unique']) ? $this->_schema['post'][$key]['unique'] : '';
+            if (! empty($checkUnique)) {
+                $query = array();
+                switch ($action) {
+                    case 'insert':
+                        $query[$key] = $value;
+                        break;
+                    case 'update':
+                    case 'save':
+                        $query['_id'] = array(
+                            '$ne' => $_id instanceof \MongoId ? $_id : myMongoId($_id)
+                        );
+                        $query[$key] = $value;
+                        break;
+                }
+                if (! empty($query))
+                    if ($this->_data->findOne($query) !== null) {
+                        $label = $this->_schema['post'][$key]['label'];
+                        throw new \Exception("属性:<font color=red>{$label}</font>({$key})的输入不符合'<font color=red>唯一性检查</font>'要求，请重新输入");
+                    }
             }
             
             if ($type == 'arrayfield' && isset($this->_rshCollection[$rshCollection])) {
@@ -1862,9 +1900,10 @@ class DataController extends Action
 
     /**
      * 采用异步的方式发送电子邮件，避免因为繁重的邮件发送拖慢发送速度
-     * @param string $toEmail
-     * @param string $subject
-     * @param string $content
+     *
+     * @param string $toEmail            
+     * @param string $subject            
+     * @param string $content            
      * @return boolean
      */
     private function sendEmailGearMan($toEmail, $subject, $content)

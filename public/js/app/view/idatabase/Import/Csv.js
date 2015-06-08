@@ -25,6 +25,13 @@ Ext.define('icc.view.idatabase.Import.Csv', {
                     allowBlank: false,
                     value: this.__COLLECTION_ID__
                 }, {
+                    xtype: 'textfield',
+                    name: '__COLLECTION_NAME__',
+                    fieldLabel: '集合名称',
+                    allowBlank: false,
+                    readOnly : true,
+                    value: this.__COLLECTION_NAME__
+                }, {
                     xtype: 'filefield',
                     name: 'import',
                     fieldLabel: '导入文件(*.csv)',

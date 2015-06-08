@@ -36,7 +36,9 @@ Ext.define('icc.view.idatabase.Data.Main', {
 					addOrEditFields : this.addOrEditFields,
 					linkagedElementInitValueFrom : this.linkagedElementInitValueFrom,
 					selType : 'checkboxmodel',
-					plugins : plugins
+					plugins : plugins,
+					submitConfirm : this.submitConfirm,
+					submitConfirmInfo: this.submitConfirmInfo
 				} ]
 			});
 		} else {
@@ -51,7 +53,9 @@ Ext.define('icc.view.idatabase.Data.Main', {
 					addOrEditFields : this.addOrEditFields,
 					linkagedElementInitValueFrom : this.linkagedElementInitValueFrom,
 					selType : 'checkboxmodel',
-					plugins : plugins
+					plugins : plugins,
+					submitConfirm : this.submitConfirm,
+					submitConfirmInfo: this.submitConfirmInfo
 				}, {
 					xtype : 'idatabaseDataSearch',
 					__PROJECT_ID__ : this.__PROJECT_ID__,

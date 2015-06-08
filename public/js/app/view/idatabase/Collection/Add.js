@@ -173,6 +173,35 @@ Ext.define('icc.view.idatabase.Collection.Add', {
 									]
 								}, {
 									xtype: 'fieldset',
+									title: '提交确认功能（选填）',
+									collapsed: true,
+									collapsible: true,
+									items: [{
+											xtype: 'radiogroup',
+											fieldLabel: '是否开启提交确认功能',
+											defaultType: 'radiofield',
+											layout: 'hbox',
+											items: [{
+													boxLabel: '是',
+													name: 'submitConfirm',
+													inputValue: true
+												}, {
+													boxLabel: '否',
+													name: 'submitConfirm',
+													inputValue: false,
+													checked: true
+												}
+											]
+										}, {
+											xtype: 'textareafield',
+											name: 'submitConfirmInfo',
+											fieldLabel: '设定提交确认弹窗信息',
+											allowBlank: true ,
+											value : '请您确认是否继续执行本操作?'
+										}
+									]
+								}, {
+									xtype: 'fieldset',
 									title: '插件设定（选填）',
 									collapsed: true,
 									collapsible: true,

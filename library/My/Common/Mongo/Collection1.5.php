@@ -382,6 +382,7 @@ class MongoCollection extends \MongoCollection
      */
     private function shardingCollection()
     {
+        return true;
         $defaultCollectionOptions = array(
             'capped' => false, // 是否开启固定集合
             'size' => pow(1024, 3), // 如果简单开启capped=>true,单个集合的最大尺寸为2G
@@ -401,7 +402,7 @@ class MongoCollection extends \MongoCollection
                 $rst = $this->_admin->command(array(
                     'shardCollection' => $this->_database . '.' . $this->_collection,
                     'key' => array(
-                        '_id' => 1
+                        '_id' => 'hashed'
                     )
                 ));
                 if ($rst['ok'] == 1) {
@@ -621,14 +622,37 @@ class MongoCollection extends \MongoCollection
      * @param array $key_keys            
      * @param array $options            
      */
-    public function createIndex($key_keys, array $options = NULL)
+    public function createIndex($keys, array $options = NULL)
     {
+        if ($this->checkIndexExist($keys)) {
+            return true;
+        }
+        
         $default = array();
         $default['background'] = true;
         $default['w'] = 0;
         // $default['expireAfterSeconds'] = 3600; // 请充分了解后开启此参数，慎用
         $options = ($options === NULL) ? $default : array_merge($default, $options);
-        return parent::createIndex($key_keys, $options);
+        return parent::createIndex($keys, $options);
+    }
+
+    /**
+     * 检测集合的某个索引是否存在
+     * 
+     * @param array $keys            
+     * @return boolean
+     */
+    public function checkIndexExist($keys)
+    {
+        $indexs = parent::getIndexInfo();
+        if (! empty($indexs) && is_array($indexs)) {
+            foreach ($indexs as $index) {
+                if ($index['key'] == $keys) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -683,10 +707,10 @@ class MongoCollection extends \MongoCollection
             $cursor->limit($limit);
         }
         
-        if ($cursor->count() == 0)
-            return array();
+        if ($cursor instanceof \Traversable)
+            return iterator_to_array($cursor, false);
         
-        return iterator_to_array($cursor, false);
+        return array();
     }
 
     /**
@@ -1096,7 +1120,19 @@ class MongoCollection extends \MongoCollection
             $locks = new self($this->_configInstance, 'locks', DB_MAPREDUCE, $this->_cluster);
             $locks->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
             
-            $checkLock = function ($out) use($locks)
+            $releaseLock = function ($out, $rst = null) use($locks)
+            {
+                return $locks->update(array(
+                    'out' => $out
+                ), array(
+                    '$set' => array(
+                        'isRunning' => false,
+                        'rst' => is_string($rst) ? $rst : Json::encode($rst)
+                    )
+                ));
+            };
+            
+            $checkLock = function ($out) use($locks,$releaseLock)
             {
                 $check = $locks->findOne(array(
                     'out' => $out
@@ -1134,18 +1170,6 @@ class MongoCollection extends \MongoCollection
                     ));
                     return false;
                 }
-            };
-            
-            $releaseLock = function ($out, $rst = null) use($locks)
-            {
-                return $locks->update(array(
-                    'out' => $out
-                ), array(
-                    '$set' => array(
-                        'isRunning' => false,
-                        'rst' => is_string($rst) ? $rst : Json::encode($rst)
-                    )
-                ));
             };
             
             $failure = function ($code, $msg)
@@ -1286,7 +1310,12 @@ class MongoCollection extends \MongoCollection
         if ($mime !== false)
             $metadata['mime'] = $mime;
         
-        $id = $this->_fs->storeUpload($fieldName, $metadata);
+        try {
+            $id = $this->_fs->storeUpload($fieldName, $metadata);
+        } catch (\MongoGridFSException $e) {
+            fb(exceptionMsg($e), 'LOG');
+            throw new \Exception($e->getMessage());
+        }
         $gridfsFile = $this->_fs->get($id);
         if (! ($gridfsFile instanceof \MongoGridFSFile)) {
             fb($gridfsFile, 'LOG');
@@ -1315,8 +1344,12 @@ class MongoCollection extends \MongoCollection
         $mime = $finfo->buffer($bytes);
         if ($mime !== false)
             $metadata['mime'] = $mime;
-        
-        $id = $this->_fs->storeBytes($bytes, $metadata);
+        try {
+            $id = $this->_fs->storeBytes($bytes, $metadata);
+        } catch (\MongoGridFSException $e) {
+            fb(exceptionMsg($e), 'LOG');
+            throw new \Exception($e->getMessage());
+        }
         $gridfsFile = $this->_fs->get($id);
         return $gridfsFile->file;
     }

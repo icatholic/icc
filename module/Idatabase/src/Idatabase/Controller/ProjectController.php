@@ -11,6 +11,7 @@ namespace Idatabase\Controller;
 use Zend\View\Model\JsonModel;
 use Zend\Json\Json;
 use My\Common\Controller\Action;
+use My\Common\MongoCollection;
 
 class ProjectController extends Action
 {
@@ -53,7 +54,8 @@ class ProjectController extends Action
     {
         $query = array();
         $isSystem = filter_var($this->params()->fromQuery('isSystem', ''), FILTER_VALIDATE_BOOLEAN);
-        $search = $this->params()->fromQuery('query', $this->params()->fromQuery('search',null));
+        $search = $this->params()->fromQuery('query', $this->params()
+            ->fromQuery('search', null));
         $start = intval($this->params()->fromQuery('start', 0));
         $limit = intval($this->params()->fromQuery('limit', 10));
         
@@ -94,6 +96,7 @@ class ProjectController extends Action
         ));
         $cursor->skip($start);
         $cursor->limit($limit);
+        
         return $this->rst(iterator_to_array($cursor, false), $total, true);
     }
 
@@ -137,7 +140,28 @@ class ProjectController extends Action
         $project['sn'] = $sn;
         $project['isSystem'] = isset($_SESSION['account']['role']) && $_SESSION['account']['role'] === 'root' ? $isSystem : false;
         $project['desc'] = $desc;
-        $this->_project->insert($project);
+        $this->_project->insertRef($project);
+        
+        // 为添加项目的用户，添加项目的权限
+        if (isset($_SESSION['account']['role']) && $_SESSION['account']['role'] !== 'root') {
+            // 添加集合权限给到该用户
+            if (isset($_SESSION['account']['username'])) {
+                if ($project['_id'] instanceof \MongoId) {
+                    $project_id = $project['_id']->__toString();
+                    if ($this->_acl->findOne(array(
+                        'username' => $_SESSION['account']['username'],
+                        'project_id' => $project_id
+                    )) === null) {
+                        $this->_acl->insert(array(
+                            'username' => $_SESSION['account']['username'],
+                            'project_id' => $project_id,
+                            'collection_ids' => array()
+                        ));
+                        $this->getAcl();
+                    }
+                }
+            }
+        }
         
         return $this->msg(true, '添加信息成功');
     }

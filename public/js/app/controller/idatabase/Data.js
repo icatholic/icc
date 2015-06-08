@@ -50,19 +50,38 @@ Ext.define('icc.controller.idatabase.Data', {
 				var store = grid.store;
 				var form = button.up('form').getForm();
 				if (form.isValid()) {
-					form.submit({
-						submitEmptyText : false,
-						waitTitle: '系统提示',
-						waitMsg: '系统处理中，请稍后……',
-						success: function(form, action) {
-							Ext.Msg.alert('成功提示', action.result.msg);
-							form.reset();
-							store.load();
-						},
-						failure: function(form, action) {
-							Ext.Msg.alert('失败提示', action.result.msg);
+					var doSubmit = function() {
+						form.submit({
+							submitEmptyText : false,
+							waitTitle: '系统提示',
+							waitMsg: '系统处理中，请稍后……',
+							success: function(form, action) {
+								Ext.Msg.alert('成功提示', action.result.msg);
+								form.reset();
+								store.load();
+							},
+							failure: function(form, action) {
+								Ext.Msg.alert('失败提示', action.result.msg);
+							}
+						});
+					}
+					
+					if(Ext.isBoolean(grid.submitConfirm)) {
+						if(grid.submitConfirm) {
+							Ext.Msg.confirm('高风险操作提示', grid.submitConfirmInfo, function(btn) {
+								if (btn == 'yes') {
+									doSubmit();
+									return false;
+								}
+							});
+						} else {
+							doSubmit();
 						}
-					});
+					} else {
+						doSubmit();
+					}
+					
+
 				} else {
 					Ext.Msg.alert('失败提示', '表单验证失败，请确认你填写的表单符合要求');
 				}
@@ -75,26 +94,42 @@ Ext.define('icc.controller.idatabase.Data', {
 				var store = grid.store;
 				var form = button.up('form').getForm();
 				if (form.isValid()) {
-
 					var htmleditors = button.up('form').query('htmleditor');
 					if (Ext.isArray(htmleditors) && htmleditors.length > 0) {
 						Ext.Array.forEach(htmleditors, function(item, index, allitems) {
 							item.toggleSourceEdit(false);
 						});
 					}
-
-					form.submit({
-						submitEmptyText : false,
-						waitTitle: '系统提示',
-						waitMsg: '系统处理中，请稍后……',
-						success: function(form, action) {
-							Ext.Msg.alert('成功提示', action.result.msg);
-							store.load();
-						},
-						failure: function(form, action) {
-							Ext.Msg.alert('失败提示', action.result.msg);
+					
+					var doSubmit = function() {
+						form.submit({
+							submitEmptyText : false,
+							waitTitle: '系统提示',
+							waitMsg: '系统处理中，请稍后……',
+							success: function(form, action) {
+								Ext.Msg.alert('成功提示', action.result.msg);
+								store.load();
+							},
+							failure: function(form, action) {
+								Ext.Msg.alert('失败提示', action.result.msg);
+							}
+						});
+					};
+					
+					if(Ext.isBoolean(grid.submitConfirm)) {
+						if(grid.submitConfirm) {
+							Ext.Msg.confirm('高风险操作提示', grid.submitConfirmInfo, function(btn) {
+								if (btn == 'yes') {
+									doSubmit();
+									return true;
+								}
+							});
+						} else {
+							doSubmit();
 						}
-					});
+					} else {
+						doSubmit();
+					}
 				}
 			}
 		};
@@ -155,11 +190,13 @@ Ext.define('icc.controller.idatabase.Data', {
 							return true;
 						} else if (item.xtype == 'boolfield') {
 							var fieldValue = selections[0].get(field);
-							fieldValue = Ext.isBoolean(fieldValue) ? fieldValue : false;
-							if (fieldValue === true) {
-								form.findField(field).setValue(true);
-							} else {
-								form.findField(field).next().setValue(true);
+							if(Ext.isBoolean(fieldValue)) {
+								fieldValue = Ext.isBoolean(fieldValue) ? fieldValue : false;
+								if (fieldValue === true) {
+									form.findField(field).setValue(true);
+								} else {
+									form.findField(field).next().setValue(true);
+								}
 							}
 						} else if (item.xtype == 'boxselect') {
 							var boxSelect = form.findField(field);
@@ -230,25 +267,40 @@ Ext.define('icc.controller.idatabase.Data', {
 					record = records[i];
 					updateList.push(record.data);
 				}
-
-				Ext.Ajax.request({
-					url: me.actions.save,
-					params: {
-						updateInfos: Ext.encode(updateList),
-						__PROJECT_ID__: grid.__PROJECT_ID__,
-						__COLLECTION_ID__: grid.__COLLECTION_ID__,
-						__PLUGIN_ID__: grid.__PLUGIN_ID__
-					},
-					scope: me,
-					success: function(response) {
-						var text = response.responseText;
-						var json = Ext.decode(text);
-						Ext.Msg.alert('提示信息', json.msg);
-						if (json.success) {
-							store.load();
+				
+				var doSave = function() { 
+					Ext.Ajax.request({
+						url: me.actions.save,
+						params: {
+							updateInfos: Ext.encode(updateList),
+							__PROJECT_ID__: grid.__PROJECT_ID__,
+							__COLLECTION_ID__: grid.__COLLECTION_ID__,
+							__PLUGIN_ID__: grid.__PLUGIN_ID__
+						},
+						scope: me,
+						success: function(response) {
+							var text = response.responseText;
+							var json = Ext.decode(text);
+							Ext.Msg.alert('提示信息', json.msg);
+							if (json.success) {
+								store.load();
+							}
 						}
+					});
+				}
+				if(Ext.isBoolean(grid.submitConfirm)) {
+					if(grid.submitConfirm) {
+						Ext.Msg.confirm('高风险操作提示', grid.submitConfirmInfo, function(btn) {
+							if (btn == 'yes') {
+								doSave();
+							}
+						});
+					} else {
+						doSave();
 					}
-				});
+				} else {
+					doSave();
+				}
 				return true;
 			}
 		};
@@ -449,6 +501,13 @@ Ext.define('icc.controller.idatabase.Data', {
 
 				store.load(function(records, operation, success) {
 					if (success) {
+						if(Ext.Object.getKey(records, 'success')!=null && Ext.Object.getKey(records, 'success')==false) {
+							Ext.Msg.alert('提示信息', records.msg);
+							button.setDisabled(false);
+							return false;
+						}
+						
+						
 						if (records.length > 0) {
 							var win = Ext.widget('idatabaseStatisticChart', {
 								__PROJECT_ID__: grid.__PROJECT_ID__,

@@ -102,6 +102,21 @@ Ext.define('icc.view.idatabase.Structure.Edit', {
 			}]
 		}, {
 			xtype: 'radiogroup',
+			fieldLabel: '是否唯一',
+			defaultType: 'radiofield',
+			layout: 'hbox',
+			items: [{
+				boxLabel: '是',
+				name: 'unique',
+				inputValue: true
+			}, {
+				boxLabel: '否',
+				name: 'unique',
+				inputValue: false,
+				checked: true
+			}]
+		}, {
+			xtype: 'radiogroup',
 			fieldLabel: '作为导出字段',
 			defaultType: 'radiofield',
 			layout: 'hbox',

@@ -212,6 +212,19 @@ class AccessTokenHandler(tornado.web.RequestHandler):
                         new_params[k] = v.encode('utf-8')
                     elif isinstance(v,int):
                         new_params[k] = v
+                
+                try:       
+                    if 'openid' in new_params:
+                        del new_params['openid']
+                    if 'province' in new_params:
+                        del new_params['province']
+                    if 'city' in new_params:
+                        del new_params['city']
+                    if 'language' in new_params:
+                        del new_params['language']
+                except Exception,e:
+                    pass
+                
                 append = urllib.urlencode(new_params)
                 self.set_secure_cookie('__WEIXIN_OAUTH_INFO__',append,30)
             else:

@@ -18,9 +18,9 @@ class PluginIndex extends Mongo
     public function init()
     {
         try {
-            $this->ensureIndex(array(
-                'plugin_id' => 1
-            ));
+//             $this->ensureIndex(array(
+//                 'plugin_id' => 1
+//             ));
             $this->_pluginCollection = new PluginCollection($this->config);
             $this->_collection = new Collection($this->config);
             $this->_data = new Data($this->config);

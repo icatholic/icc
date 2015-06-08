@@ -189,6 +189,26 @@ Ext.define('icc.view.idatabase.Structure.Grid', {
 				xtype: 'booleancolumn',
 				trueText: '√',
 				falseText: '×',
+				text: '唯一?',
+				dataIndex: 'unique',
+				flex: 1,
+				field: {
+					xtype: 'commonComboboxBoolean'
+				}
+			}, {
+				xtype: 'booleancolumn',
+				trueText: '√',
+				falseText: '×',
+				text: '导出?',
+				dataIndex: 'export',
+				flex: 1,
+				field: {
+					xtype: 'commonComboboxBoolean'
+				}
+			}, {
+				xtype: 'booleancolumn',
+				trueText: '√',
+				falseText: '×',
 				text: '图片?',
 				dataIndex: 'showImage',
 				flex: 1,

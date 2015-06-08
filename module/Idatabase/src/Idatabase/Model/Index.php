@@ -14,9 +14,9 @@ class Index extends Mongo
      */
     public function init()
     {
-        $this->ensureIndex(array(
-            'collection_id' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'collection_id' => 1
+//         ));
     }
 
     /**

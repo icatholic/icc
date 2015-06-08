@@ -94,6 +94,10 @@ class PluginController extends Action
             return $this->msg(false, '无效的插件编号');
         }
         
+        if (! empty($source_project_id)) {
+            return $this->msg(false, '请勿设定来源映射信息');
+        }
+        
         $datas = array();
         $datas['project_id'] = $project_id;
         $datas['source_project_id'] = $source_project_id;
@@ -153,7 +157,8 @@ class PluginController extends Action
     public function readPluginAction()
     {
         $query = array();
-        $search = $this->params()->fromQuery('query', $this->params()->fromQuery('search', null));
+        $search = $this->params()->fromQuery('query', $this->params()
+            ->fromQuery('search', null));
         $start = intval($this->params()->fromQuery('start', 0));
         $limit = intval($this->params()->fromQuery('limit', 10));
         

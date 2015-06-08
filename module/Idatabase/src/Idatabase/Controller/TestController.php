@@ -10,7 +10,6 @@ namespace Idatabase\Controller;
 
 use My\Common\Controller\Action;
 use My\Common\MongoCollection;
-use Zend\Crypt\PublicKey\Rsa\PublicKey;
 
 class TestController extends Action
 {

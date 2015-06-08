@@ -56,6 +56,8 @@ class Mongo extends MongoCollection
                 $this->init();
             }
         }
+        
+        return $this;
     }
 
     /**
@@ -75,5 +77,7 @@ class Mongo extends MongoCollection
         if (method_exists($this, 'init')) {
             $this->init();
         }
+        
+        return $this;
     }
 }

@@ -11,6 +11,8 @@ namespace Application\Controller;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Gregwar\Captcha\CaptchaBuilder;
+use Zend\Json\Json;
+use My\Common\MongoCollection;
 
 class TestController extends AbstractActionController
 {
@@ -110,8 +112,8 @@ class TestController extends AbstractActionController
     {
         try {
             $this->_model = $this->m('yangming');
-            if ($this->_model instanceof \MongoCollection)
-                echo '$this->_model instanceof \MongoCollection';
+            if ($this->_model instanceof MongoCollection)
+                echo '$this->_model instanceof MongoCollection';
             else
                 echo 'error';
             var_dump($this->_model->insertByFindAndModify(array(
@@ -221,6 +223,11 @@ class TestController extends AbstractActionController
     public function sendEmailAction()
     {
         echo sendEmail('youngyang@icatholic.net.cn', '测试内容', '测试内容');
+        return $this->response;
+    }
+    
+    public function jsonDecodeAction() {
+        var_dump(Json::decode('{"_id":{"$id":"556525cd48961906188b45d1"},"activity_name":"5\u670827\u65e5\u6d4b\u8bd5\u5546\u54c12","product_id":"55627cc5499619ed1c8b45b3","start_time":{"sec":1432656000,"usec":0},"end_time":{"sec":1432915200,"usec":0},"is_valid":true,"pay_time":{"sec":1433088000,"usec":0}}', Json::TYPE_ARRAY));
         return $this->response;
     }
 }

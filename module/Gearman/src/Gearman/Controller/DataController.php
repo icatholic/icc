@@ -116,7 +116,14 @@ class DataController extends Action
                             $datas[$key] = $value;
                         }
                     }
-                    $rshData[$detail['collectionField']] = $datas;
+                    
+                    if (is_array($detail['collectionField'])) {
+                        foreach ($detail['collectionField'] as $detailCollectionField) {
+                            $rshData[$detailCollectionField] = $datas;
+                        }
+                    } else {
+                        $rshData[$detail['collectionField']] = $datas;
+                    }
                 }
                 
                 // 结束
@@ -151,7 +158,8 @@ class DataController extends Action
                             $cell = isset($rshData[$field][$cell]) ? $rshData[$field][$cell] : '';
                         }
                         if (is_string($cell))
-                            $cell = preg_replace("/\r|\n|\t|\s/", "", htmlspecialchars($cell));
+                            if (strtotime($cell) === false)
+                                $cell = preg_replace("/\r|\n|\t|\s/", "", htmlspecialchars($cell));
                     });
                 });
                 
@@ -205,7 +213,8 @@ class DataController extends Action
         $this->_worker->addFunction("bsonImport", function (\GearmanJob $job) use($cache)
         {
             $iconvBin = '/usr/bin/';
-            $mongoBin = '/home/mongodb/bin/';
+            //$mongoBin = '/home/mongodb/bin/';
+            $mongoBin = '/home/60000/bin/';
             $host = '10.0.0.31';
             $port = '57017';
             $dbName = 'ICCv1';
@@ -314,10 +323,10 @@ class DataController extends Action
             fclose($fp);
             
             // 执行导入脚本
-            echo $importCmd = $mongoBin . "mongorestore -host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} $temp";
+            echo $importCmd = $mongoBin . "mongorestore --host {$host} --port {$port} -d {$dbName} -c idatabase_collection_{$collection_id} $temp";
             $fp = popen($importCmd, 'r');
             pclose($fp);
-            unlink($temp);
+            // unlink($temp);
             
             echo "\ncomplete";
             
@@ -484,7 +493,8 @@ class DataController extends Action
     {
         $this->_worker->addFunction("dropDatas", function (\GearmanJob $job)
         {
-            $mongoBin = '/home/mongodb/bin/';
+            //$mongoBin = '/home/mongodb/bin/';
+            $mongoBin = '/home/60000/bin/';
             $host = '10.0.0.31';
             $port = '57017';
             $dbName = 'ICCv1';
@@ -521,9 +531,9 @@ class DataController extends Action
         });
         
         while ($this->_worker->work()) {
-        	if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
-        		echo "return_code: " . $this->_worker->returnCode() . "\n";
-        	}
+            if ($this->_worker->returnCode() != GEARMAN_SUCCESS) {
+                echo "return_code: " . $this->_worker->returnCode() . "\n";
+            }
         }
         return $this->response;
     }

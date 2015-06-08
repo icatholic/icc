@@ -389,6 +389,7 @@ class MongoCollection extends \MongoCollection
      */
     private function shardingCollection()
     {
+        return true;
         $defaultCollectionOptions = array(
             'capped' => false, // 是否开启固定集合
             'size' => pow(1024, 3), // 如果简单开启capped=>true,单个集合的最大尺寸为2G
@@ -408,7 +409,7 @@ class MongoCollection extends \MongoCollection
                 $rst = $this->_admin->command(array(
                     'shardCollection' => $this->_database . '.' . $this->_collection,
                     'key' => array(
-                        '_id' => 1
+                        '_id' => 'hashed'
                     )
                 ));
                 if ($rst['ok'] == 1) {
@@ -595,20 +596,42 @@ class MongoCollection extends \MongoCollection
     /**
      * 新的写法，创建索引
      *
-     * @param array $key_keys            
+     * @param array $keys            
      * @param array $options            
      */
-    public function createIndex($key_keys, array $options = NULL)
+    public function createIndex($keys, array $options = NULL)
     {
+        if ($this->checkIndexExist($keys)) {
+            return true;
+        }
         $default = array();
         $default['background'] = true;
         $default['w'] = 0;
         // $default['expireAfterSeconds'] = 3600; // 请充分了解后开启此参数，慎用
         $options = ($options === NULL) ? $default : array_merge($default, $options);
         if (version_compare(\MongoClient::VERSION, '1.5.0', '>='))
-            return parent::createIndex($key_keys, $options);
+            return parent::createIndex($keys, $options);
         else
-            return parent::ensureIndex($key_keys, $options);
+            return parent::ensureIndex($keys, $options);
+    }
+
+    /**
+     * 检测集合的某个索引是否存在
+     *
+     * @param array $keys            
+     * @return boolean
+     */
+    public function checkIndexExist($keys)
+    {
+        $indexs = parent::getIndexInfo();
+        if (! empty($indexs) && is_array($indexs)) {
+            foreach ($indexs as $index) {
+                if ($index['key'] == $keys) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -660,10 +683,10 @@ class MongoCollection extends \MongoCollection
             $cursor->limit($limit);
         }
         
-        if ($cursor->count() == 0)
-            return array();
+        if ($cursor instanceof \Traversable)
+            return iterator_to_array($cursor, false);
         
-        return iterator_to_array($cursor, false);
+        return array();
     }
 
     /**
@@ -1069,6 +1092,91 @@ class MongoCollection extends \MongoCollection
      *
      * @param array $command            
      */
+    public function mapReduce_test($out = null, $map, $reduce, $query = array(), $finalize = null, $method = 'replace', $scope = null, $sort = array('_id'=>1), $limit = null)
+    {
+        if ($out == null) {
+            $out = md5(serialize(func_get_args()));
+        }
+        
+        $failure = function ($code, $msg)
+        {
+            if (is_array($msg)) {
+                $msg = Json::encode($msg);
+            }
+            return array(
+                'ok' => 0,
+                'code' => $code,
+                'msg' => $msg
+            );
+        };
+
+        try {
+            // map reduce执行锁管理结束
+            $command = array();
+            $command['mapreduce'] = $this->_collection;
+            $command['map'] = ($map instanceof \MongoCode) ? $map : new \MongoCode($map);
+            $command['reduce'] = ($reduce instanceof \MongoCode) ? $reduce : new \MongoCode($reduce);
+            $query = $this->appendQuery($query);
+            if (! empty($query))
+                $command['query'] = $query;
+            
+            if (! empty($finalize))
+                $command['finalize'] = ($finalize instanceof \MongoCode) ? $finalize : new \MongoCode($finalize);
+            if (! empty($sort))
+                $command['sort'] = $sort;
+            if (! empty($limit))
+                $command['limit'] = $limit;
+            if (! empty($scope))
+                $command['scope'] = $scope;
+            $command['verbose'] = true;
+            
+            if (! in_array($method, array(
+                'replace',
+                'merge',
+                'reduce'
+            ), true)) {
+                $method = 'replace';
+            }
+            
+            $command['out'] = array(
+                $method => $out,
+                'db' => DB_MAPREDUCE,
+                'sharded' => false,
+                'nonAtomic' => in_array($method, array(
+                    'merge',
+                    'reduce'
+                ), true) ? true : false
+            );
+            
+            $this->db->setReadPreference(\MongoClient::RP_SECONDARY);
+            echo "map reduce command\n";
+            var_dump($command);
+            $rst = $this->db->command($command);
+            var_dump($rst);
+            
+            if ($rst['ok'] == 1) {
+                if ($rst['counts']['emit'] > 0 && $rst['counts']['output'] > 0) {
+                    $outMongoCollection = new self($this->_configInstance, $out, DB_MAPREDUCE, $this->_cluster);
+                    $outMongoCollection->setNoAppendQuery(true);
+                    return $outMongoCollection;
+                }
+                return $failure(500, $rst);
+            } else {
+                var_dump($this->db->lastError());
+                return $failure(501, $rst);
+            }
+        } catch (\Exception $e) {
+            var_dump(exceptionMsg($e));
+            var_dump($this->db->lastError());
+        }
+    }
+
+    /**
+     * 执行map reduce操作,为了防止数据量过大，导致无法完成mapreduce,统一采用集合的方式，取代内存方式
+     * 内存方式，不允许执行过程的数据量量超过物理内存的10%，故无法进行大数量分析工作。
+     *
+     * @param array $command            
+     */
     public function mapReduce($out = null, $map, $reduce, $query = array(), $finalize = null, $method = 'replace', $scope = null, $sort = array('_id'=>1), $limit = null)
     {
         if ($out == null) {
@@ -1079,7 +1187,19 @@ class MongoCollection extends \MongoCollection
             $locks = new self($this->_configInstance, 'locks', DB_MAPREDUCE, $this->_cluster);
             $locks->setReadPreference(\MongoClient::RP_PRIMARY_PREFERRED);
             
-            $checkLock = function ($out) use($locks)
+            $releaseLock = function ($out, $rst = null) use($locks)
+            {
+                return $locks->update(array(
+                    'out' => $out
+                ), array(
+                    '$set' => array(
+                        'isRunning' => false,
+                        'rst' => is_string($rst) ? $rst : Json::encode($rst)
+                    )
+                ));
+            };
+            
+            $checkLock = function ($out) use($locks, $releaseLock)
             {
                 $check = $locks->findOne(array(
                     'out' => $out
@@ -1116,18 +1236,6 @@ class MongoCollection extends \MongoCollection
                     ));
                     return false;
                 }
-            };
-            
-            $releaseLock = function ($out, $rst = null) use($locks)
-            {
-                return $locks->update(array(
-                    'out' => $out
-                ), array(
-                    '$set' => array(
-                        'isRunning' => false,
-                        'rst' => is_string($rst) ? $rst : Json::encode($rst)
-                    )
-                ));
             };
             
             $failure = function ($code, $msg)
@@ -1181,7 +1289,11 @@ class MongoCollection extends \MongoCollection
                 );
                 
                 $this->db->setReadPreference(\MongoClient::RP_SECONDARY);
-                $rst = $this->command($command);
+                echo "map reduce command\n";
+                var_dump($command);
+                $rst = $this->db->command($command);
+                var_dump($this->db->lastError());
+                var_dump($rst);
                 $releaseLock($out, $rst);
                 
                 if ($rst['ok'] == 1) {
@@ -1198,6 +1310,7 @@ class MongoCollection extends \MongoCollection
                 return $failure(502, '程序正在执行中，请勿频繁尝试');
             }
         } catch (\Exception $e) {
+            var_dump($this->db->lastError());
             if (isset($releaseLock) && isset($failure)) {
                 $releaseLock($out, exceptionMsg($e));
                 return $failure(503, exceptionMsg($e));
@@ -1268,7 +1381,12 @@ class MongoCollection extends \MongoCollection
         if ($mime !== false)
             $metadata['mime'] = $mime;
         
-        $id = $this->_fs->storeUpload($fieldName, $metadata);
+        try {
+            $id = $this->_fs->storeUpload($fieldName, $metadata);
+        } catch (\MongoGridFSException $e) {
+            fb(exceptionMsg($e), 'LOG');
+            throw new \Exception($e->getMessage());
+        }
         $gridfsFile = $this->_fs->get($id);
         if (! ($gridfsFile instanceof \MongoGridFSFile)) {
             fb($gridfsFile, 'LOG');
@@ -1298,7 +1416,12 @@ class MongoCollection extends \MongoCollection
         if ($mime !== false)
             $metadata['mime'] = $mime;
         
-        $id = $this->_fs->storeBytes($bytes, $metadata);
+        try {
+            $id = $this->_fs->storeBytes($bytes, $metadata);
+        } catch (\MongoGridFSException $e) {
+            fb(exceptionMsg($e), 'LOG');
+            throw new \Exception($e->getMessage());
+        }
         $gridfsFile = $this->_fs->get($id);
         return $gridfsFile->file;
     }

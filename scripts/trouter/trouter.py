@@ -4,6 +4,14 @@
 使用tornado进行路由转发控制，将请求通过该服务进行转发。
 当短时间出现大量的请求超过阈值的情况，服务会将过载部分的请求缓存在zeroMQ中，以便能缓慢的释放请求到应用服务器。
 保障服务的正常运行。
+
+版本、扩展与依赖：
+python 2.6+
+tornado4.1
+pymongo2.8
+redis(暂未使用)
+zmq
+
 """
 import tornado.httpserver
 import tornado.ioloop
@@ -29,7 +37,6 @@ import optparse
 import urllib
 import platform
 import zmq
-import md5
 
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -44,9 +51,11 @@ from tornado.escape import utf8, _unicode
 from tornado.options import define, options, parse_command_line
 from tornado.httpclient import AsyncHTTPClient
 from tornado.httputil import HTTPHeaders
+
+#from collections import Counter
  
 """代码版本"""
-version = '0.4'
+version = '0.6'
 
 define("conn", type=int, default=5000, help="最大连接数")
 define("apps", type=str, default="", help="app servers多台应用服务器请使用英文逗号分隔")
@@ -95,7 +104,7 @@ if options.sync_threshold is None:
 else:
     sync_threshold = options.sync_threshold
     
-if threshold <= sync_threshold:
+if threshold < sync_threshold:
     logging.error('阈值必须大于同步请求阈值')
     sys.exit(2)
     
@@ -141,6 +150,7 @@ class RouterHandler(tornado.web.RequestHandler):
         self.is_async = False
         self.security()
         self.logging.info("initialize")
+        self.retry_times = 3
     
     def set_headers(self, response):
         global pool,conn_count,sync,async
@@ -176,10 +186,23 @@ class RouterHandler(tornado.web.RequestHandler):
         self.logging.info("after response the pool number is:%d"%(pool,))
         self.logging.info("after response the async pool number is:%d"%(async,))
         self.logging.info("response code:%d"%(response.code,))
+        self.logging.info(response)
         
-        #检测到599，重试
+        #检测到599，重试3次
         if response.error and response.code==599:
-            return tornado.ioloop.IOLoop.instance().add_callback(self.router)
+            self.logging.debug(response) 
+            if self.retry_times > 0:
+                self.logging.info('retry limit is %d'%(self.retry_times,))
+                self.retry_times -= 1
+                return tornado.ioloop.IOLoop.instance().add_callback(self.router)
+            else:
+                self.logging.info('retry limit is 0')
+                #重试结束后
+                try:
+                    self.finish()
+                except Exception,e:
+                    self.logging.error(e)
+                return False
 
         if not self.is_async:
             try:
@@ -244,6 +267,16 @@ class RouterHandler(tornado.web.RequestHandler):
         if not async_result:
             async_result = self.get_query_argument('__ASYNC_RESULT__',default='{"ok":1}')
         
+        content_type = self.request.headers.get('__CONTENT_TYPE__',default='')
+        if not content_type:
+            content_type = self.get_query_argument('__CONTENT_TYPE__',default='')
+        
+        jsonp_callback_varname = self.request.headers.get('__JSONP_CALLBACK_VARNAME__',default='jsonpcallback')
+        if not jsonp_callback_varname:
+            jsonp_callback_varname = self.get_query_argument('__JSONP_CALLBACK_VARNAME__',default='jsonpcallback')
+            
+        jsonpcallback = self.get_query_argument('%s'%(jsonp_callback_varname,),default='')
+        
         
         #如果代码进行了urlencode编码，则自动进行解码
         if isinstance(blacklist, basestring):
@@ -278,8 +311,28 @@ class RouterHandler(tornado.web.RequestHandler):
         if nodelay:
             if not self._finished:
                 self.is_async = True
-                self.write('%s'%(async_result,))
+                self.set_status(200)
+                
+                #禁止缓存
+                self.set_header('Expires','Thu, 19 Nov 1981 08:52:00 GMT')
+                self.set_header('Pragma','no-cache')
+                
+                #默认判断，对于json格式的处理，默认jsonpcallback兼容jquery调用方法，如需定制请在__JSONP_CALLBACK_VARNAME__指定
+                if(self.is_json(async_result)):
+                    self.set_header('Content-Type','text/javascript')
+                    if jsonpcallback!='':
+                        self.write('%s(%s)'%(jsonpcallback,async_result))
+                    else:
+                        self.write('%s'%(async_result,))
+                else:
+                    self.write('%s'%(async_result,))
+                
+                #可以强行执行content-type  
+                if(content_type!=''):
+                    self.set_header('Content-Type',content_type)
+                
                 self.finish()
+                
                 #如果设置了zeroMQ队列的话，放到zmq列队中结束请求
                 if enable_zmq > 0 and zmq_device != '':
                     self.logging.info("zmq_socket send_pyobj")
@@ -302,12 +355,15 @@ class RouterHandler(tornado.web.RequestHandler):
         # 后台转发脚本计算时间开始
         self.timer = time.time()
         try:
+            self.logging.debug(self.request)
+            request = self.construct_request(self.request)
+            self.logging.debug(request)
             pool += 1
             if self.is_async:
                 async += 1
-                self.client_async.fetch(self.construct_request(self.request),callback=self.on_response)
+                self.client_async.fetch(request,callback=self.on_response)
             else:
-                self.client_sync.fetch(self.construct_request(self.request),callback=self.on_response)
+                self.client_sync.fetch(request,callback=self.on_response)
         except Exception,e:
             pool -= 1
             if self.is_async:
@@ -320,8 +376,11 @@ class RouterHandler(tornado.web.RequestHandler):
     def construct_request(self, server_request,is_pickle = False):
         self.logging.info(app_servers)
         url = "%s://%s%s"%(self.request.protocol,str(random_list(app_servers)),self.request.uri)
+        self.logging.info(url)
         if not hasattr(server_request,'body') or server_request.body=='':
             server_request.body = None
+        
+        self.logging.debug(server_request)
         
         if is_pickle:
             dict_headers = {}
@@ -330,6 +389,9 @@ class RouterHandler(tornado.web.RequestHandler):
             server_request.headers = dict_headers
             self.logging.info(server_request.headers)
         
+        if server_request.body == None and server_request.method=='POST':
+            server_request.method = 'GET'
+            
         return tornado.httpclient.HTTPRequest(
             url,
             method=server_request.method,
@@ -342,6 +404,7 @@ class RouterHandler(tornado.web.RequestHandler):
     
     #进行必要的安全检查,拦截有问题操作,考虑使用贝叶斯算法屏蔽有问题的访问
     def security(self):
+        return False
         if security_device != '':
             session_id = self.get_cookie('PHPSESSID', '')
             remote_ip = self.request.headers.get('X-Real-Ip', self.request.remote_ip)
@@ -349,9 +412,6 @@ class RouterHandler(tornado.web.RequestHandler):
             request_uri = self.request.uri
             http_host = self.request.headers.get('Host', '')
             
-            #if user_agent != '':
-            #    user_agent = hashlib.md5(user_agent).hexdigest()
-                
             security_info = {}
             security_info['http_host'] = http_host
             security_info['request_uri'] = request_uri
@@ -377,6 +437,10 @@ class RouterHandler(tornado.web.RequestHandler):
             del arguments['__ASYNC_RESULT__']
         if '__ENABLE_DEBUG__' in arguments:
             del arguments['__ENABLE_DEBUG__']
+        if '__CONTENT_TYPE__' in arguments:
+            del arguments['__CONTENT_TYPE__']
+        if '__JSONP_CALLBACK_VARNAME__' in arguments:
+            del arguments['__JSONP_CALLBACK_VARNAME__']
             
         match = "|".join(match_list)
         for k in arguments.keys():
@@ -384,7 +448,16 @@ class RouterHandler(tornado.web.RequestHandler):
                 return True
         if server_request.body != '' and re.match(match,_unicode(server_request.body)):
             return True
-        return False  
+        return False
+    
+    #判断字符串是否为有效的json字符串
+    def is_json(self,json_str):
+        try:
+            json_object = json.loads(json_str)
+        except ValueError,e:
+            return False
+        else:
+            return True
 
 
 

@@ -10,7 +10,7 @@ namespace Idatabase\Controller;
 
 use Zend\Json\Json;
 use My\Common\Controller\Action;
-use Aws\CloudFront\Exception\Exception;
+use My\Common\MongoCollection;
 
 class StructureController extends Action
 {
@@ -171,6 +171,7 @@ class StructureController extends Action
         $datas['searchable'] = filter_var($this->params()->fromPost('searchable', false), FILTER_VALIDATE_BOOLEAN);
         $datas['main'] = filter_var($this->params()->fromPost('main', false), FILTER_VALIDATE_BOOLEAN);
         $datas['required'] = filter_var($this->params()->fromPost('required', false), FILTER_VALIDATE_BOOLEAN);
+        $datas['unique'] = filter_var($this->params()->fromPost('unique', false), FILTER_VALIDATE_BOOLEAN);
         $datas['export'] = filter_var($this->params()->fromPost('export', false), FILTER_VALIDATE_BOOLEAN);
         $datas['isFatherField'] = filter_var($this->params()->fromPost('isFatherField', false), FILTER_VALIDATE_BOOLEAN);
         $datas['rshCollection'] = $this->params()->fromPost('rshCollection', '');
@@ -299,6 +300,7 @@ class StructureController extends Action
         $datas['searchable'] = filter_var($this->params()->fromPost('searchable', false), FILTER_VALIDATE_BOOLEAN);
         $datas['main'] = filter_var($this->params()->fromPost('main', false), FILTER_VALIDATE_BOOLEAN);
         $datas['required'] = filter_var($this->params()->fromPost('required', false), FILTER_VALIDATE_BOOLEAN);
+        $datas['unique'] = filter_var($this->params()->fromPost('unique', false), FILTER_VALIDATE_BOOLEAN);
         $datas['export'] = filter_var($this->params()->fromPost('export', false), FILTER_VALIDATE_BOOLEAN);
         $datas['isFatherField'] = filter_var($this->params()->fromPost('isFatherField', false), FILTER_VALIDATE_BOOLEAN);
         $datas['rshCollection'] = $this->params()->fromPost('rshCollection', '');
@@ -409,7 +411,7 @@ class StructureController extends Action
                 return $this->msg(false, '当前集合开启了映射，无法修改字段名');
             }
             $dataCollection = $this->collection(iCollectionName($this->_collection_id));
-            if ($dataCollection instanceof \MongoCollection) {
+            if ($dataCollection instanceof MongoCollection) {
                 $rstRename = $dataCollection->update(array(), array(
                     '$rename' => array(
                         $oldStructureInfo['field'] => $datas['field']
@@ -559,7 +561,7 @@ class StructureController extends Action
         // 如果修改了字段名称，那么对于数据集合中的对应字段进行重命名操作
         if (! empty($rename)) {
             $dataCollection = $this->collection(iCollectionName($this->_collection_id));
-            if ($dataCollection instanceof \MongoCollection) {
+            if ($dataCollection instanceof MongoCollection) {
                 $dataCollection->update(array(), array(
                     '$rename' => $rename
                 ));
@@ -695,9 +697,10 @@ class StructureController extends Action
     private function checkExist($field, $info, $extra = null, $model = null)
     {
         if ($model == null) {
-            if ($this->_model instanceof \MongoCollection) {
+            if ($this->_model instanceof MongoCollection) {
                 $model = $this->_model;
             } else {
+                var_dump($this->_model);
                 throw new \Exception('$this->_model未设定');
             }
         }

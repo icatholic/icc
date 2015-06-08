@@ -12,18 +12,18 @@ class Log extends Mongo
 
     public function init()
     {
-        $this->createIndex(array(
-            'uri' => true
-        ), array(
-            'background' => true
-        ));
+//         $this->createIndex(array(
+//             'uri' => true
+//         ), array(
+//             'background' => true
+//         ));
         
-        $this->createIndex(array(
-            '__CREATE_TIME__' => -1
-        ), array(
-            'background' => true,
-            'expireAfterSeconds' => 15 * 24 * 3600
-        ));
+//         $this->createIndex(array(
+//             '__CREATE_TIME__' => - 1
+//         ), array(
+//             'background' => true,
+//             'expireAfterSeconds' => 15 * 24 * 3600
+//         ));
     }
 
     /**
@@ -34,11 +34,11 @@ class Log extends Mongo
     public function trackingLog()
     {
         return $this->insert(array(
-            'uri' => $_SERVER['REQUEST_URI'],
-            'session' => $_SESSION,
-            'post' => $_POST,
-            'get' => $_GET,
-            'server' => $_SERVER
+            'uri' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'php cli',
+            'session' => isset($_SESSION) ? $_SESSION : array(),
+            'post' => isset($_POST) ? $_POST : array(),
+            'get' => isset($_GET) ? $_GET : array(),
+            'server' => isset($_SERVER) ? $_SERVER : array()
         ), array(
             'w' => 0
         ));

@@ -9,8 +9,8 @@
 namespace Idatabase\Controller;
 
 use My\Common\Controller\Action;
-use My\Common\Queue;
 use Zend\Json\Json;
+use My\Common\MongoCollection;
 
 class DashboardController extends Action
 {
@@ -175,9 +175,9 @@ class DashboardController extends Action
                 );
                 
                 $out = 'dashboard_' . $statisticInfo['_id']->__toString();
-                $rst = mapReduce1($out, $dataModel, $statisticInfo, $query, 'replace');
+                $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'replace');
                 
-                if ($rst instanceof \MongoCollection) {
+                if ($rst instanceof MongoCollection) {
                     $outCollectionName = $rst->getName(); // 输出集合名称
                     $this->_statistic->update(array(
                         '_id' => $statisticInfo['_id']
@@ -217,121 +217,6 @@ class DashboardController extends Action
                                         'upsert' => true
                                     ));
                                 }
-                            }
-                        } catch (\Exception $e) {
-                            var_dump($e);
-                        }
-                    }
-                }
-                // 替换统计结果中的数据为人可读数据结束
-            } catch (\Exception $e) {
-                $logError($statisticInfo, $e->getMessage());
-            }
-        }
-        
-        echo 'OK';
-        return $this->response;
-    }
-
-    /**
-     * 测试结果
-     *
-     * @return \Zend\Stdlib\ResponseInterface
-     */
-    public function testAction()
-    {
-        $statistic_id = $this->params()->fromQuery('statistic_id', null);
-        $logError = function ($statisticInfo, $rst)
-        {
-            $this->_statistic->update(array(
-                '_id' => $statisticInfo['_id']
-            ), array(
-                '$set' => array(
-                    'dashboardOut' => '',
-                    'dashboardError' => is_string($rst) ? $rst : Json::encode($rst)
-                )
-            ));
-        };
-        
-        $statistics = $this->_statistic->findAll(array(
-            '_id' => myMongoId($statistic_id),
-            'isDashboard' => true
-        ));
-        
-        if (empty($statistics)) {
-            echo 'empty';
-            return $this->response;
-        }
-        
-        foreach ($statistics as $statisticInfo) {
-            try {
-                if (! empty($statisticInfo['dashboardOut'])) {
-                    $oldDashboardOut = $this->collection($statisticInfo['dashboardOut'], DB_MAPREDUCE, DEFAULT_CLUSTER);
-                    $oldDashboardOut->physicalDrop();
-                }
-                
-                // 检查是否存在映射关系
-                $mapCollection = $this->_mapping->findOne(array(
-                    'collection_id' => $statisticInfo['collection_id'],
-                    'active' => true
-                ));
-                if ($mapCollection != null) {
-                    $dataModel = $this->collection()->secondary($mapCollection['collection'], $mapCollection['database'], $mapCollection['cluster']);
-                } else {
-                    $dataModel = $this->collection()->secondary(iCollectionName($statisticInfo['collection_id']));
-                }
-                
-                $query = array();
-                if (! empty($statisticInfo['dashboardQuery'])) {
-                    $query['$and'][] = $statisticInfo['dashboardQuery'];
-                }
-                $query['$and'][] = array(
-                    '__CREATE_TIME__' => array(
-                        '$gte' => new \MongoDate(time() - $statisticInfo['statisticPeriod'])
-                    )
-                );
-                
-                $out = 'dashboard_' . $statisticInfo['_id']->__toString();
-                $rst = mapReduce($out, $dataModel, $statisticInfo, $query, 'replace');
-                
-                if ($rst instanceof \MongoCollection) {
-                    $outCollectionName = $rst->getName(); // 输出集合名称
-                    $this->_statistic->update(array(
-                        '_id' => $statisticInfo['_id']
-                    ), array(
-                        '$set' => array(
-                            'dashboardOut' => $outCollectionName,
-                            'lastExecuteTime' => new \MongoDate(),
-                            'resultExpireTime' => new \MongoDate(time() + $statisticInfo['interval'])
-                        )
-                    ));
-                } else {
-                    $logError($statisticInfo, $rst);
-                }
-                
-                // 替换统计结果中的数据为人可读数据开始
-                if (isset($statisticInfo['xAxisType']) && $statisticInfo['xAxisType'] === 'value') {
-                    $rshDatas = $this->dealRshData($statisticInfo['project_id'], $statisticInfo['collection_id'], $statisticInfo['xAxisField']);
-                    if (! empty($rshDatas)) {
-                        try {
-                            $rstModel = $this->collection($out, DB_MAPREDUCE, DEFAULT_CLUSTER);
-                            $rstModel->setNoAppendQuery(true);
-                            $cursor = $rstModel->find(array());
-                            while ($cursor->hasNext()) {
-                                $row = $cursor->getNext();
-                                $rstModel->physicalRemove(array(
-                                    '_id' => $row['_id']
-                                ));
-                                $_id = $row['_id'];
-                                $rstModel->update(array(
-                                    '_id' => isset($rshDatas[$_id]) ? $rshDatas[$_id] : $_id
-                                ), array(
-                                    '$set' => array(
-                                        'value' => $row['value']
-                                    )
-                                ), array(
-                                    'upsert' => true
-                                ));
                             }
                         } catch (\Exception $e) {
                             var_dump($e);

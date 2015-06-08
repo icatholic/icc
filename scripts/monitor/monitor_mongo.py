@@ -153,6 +153,12 @@ class ComplexEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+def fromIndexToKeyName(index):
+    name = []
+    for idx,seq in index:
+        name.append(u"%s_%s"%(idx,seq))
+    return "_".join(name)
+
 loop = 0        
 while True:
     loop+=1
@@ -164,7 +170,7 @@ while True:
     waitingForLockNumber = 0
     mongos = servers
     #exclude = ['local.oplog.rs','ICCv1.','local.','ICCv1.system.indexes','ICCv1.icc.chunks','mapreduce.system.indexes','','logs.system.indexes','ICCv1.system.namespaces']
-    exclude = ['local.oplog.rs','local.','','%s.'%(database,),'%s.system.indexes'%(database,),'%s.system.namespaces'%(database,)]
+    exclude = ['local.oplog.rs','local.','','%s.'%(database,),'%s.system.indexes'%(database,),'%s.system.namespaces'%(database,),'%s.$cmd'%(database,),'admin.$cmd']
     for server in mongos:
         client = MongoClient(server, port)
         db = client[database]
@@ -277,11 +283,14 @@ while True:
                                         if database_name==database:
                                             collction_name = '.'.join(str(collection[0]).split('.')[1:])
                                             logging.debug(collction_name)
-                                            rst = db[collction_name].create_index(index,background=True)
                                             indexes = db[collction_name].index_information()
-                                            if not rst in indexes:
+                                            indexName = fromIndexToKeyName(index)
+                                            if not indexName in indexes.keys():
+                                                rst = db[collction_name].create_index(index,background=True)
                                                 create_index_list.append(index)
-                                                indexInfo = unicode("%s因性能问题自动为集合：%s，创建索引：%s,执行结果：%s\n")%(indexInfo,collection[0],json.dumps(index,skipkeys=True,cls=ComplexEncoder),json.dumps(rst,skipkeys=True,cls=ComplexEncoder))
+                                                indexInfo = unicode("%s因性能问题自动为集合：%s，创建索引：%s,执行结果：%s\n,增加索引前的索引情况：%s\n")%(indexInfo,collection[0],json.dumps(index,skipkeys=True,cls=ComplexEncoder),json.dumps(rst,skipkeys=True,cls=ComplexEncoder),json.dumps(indexes,skipkeys=True,cls=ComplexEncoder))
+                                            else:
+                                                indexInfo = unicode("%s索引：%s在集合%s中已经存在\n"%(indexInfo,indexName,collction_name))
                                         else:
                                             indexInfo = unicode("非%s集合：%s"%(database,str(collection[0])))
                                     except Exception,e:
@@ -295,11 +304,13 @@ while True:
     
     mailto_list=notify_emails
     if warnning != '':
-        send_mail(mailto_list,unicode("并发集合访问频次告警"),warnning)
+        #send_mail(mailto_list,unicode("并发集合访问频次告警"),warnning)
+        pass
     if indexInfo != '':
         send_mail(mailto_list,unicode("自动优化查询提醒"),indexInfo)
     if slow != '':
-        send_mail(mailto_list,unicode("慢查询语句提醒"),slow)
+        #send_mail(mailto_list,unicode("慢查询语句提醒"),slow)
+        pass
         
     time.sleep(options.sleep)
 

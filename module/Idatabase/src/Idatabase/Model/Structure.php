@@ -11,21 +11,21 @@ class Structure extends Mongo
     public function init()
     {
         // 添加索引
-        $this->ensureIndex(array(
-            'collection_id' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'collection_id' => 1
+//         ));
         
-        $this->ensureIndex(array(
-            'field' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'field' => 1
+//         ));
         
-        $this->ensureIndex(array(
-            'rshKey' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'rshKey' => 1
+//         ));
         
-        $this->ensureIndex(array(
-            'rshValue' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'rshValue' => 1
+//         ));
     }
 
     /**

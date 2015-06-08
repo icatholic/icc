@@ -20,8 +20,10 @@
  */
 namespace My\Common;
 
-if (version_compare(\MongoClient::VERSION, '1.5.0', '<')) {
-    require __DIR__ . '/Mongo/Collection1.4.php';
-} else {
-    require __DIR__ . '/Mongo/Collection1.5.php';
-}
+require __DIR__ . '/Mongo/Collection.php';
+
+// if (version_compare(\MongoClient::VERSION, '1.5.0', '<')) {
+//     require __DIR__ . '/Mongo/Collection1.4.php';
+// } else {
+//     require __DIR__ . '/Mongo/Collection1.5.php';
+// }

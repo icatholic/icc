@@ -45,6 +45,8 @@ class CollectionController extends Action
 
     private $_gmClient;
 
+    private $_acl;
+
     public function init()
     {
         $this->_project_id = isset($_REQUEST['__PROJECT_ID__']) ? trim($_REQUEST['__PROJECT_ID__']) : '';
@@ -64,6 +66,7 @@ class CollectionController extends Action
         $this->_lock = $this->model('Idatabase\Model\Lock');
         $this->_mapping = $this->model('Idatabase\Model\Mapping');
         $this->_plugin_index = $this->model('Idatabase\Model\PluginIndex');
+        $this->_acl = $this->collection(SYSTEM_ACCOUNT_PROJECT_ACL);
         
         $this->_collection->setReadPreference(\MongoClient::RP_SECONDARY);
         $this->_structure->setReadPreference(\MongoClient::RP_SECONDARY);
@@ -73,6 +76,7 @@ class CollectionController extends Action
         $this->_lock->setReadPreference(\MongoClient::RP_SECONDARY);
         $this->_mapping->setReadPreference(\MongoClient::RP_SECONDARY);
         $this->_plugin_index->setReadPreference(\MongoClient::RP_SECONDARY);
+        $this->_acl->setReadPreference(\MongoClient::RP_SECONDARY);
         
         $this->_gmClient = $this->gearman()->client();
     }
@@ -107,7 +111,7 @@ class CollectionController extends Action
             $query['plugin_id'] = $plugin_id;
             
             // 如果加载插件，则自动检测是否添加索引
-            //$this->_plugin_index->autoCreateIndexes($this->_project_id, $plugin_id);
+            // $this->_plugin_index->autoCreateIndexes($this->_project_id, $plugin_id);
         }
         
         if ($search != '') {
@@ -127,7 +131,9 @@ class CollectionController extends Action
         }
         
         $datas = array();
-        $cursor = $this->_collection->find($query);
+        $cursor = $this->_collection->find($query, array(
+            'hookLastResponseResult' => false
+        ));
         $cursor->sort($sort);
         $cursor->skip($start)->limit($limit);
         while ($cursor->hasNext()) {
@@ -258,7 +264,7 @@ class CollectionController extends Action
                         'hookLastResponseResult' => $response
                     )
                 ));
-                return $this->msg(true, '触发联动操作成功' . $response);
+                return $this->msg(true, '触发联动操作已执行,操作反馈如下：<br />' . $response);
             } catch (\Exception $e) {
                 return $this->msg(false, $e->getMessage());
             }
@@ -297,6 +303,8 @@ class CollectionController extends Action
             $isAllowHttpAccess = filter_var($this->params()->fromPost('isAllowHttpAccess', false), FILTER_VALIDATE_BOOLEAN);
             $promissionDefinition = $this->params()->fromPost('promissionDefinition', array());
             $hookDebugMode = filter_var($this->params()->fromPost('hook_debug_mode', false), FILTER_VALIDATE_BOOLEAN);
+            $submitConfirm = filter_var($this->params()->fromPost('submitConfirm', false), FILTER_VALIDATE_BOOLEAN);
+            $submitConfirmInfo = $this->params()->fromPost('submitConfirmInfo', NULL);
             
             if ($project_id == null) {
                 return $this->msg(false, '无效的项目编号');
@@ -344,15 +352,36 @@ class CollectionController extends Action
             $datas['hook_debug_mode'] = $hookDebugMode;
             $datas['isAllowHttpAccess'] = $isAllowHttpAccess;
             $datas['promissionDefinition'] = $promissionDefinition;
+            $datas['submitConfirm'] = $submitConfirm;
+            $datas['submitConfirmInfo'] = $submitConfirmInfo;
             $datas['plugin_collection_id'] = $this->_plugin_collection->addPluginCollection($datas);
-            $rst = $this->_collection->insert($datas);
+            $rst = $this->_collection->insertRef($datas);
             
             // 设定或者取消当前集合为插件默认的数据集合
             if (! empty($plugin_id)) {
                 if ($defaultSourceData) {
-                    if (isset($rst['_id']) && $rst['_id'] instanceof \MongoId) {
-                        $data_collection_id = $rst['_id']->__toString();
+                    if (isset($datas['_id']) && $datas['_id'] instanceof \MongoId) {
+                        $data_collection_id = $datas['_id']->__toString();
                         $this->_plugin_data->setDefault($datas['plugin_collection_id'], $data_collection_id);
+                    }
+                }
+            }
+            
+            // 添加集合后，将这个集合的权限开发给到该用户
+            if (isset($datas['_id']) && $datas['_id'] instanceof \MongoId) {
+                // 排除管理员操作
+                if (isset($_SESSION['account']['role']) && $_SESSION['account']['role'] !== 'root') {
+                    // 添加集合权限给到该用户
+                    if (isset($_SESSION['account']['username'])) {
+                        array_push($_SESSION['acl']['collection'], $datas['_id']->__toString());
+                        $this->_acl->update(array(
+                            'username' => $_SESSION['account']['username'],
+                            'project_id' => $this->_project_id
+                        ), array(
+                            '$push' => array(
+                                'collection_ids' => $datas['_id']->__toString()
+                            )
+                        ));
                     }
                 }
             }
@@ -407,6 +436,8 @@ class CollectionController extends Action
         $isAllowHttpAccess = filter_var($this->params()->fromPost('isAllowHttpAccess', false), FILTER_VALIDATE_BOOLEAN);
         $promissionDefinition = $this->params()->fromPost('promissionDefinition', array());
         $plugin_collection_id = trim($this->params()->fromPost('__PLUGIN_COLLECTION_ID__', ''));
+        $submitConfirm = filter_var($this->params()->fromPost('submitConfirm', false), FILTER_VALIDATE_BOOLEAN);
+        $submitConfirmInfo = $this->params()->fromPost('submitConfirmInfo', NULL);
         
         if ($_id == null) {
             return $this->msg(false, '无效的集合编号');
@@ -467,6 +498,8 @@ class CollectionController extends Action
         $datas['isAllowHttpAccess'] = $isAllowHttpAccess;
         $datas['promissionDefinition'] = $promissionDefinition;
         $datas['plugin_collection_id'] = $plugin_collection_id;
+        $datas['submitConfirm'] = $submitConfirm;
+        $datas['submitConfirmInfo'] = $submitConfirmInfo;
         $datas['plugin_collection_id'] = $this->_plugin_collection->editPluginCollection($datas);
         
         $this->_collection->update(array(

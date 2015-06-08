@@ -17,18 +17,18 @@ class Collection extends Mongo
     {
         $this->_structure = new Structure($this->config);
         
-        $this->ensureIndex(array(
-            'project_id' => 1,
-            'alias' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'project_id' => 1,
+//             'alias' => 1
+//         ));
         
-        $this->ensureIndex(array(
-            'project_id' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'project_id' => 1
+//         ));
         
-        $this->ensureIndex(array(
-            'plugin_id' => 1
-        ));
+//         $this->ensureIndex(array(
+//             'plugin_id' => 1
+//         ));
     }
 
     /**

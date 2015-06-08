@@ -11,9 +11,6 @@ set_time_limit(PHP_SAPI === 'cli' ? 0 : 30); // 与PHP-FPM的设定保持一致
                                              
 // 初始化应用程序
 chdir(dirname(__DIR__));
-define('ZF_CLASS_CACHE', realpath(dirname(__DIR__)) . '/optimize/classes.php.cache');
-if (file_exists(ZF_CLASS_CACHE))
-    require_once ZF_CLASS_CACHE;
 
 require 'config/constant.php';
 require 'init_autoloader.php';
